@@ -1,8 +1,7 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Search, Loader2, Package, Terminal, Check, Plus } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { searchAPI } from "@/lib/electron"
 import { cn } from "@/lib/utils"
 import { SearchResult } from "@/lib/types"
@@ -22,6 +21,22 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
     const [loadingId, setLoadingId] = useState<string | null>(null)
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const containerRef = useRef<HTMLDivElement>(null)
+    const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+    // Auto-scroll selected item into view
+    useEffect(() => {
+        if (selectedIndex >= 0 && itemRefs.current[selectedIndex]) {
+            itemRefs.current[selectedIndex]?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest'
+            })
+        }
+    }, [selectedIndex])
+
+    // Callback to set item refs
+    const setItemRef = useCallback((index: number) => (el: HTMLButtonElement | null) => {
+        itemRefs.current[index] = el
+    }, [])
 
     // Subscript to clicks outside to close dropdown
     useEffect(() => {
@@ -123,64 +138,63 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
 
             {isOpen && results.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    <ScrollArea className="max-h-[300px]">
-                        <div className="p-1">
-                            {results.map((result, index) => {
-                                const id = `${result.type}:${result.name}`
-                                const added = isAdded(id)
-                                const isLoading = loadingId === result.name
-                                const isSelected = index === selectedIndex
+                    <div className="max-h-[300px] overflow-y-auto overscroll-contain p-1">
+                        {results.map((result, index) => {
+                            const id = `${result.type}:${result.name}`
+                            const added = isAdded(id)
+                            const isLoading = loadingId === result.name
+                            const isSelected = index === selectedIndex
 
-                                return (
-                                    <button
-                                        key={id}
-                                        onClick={() => !added && handleAdd(result)}
-                                        disabled={added || isLoading}
-                                        className={cn(
-                                            "w-full px-3 py-3 flex items-center gap-3 text-left rounded-lg transition-colors",
-                                            added ? "opacity-50 cursor-default" : "hover:bg-accent cursor-pointer",
-                                            isSelected && !added && "bg-accent ring-1 ring-primary/50"
+                            return (
+                                <button
+                                    key={id}
+                                    ref={setItemRef(index)}
+                                    onClick={() => !added && handleAdd(result)}
+                                    disabled={added || isLoading}
+                                    className={cn(
+                                        "w-full px-3 py-3 flex items-center gap-3 text-left rounded-lg transition-colors",
+                                        added ? "opacity-50 cursor-default" : "hover:bg-accent cursor-pointer",
+                                        isSelected && !added && "bg-accent ring-1 ring-primary/50"
+                                    )}
+                                >
+                                    <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+                                        {result.type === 'cask' ? (
+                                            <Package className="w-4 h-4 text-primary" />
+                                        ) : (
+                                            <Terminal className="w-4 h-4 text-emerald-500" />
                                         )}
-                                    >
-                                        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">
-                                            {result.type === 'cask' ? (
-                                                <Package className="w-4 h-4 text-primary" />
-                                            ) : (
-                                                <Terminal className="w-4 h-4 text-emerald-500" />
+                                    </div>
+
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="font-medium text-sm text-foreground">{result.name}</span>
+                                            {result.installed && (
+                                                <span className="text-[10px] text-emerald-500 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded-full">installed</span>
                                             )}
                                         </div>
-
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <span className="font-medium text-sm text-foreground">{result.name}</span>
-                                                {result.installed && (
-                                                    <span className="text-[10px] text-emerald-500 font-medium bg-emerald-500/10 px-1.5 py-0.5 rounded-full">installed</span>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-border/50 text-muted-foreground">
-                                                    {result.type}
-                                                </Badge>
-                                                <span className="text-xs text-muted-foreground truncate max-w-[200px]">
-                                                    {result.description}
-                                                </span>
-                                            </div>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-border/50 text-muted-foreground">
+                                                {result.type}
+                                            </Badge>
+                                            <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                                                {result.description}
+                                            </span>
                                         </div>
+                                    </div>
 
-                                        <div className="pr-1">
-                                            {isLoading ? (
-                                                <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
-                                            ) : added ? (
-                                                <Check className="w-4 h-4 text-emerald-500" />
-                                            ) : (
-                                                <Plus className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
-                                            )}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </ScrollArea>
+                                    <div className="pr-1">
+                                        {isLoading ? (
+                                            <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />
+                                        ) : added ? (
+                                            <Check className="w-4 h-4 text-emerald-500" />
+                                        ) : (
+                                            <Plus className="w-4 h-4 text-muted-foreground group-hover:text-foreground" />
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             )}
         </div>
