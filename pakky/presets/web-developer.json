@@ -1,0 +1,107 @@
+{
+    "name": "Web Developer Setup",
+    "version": "1.0.0",
+    "author": "Pakky",
+    "description": "Essential tools for modern web development on macOS",
+    "tags": [
+        "web",
+        "developer",
+        "frontend",
+        "backend",
+        "nodejs"
+    ],
+    "macos": {
+        "homebrew": {
+            "taps": [
+                "homebrew/cask-fonts"
+            ],
+            "formulae": [
+                "git",
+                "node",
+                "pnpm",
+                "yarn",
+                "python",
+                "go",
+                "rust",
+                "ripgrep",
+                "fzf",
+                "gh",
+                "jq",
+                "tree",
+                "wget",
+                "curl",
+                "httpie",
+                "tldr",
+                "bat",
+                "eza",
+                "fd",
+                "zsh-autosuggestions",
+                "zsh-syntax-highlighting"
+            ],
+            "casks": [
+                "visual-studio-code",
+                "iterm2",
+                "docker",
+                "raycast",
+                "arc",
+                "figma",
+                "postman",
+                "tableplus",
+                "github-desktop",
+                "notion",
+                "slack",
+                "font-fira-code-nerd-font",
+                "font-jetbrains-mono-nerd-font"
+            ]
+        },
+        "shell": {
+            "default_shell": "zsh",
+            "install_oh_my_zsh": true,
+            "oh_my_zsh_theme": "agnoster",
+            "zsh_plugins": [
+                "git",
+                "docker",
+                "node",
+                "npm",
+                "yarn",
+                "vscode",
+                "zsh-autosuggestions",
+                "zsh-syntax-highlighting"
+            ]
+        }
+    },
+    "post_install": [
+        {
+            "name": "Configure Git",
+            "prompt": "Would you like to configure Git?",
+            "prompt_for_input": {
+                "git_name": {
+                    "message": "Enter your name for Git commits:",
+                    "validation": "none"
+                },
+                "git_email": {
+                    "message": "Enter your email for Git commits:",
+                    "validation": "email"
+                }
+            },
+            "commands": [
+                "git config --global user.name '{{git_name}}'",
+                "git config --global user.email '{{git_email}}'",
+                "git config --global init.defaultBranch main",
+                "git config --global pull.rebase false"
+            ]
+        },
+        {
+            "name": "Install Node.js LTS with fnm",
+            "condition": "always",
+            "commands": [
+                "npm install -g typescript",
+                "npm install -g @angular/cli",
+                "npm install -g create-react-app",
+                "npm install -g create-next-app",
+                "npm install -g vercel"
+            ],
+            "continue_on_error": true
+        }
+    ]
+}

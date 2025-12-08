@@ -11,6 +11,9 @@
     "dist",
     "dist-electron"
   ],
+  "extraResources": [
+    "presets/**"
+  ],
   "mac": {
     "target": [
       "dmg"

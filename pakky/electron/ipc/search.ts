@@ -1,0 +1,117 @@
+import { ipcMain } from 'electron'
+import { execFileAsync, isValidPackageName } from '../utils'
+
+// Search result item interface
+interface SearchResultItem {
+    name: string
+    type: 'formula' | 'cask'
+    description?: string
+    version?: string
+    installed?: boolean
+}
+
+/**
+ * Register search-related IPC handlers
+ */
+export function registerSearchHandlers() {
+    ipcMain.handle('search:brew', async (_, query: string): Promise<SearchResultItem[]> => {
+        // Security: Validate query to prevent injection
+        if (!query || query.length < 2 || query.length > 100) {
+            return []
+        }
+
+        // Security: Additional validation - only allow safe characters in search
+        if (!/^[a-zA-Z0-9-_@/.+ ]+$/.test(query)) {
+            return []
+        }
+
+        try {
+            // Search both formulae and casks
+            const results: SearchResultItem[] = []
+
+            // Get installed packages for comparison
+            let installedFormulae: string[] = []
+            let installedCasks: string[] = []
+
+            try {
+                const { stdout: formulaeList } = await execFileAsync('brew', ['list', '--formula'])
+                installedFormulae = formulaeList.trim().split('\n').filter(Boolean)
+            } catch { /* ignore */ }
+
+            try {
+                const { stdout: casksList } = await execFileAsync('brew', ['list', '--cask'])
+                installedCasks = casksList.trim().split('\n').filter(Boolean)
+            } catch { /* ignore */ }
+
+            // Security: Use execFileAsync with arguments array (prevents command injection)
+            // Search formulae
+            try {
+                const { stdout: formulaeOutput } = await execFileAsync('brew', ['search', '--formula', query])
+                const formulae = formulaeOutput.trim().split('\n').filter(Boolean).slice(0, 10)
+
+                for (const name of formulae) {
+                    if (name && !name.startsWith('==>')) {
+                        results.push({
+                            name: name.trim(),
+                            type: 'formula',
+                            installed: installedFormulae.includes(name.trim()),
+                        })
+                    }
+                }
+            } catch { /* no results */ }
+
+            // Search casks
+            try {
+                const { stdout: casksOutput } = await execFileAsync('brew', ['search', '--cask', query])
+                const casks = casksOutput.trim().split('\n').filter(Boolean).slice(0, 10)
+
+                for (const name of casks) {
+                    if (name && !name.startsWith('==>')) {
+                        results.push({
+                            name: name.trim(),
+                            type: 'cask',
+                            installed: installedCasks.includes(name.trim()),
+                        })
+                    }
+                }
+            } catch { /* no results */ }
+
+            return results.slice(0, 15) // Limit total results
+        } catch (error) {
+            console.error('Search error:', error)
+            return []
+        }
+    })
+
+    ipcMain.handle('search:info', async (_, name: string, type: 'formula' | 'cask'): Promise<{ description?: string; version?: string } | null> => {
+        // Security: Validate package name to prevent injection
+        if (!isValidPackageName(name)) {
+            return null
+        }
+
+        try {
+            const flag = type === 'cask' ? '--cask' : '--formula'
+            // Security: Use execFileAsync with arguments array (prevents command injection)
+            const { stdout } = await execFileAsync('brew', ['info', flag, '--json=v2', name])
+            const data = JSON.parse(stdout)
+
+            if (type === 'cask' && data.casks && data.casks.length > 0) {
+                const cask = data.casks[0]
+                return {
+                    description: cask.desc || undefined,
+                    version: cask.version || undefined,
+                }
+            } else if (type === 'formula' && data.formulae && data.formulae.length > 0) {
+                const formula = data.formulae[0]
+                return {
+                    description: formula.desc || undefined,
+                    version: formula.versions?.stable || undefined,
+                }
+            }
+
+            return null
+        } catch {
+            return null
+        }
+    })
+}
