@@ -1,4 +1,4 @@
-import type { BrowserWindow } from 'electron'
+import { type BrowserWindow, ipcMain, app } from 'electron'
 import { registerSystemHandlers } from './system'
 import { registerConfigHandlers } from './config'
 import { registerInstallHandlers } from './install'
@@ -6,6 +6,7 @@ import { registerSearchHandlers } from './search'
 import { registerUserInputHandlers } from './userInput'
 import { registerShellHandlers } from './shell'
 import { registerPresetsHandlers } from './presets'
+import { registerUserConfigHandlers } from './userConfig'
 
 /**
  * Register all IPC handlers
@@ -18,7 +19,13 @@ export function registerAllHandlers(getWindow: () => BrowserWindow | null) {
     registerSearchHandlers()
     registerUserInputHandlers()
     registerShellHandlers()
-    registerPresetsHandlers()
+    registerPresetsHandlers();
+
+    // Core App Handlers
+    ipcMain.handle('app:quit', () => {
+        app.quit();
+    });
+    registerUserConfigHandlers()
 }
 
 // Re-export individual registrations for selective use
@@ -29,3 +36,4 @@ export { registerSearchHandlers } from './search'
 export { registerUserInputHandlers } from './userInput'
 export { registerShellHandlers } from './shell'
 export { registerPresetsHandlers } from './presets'
+export { registerUserConfigHandlers } from './userConfig'

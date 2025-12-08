@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstallProgress } from '@/lib/types';
 
-type Page = 'home' | 'install' | 'presets' | 'settings';
+type Page = 'home' | 'presets' | 'settings';
 
 interface AppLayoutProps {
     children: React.ReactNode;

@@ -14,6 +14,7 @@ const invokeChannels = [
   'install:cancel',
   'install:getInstalled',
   'install:homebrew',
+  'install:checkHomebrew',
   'search:brew',
   'search:info',
   'userInput:getValues',
@@ -22,6 +23,10 @@ const invokeChannels = [
   // 'shell:run' - REMOVED for security
   'shell:openExternal',
   'presets:list',
+  'userConfig:read',
+  'userConfig:save',
+  'userConfig:reset',
+  'app:quit',
 ] as const
 
 const allowedInvokeChannels = new Set<typeof invokeChannels[number]>(invokeChannels)

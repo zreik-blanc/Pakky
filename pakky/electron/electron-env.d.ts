@@ -35,6 +35,7 @@ type PakkyInvokeChannel =
   | 'install:cancel'
   | 'install:getInstalled'
   | 'install:homebrew'
+  | 'install:checkHomebrew'
   | 'search:brew'
   | 'search:info'
   | 'userInput:getValues'
@@ -43,6 +44,10 @@ type PakkyInvokeChannel =
   // 'shell:run' - REMOVED for security
   | 'shell:openExternal'
   | 'presets:list'
+  | 'userConfig:read'
+  | 'userConfig:save'
+  | 'userConfig:reset'
+  | 'app:quit'
 
 type PakkyOnChannel = 'install:progress' | 'install:log'
 

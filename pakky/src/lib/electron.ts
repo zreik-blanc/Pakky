@@ -27,6 +27,10 @@ export const systemAPI = {
     checkHomebrew: (): Promise<boolean> => {
         return window.pakky.invoke<boolean>('system:checkHomebrew');
     },
+
+    quitApp: (): Promise<void> => {
+        return window.pakky.invoke<void>('app:quit');
+    },
 };
 
 // Config API
@@ -75,6 +79,10 @@ export const installAPI = {
 
     installHomebrew: (): Promise<void> => {
         return window.pakky.invoke<void>('install:homebrew');
+    },
+
+    checkHomebrew: (): Promise<boolean> => {
+        return window.pakky.invoke<boolean>('install:checkHomebrew');
     },
 
     // Subscribe to installation progress updates
@@ -139,9 +147,24 @@ export const shellAPI = {
     },
 };
 
+// User Config API
+export const userConfigAPI = {
+    read: (): Promise<import('./types').UserConfig | null> => {
+        return window.pakky.invoke<import('./types').UserConfig | null>('userConfig:read');
+    },
+
+    save: (config: { userName: string; systemInfo?: import('./types').SystemInfo }): Promise<void> => {
+        return window.pakky.invoke<void>('userConfig:save', config);
+    },
+
+    reset: (): Promise<void> => {
+        return window.pakky.invoke<void>('userConfig:reset');
+    },
+};
+
 // Presets API
 export const presetsAPI = {
-    getPresets: (): Promise<any[]> => {
-        return window.pakky.invoke<any[]>('presets:list');
+    getPresets: (): Promise<import('./types').Preset[]> => {
+        return window.pakky.invoke<import('./types').Preset[]>('presets:list');
     },
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useInstallStore } from './stores/installStore';
-import { systemAPI, configAPI } from './lib/electron';
+import { systemAPI, configAPI, userConfigAPI } from './lib/electron';
 import type { Platform, SystemInfo, PakkyConfig, PackageInstallItem } from './lib/types';
 import './index.css';
 
@@ -9,33 +9,58 @@ import AppLayout from '@/components/layout/AppLayout';
 import HomePage from './pages/Home';
 import PresetsPage from '@/pages/Presets';
 import SettingsPage from '@/pages/Settings';
+import OnboardingPage from '@/pages/Onboarding';
+import { ConfigCorruptionAlert } from '@/components/alerts/ConfigCorruptionAlert';
 
-type Page = 'home' | 'install' | 'presets' | 'settings';
+type Page = 'home' | 'presets' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnboarding, setIsOnboarding] = useState(false);
+  const [configError, setConfigError] = useState<string | null>(null);
   const [importedPackages, setImportedPackages] = useState<PackageInstallItem[]>([]);
   const [selectedPackages, setSelectedPackages] = useState<PackageInstallItem[]>([]);
   const [installLogs, setInstallLogs] = useState<Record<string, string[]>>({});
   const { progress } = useInstallStore();
 
   useEffect(() => {
-    // Get system info on mount
-    const loadSystemInfo = async () => {
+    const initApp = async () => {
       try {
+        // 1. Get System Info
         const info = await systemAPI.getSystemInfo();
-        setSystemInfo({
+        const sysInfo = {
           platform: info.platform as Platform,
           arch: info.arch,
           version: info.version,
           homeDir: info.homeDir,
           hostname: info.hostname,
-        });
-      } catch (error) {
-        console.error('Failed to get system info:', error);
-        // Fallback for development
+        };
+        setSystemInfo(sysInfo);
+
+        // 2. Check User Config (Onboarding Status)
+        const userConfig = await userConfigAPI.read();
+
+        if (!userConfig) {
+          setIsOnboarding(true);
+        } else {
+          // Update last seen
+          await userConfigAPI.save({
+            userName: userConfig.userName,
+            systemInfo: sysInfo
+          });
+        }
+      } catch (error: unknown) {
+        console.error('Failed to initialize app:', error);
+
+        if (error instanceof Error && error.message.includes('CONFIG_CORRUPTED')) {
+          setConfigError('corrupted');
+          setIsLoading(false);
+          return;
+        }
+
+        // Fallback for development if everything fails
         setSystemInfo({
           platform: 'macos',
           arch: 'arm64',
@@ -48,7 +73,7 @@ function App() {
       }
     };
 
-    loadSystemInfo();
+    initApp();
   }, []);
 
   // Handle config import
@@ -113,6 +138,19 @@ function App() {
           <p className="text-muted-foreground animate-pulse">Loading Pakky...</p>
         </div>
       </div>
+    );
+  }
+
+  if (configError === 'corrupted') {
+    return <ConfigCorruptionAlert />;
+  }
+
+  if (isOnboarding) {
+    return (
+      <OnboardingPage
+        systemInfo={systemInfo}
+        onComplete={() => setIsOnboarding(false)}
+      />
     );
   }
 

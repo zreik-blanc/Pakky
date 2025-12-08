@@ -33,11 +33,18 @@ function createWindow() {
     minHeight: 600,
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
     titleBarStyle: 'hiddenInset', // macOS native title bar
+    show: false, // Don't show until ready to prevent white flash
+    backgroundColor: '#0d0d0d', // Match the app's dark theme background
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
+  })
+
+  // Show window when ready to prevent flickering
+  win.once('ready-to-show', () => {
+    win?.show()
   })
 
   // Security: Add Content Security Policy headers

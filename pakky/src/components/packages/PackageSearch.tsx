@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { searchAPI } from "@/lib/electron"
 import { cn } from "@/lib/utils"
 import { SearchResult } from "@/lib/types"
+import { SEARCH_CONFIG } from "@/lib/config"
 
 interface PackageSearchProps {
     onAddPackage: (result: SearchResult) => Promise<void>
@@ -19,6 +20,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
     const [isSearching, setIsSearching] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const [loadingId, setLoadingId] = useState<string | null>(null)
+    const [selectedIndex, setSelectedIndex] = useState(-1)
     const containerRef = useRef<HTMLDivElement>(null)
 
     // Subscript to clicks outside to close dropdown
@@ -34,7 +36,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
 
     // Debounced search
     useEffect(() => {
-        if (query.length < 2) {
+        if (query.length < SEARCH_CONFIG.minQueryLength) {
             setResults([])
             setIsOpen(false)
             return
@@ -46,13 +48,14 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                 const searchResults = await searchAPI.searchBrew(query)
                 setResults(searchResults)
                 setIsOpen(searchResults.length > 0)
+                setSelectedIndex(-1)  // Reset selection on new search
             } catch (error) {
                 console.error("Search failed:", error)
                 setResults([])
             } finally {
                 setIsSearching(false)
             }
-        }, 300)
+        }, SEARCH_CONFIG.debounceMs)
 
         return () => clearTimeout(timer)
     }, [query])
@@ -92,6 +95,24 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                         if (e.key === 'Escape') {
                             setIsOpen(false)
                             setQuery('')
+                            setSelectedIndex(-1)
+                        } else if (e.key === 'ArrowDown') {
+                            e.preventDefault()
+                            if (!isOpen && results.length > 0) {
+                                setIsOpen(true)
+                            }
+                            setSelectedIndex(prev =>
+                                prev < results.length - 1 ? prev + 1 : prev
+                            )
+                        } else if (e.key === 'ArrowUp') {
+                            e.preventDefault()
+                            setSelectedIndex(prev => prev > 0 ? prev - 1 : 0)
+                        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+                            e.preventDefault()
+                            const selected = results[selectedIndex]
+                            if (selected && !isAdded(`${selected.type}:${selected.name}`)) {
+                                handleAdd(selected)
+                            }
                         }
                     }}
                     disabled={disabled}
@@ -104,10 +125,11 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                 <div className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                     <ScrollArea className="max-h-[300px]">
                         <div className="p-1">
-                            {results.map((result) => {
+                            {results.map((result, index) => {
                                 const id = `${result.type}:${result.name}`
                                 const added = isAdded(id)
                                 const isLoading = loadingId === result.name
+                                const isSelected = index === selectedIndex
 
                                 return (
                                     <button
@@ -116,7 +138,8 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                                         disabled={added || isLoading}
                                         className={cn(
                                             "w-full px-3 py-3 flex items-center gap-3 text-left rounded-lg transition-colors",
-                                            added ? "opacity-50 cursor-default" : "hover:bg-accent cursor-pointer"
+                                            added ? "opacity-50 cursor-default" : "hover:bg-accent cursor-pointer",
+                                            isSelected && !added && "bg-accent ring-1 ring-primary/50"
                                         )}
                                     >
                                         <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center shrink-0">

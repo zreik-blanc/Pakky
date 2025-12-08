@@ -1,5 +1,5 @@
 import { PackageInstallItem } from "@/lib/types"
-import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X } from "lucide-react"
+import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X, RotateCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { InstallTerminal } from "@/components/install/InstallTerminal"
@@ -8,11 +8,12 @@ import { cn } from "@/lib/utils"
 interface PackageCardProps {
     pkg: PackageInstallItem
     onRemove: (id: string) => void
+    onReinstall?: (id: string) => void
     disabled?: boolean
     logs?: string[]
 }
 
-export function PackageCard({ pkg, onRemove, disabled, logs = [] }: PackageCardProps) {
+export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }: PackageCardProps) {
     const isInstalling = pkg.status === 'installing'
     const hasLogs = logs.length > 0
     const showActivity = isInstalling || hasLogs
@@ -33,6 +34,8 @@ export function PackageCard({ pkg, onRemove, disabled, logs = [] }: PackageCardP
                 return <Clock className="w-5 h-5 text-muted-foreground/50" />;
         }
     };
+
+    const canReinstall = pkg.status === 'already_installed' && onReinstall
 
     return (
         <div className={cn(
@@ -73,18 +76,35 @@ export function PackageCard({ pkg, onRemove, disabled, logs = [] }: PackageCardP
                         {pkg.error && (
                             <span className="text-red-500 font-medium truncate">{pkg.error}</span>
                         )}
+                        {pkg.action === 'reinstall' && (
+                            <span className="text-amber-500 font-medium border-l pl-2">Will Reinstall</span>
+                        )}
                     </div>
                 </div>
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => onRemove(pkg.id)}
-                    disabled={disabled || isInstalling}
-                >
-                    <X className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {canReinstall && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-primary"
+                            onClick={() => onReinstall && onReinstall(pkg.id)}
+                            disabled={disabled || isInstalling}
+                            title="Force Reinstall"
+                        >
+                            <RotateCw className="w-4 h-4" />
+                        </Button>
+                    )}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => onRemove(pkg.id)}
+                        disabled={disabled || isInstalling}
+                    >
+                        <X className="w-4 h-4" />
+                    </Button>
+                </div>
             </div>
 
             {/* Installing Progress Bar / Logs */}

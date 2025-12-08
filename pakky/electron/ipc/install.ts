@@ -3,6 +3,7 @@ import type { PackageInstallItem } from '../../src/lib/types'
 import {
     getInstalledPackages,
     installHomebrew,
+    isHomebrewInstalled,
     installPackage,
     cancelInstallation,
     type InstallationState,
@@ -30,6 +31,10 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
 
     ipcMain.handle('install:homebrew', async () => {
         return installHomebrew()
+    })
+
+    ipcMain.handle('install:checkHomebrew', async () => {
+        return isHomebrewInstalled()
     })
 
     ipcMain.handle('install:start', async (_event, request: InstallRequest) => {

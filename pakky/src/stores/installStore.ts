@@ -5,6 +5,7 @@ import type {
     PackageInstallItem,
     PackageStatus
 } from '../lib/types';
+import { INSTALL_CONFIG } from '../lib/config';
 
 interface InstallStore {
     // State
@@ -127,20 +128,26 @@ export const useInstallStore = create<InstallStore>((set) => ({
         };
     }),
 
-    addPackageLog: (packageId, log) => set((state) => ({
-        progress: {
-            ...state.progress,
-            packages: state.progress.packages.map((pkg) => {
-                if (pkg.id === packageId) {
-                    return {
-                        ...pkg,
-                        logs: [...pkg.logs, log],
-                    };
-                }
-                return pkg;
-            }),
-        },
-    })),
+    addPackageLog: (packageId, log) => set((state) => {
+        const maxLogs = INSTALL_CONFIG.maxLogsPerPackage;
+        return {
+            progress: {
+                ...state.progress,
+                packages: state.progress.packages.map((pkg) => {
+                    if (pkg.id === packageId) {
+                        const newLogs = pkg.logs.length >= maxLogs
+                            ? [...pkg.logs.slice(-(maxLogs - 1)), log]
+                            : [...pkg.logs, log];
+                        return {
+                            ...pkg,
+                            logs: newLogs,
+                        };
+                    }
+                    return pkg;
+                }),
+            },
+        };
+    }),
 
     setCurrentPackage: (packageId) => set((state) => ({
         progress: {

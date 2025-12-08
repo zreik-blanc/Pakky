@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { execAsync, isValidPackageName } from '../utils'
+import { execFileAsync, isValidPackageName } from '../utils'
 import type { PackageInstallItem } from '../../src/lib/types'
 
 /**
@@ -28,14 +28,14 @@ export async function getInstalledPackages(): Promise<{ formulae: string[]; cask
     const result = { formulae: [] as string[], casks: [] as string[] }
 
     try {
-        const { stdout: formulaeOutput } = await execAsync('brew list --formula')
+        const { stdout: formulaeOutput } = await execFileAsync('brew', ['list', '--formula'])
         result.formulae = formulaeOutput.trim().split('\n').filter(Boolean)
     } catch {
         // Homebrew not installed or no formulae
     }
 
     try {
-        const { stdout: casksOutput } = await execAsync('brew list --cask')
+        const { stdout: casksOutput } = await execFileAsync('brew', ['list', '--cask'])
         result.casks = casksOutput.trim().split('\n').filter(Boolean)
     } catch {
         // No casks installed
@@ -49,7 +49,7 @@ export async function getInstalledPackages(): Promise<{ formulae: string[]; cask
  */
 export async function isHomebrewInstalled(): Promise<boolean> {
     try {
-        await execAsync('which brew')
+        await execFileAsync('which', ['brew'])
         return true
     } catch {
         return false
@@ -57,11 +57,39 @@ export async function isHomebrewInstalled(): Promise<boolean> {
 }
 
 /**
- * Install Homebrew (placeholder for future implementation)
+ * Install Homebrew using the official install script
  */
 export async function installHomebrew(): Promise<void> {
-    console.log('Would install Homebrew...')
-    throw new Error('Homebrew installation not implemented yet')
+    console.log('Installing Homebrew...')
+
+    return new Promise((resolve, reject) => {
+        // /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        // We set NONINTERACTIVE=1 to avoid the "Press ENTER" prompt.
+        const installProcess = spawn('/bin/bash', ['-c', 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'], {
+            stdio: 'pipe' // We might want to stream this later, but for now just run it
+        })
+
+        installProcess.stdout.on('data', (data) => {
+            console.log(`Brew Install (stdout): ${data}`)
+        })
+
+        installProcess.stderr.on('data', (data) => {
+            console.error(`Brew Install (stderr): ${data}`)
+        })
+
+        installProcess.on('close', (code) => {
+            if (code === 0) {
+                console.log('Homebrew installed successfully')
+                resolve()
+            } else {
+                reject(new Error(`Homebrew installation failed with code ${code}`))
+            }
+        })
+
+        installProcess.on('error', (err) => {
+            reject(new Error(`Failed to start Homebrew installation: ${err.message}`))
+        })
+    })
 }
 
 /**
@@ -82,11 +110,12 @@ export async function installPackage(
             return
         }
 
-        // Determine the brew command based on package type
+        // Determine the brew command based on package type and action
         const isCask = pkg.type === 'cask'
+        const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
         const args = isCask
-            ? ['install', '--cask', pkg.name]
-            : ['install', pkg.name]
+            ? [command, '--cask', pkg.name]
+            : [command, pkg.name]
 
         sendLog(`$ brew ${args.join(' ')}`, 'stdout')
         sendProgress('installing')

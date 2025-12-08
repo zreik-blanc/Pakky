@@ -184,6 +184,7 @@ export interface PackageInstallItem {
     error?: string;
     startTime?: number;
     endTime?: number;
+    action?: 'install' | 'reinstall';
 }
 
 export interface InstallProgress {
@@ -236,5 +237,12 @@ export interface Preset {
         formulae?: (string | PackageObject)[];
         casks?: (string | CaskObject)[];
     };
+}
+
+export interface UserConfig {
+    userName: string;
+    systemInfo: SystemInfo;
+    firstLaunchAt: string; // ISO date
+    lastSeenAt: string;
 }
 
