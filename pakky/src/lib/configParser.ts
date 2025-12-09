@@ -10,7 +10,8 @@ import type {
     Preset,
     PackageObject,
     CaskObject,
-    ConfigSettings
+    ConfigSettings,
+    PostInstallStep
 } from './types';
 
 // ============================================
@@ -85,15 +86,17 @@ function parseCaskItem(item: string | CaskObject): PackageInstallItem {
 }
 
 /**
- * Parse a tap string into PackageInstallItem
+ * Parse a post-install script into PackageInstallItem
  */
-function parseTapItem(tap: string): PackageInstallItem {
+function parsePostScriptItem(script: PostInstallStep): PackageInstallItem {
     return {
-        id: `tap:${tap}`,
-        name: tap,
-        type: 'tap',
+        id: `script:${script.name}`,
+        name: script.name,
+        type: 'script',
         status: 'pending',
-        description: 'Homebrew tap repository',
+        description: script.prompt || 'Post-install script',
+        commands: script.commands,
+        promptForInput: script.prompt_for_input,
         logs: [],
     };
 }
@@ -112,13 +115,6 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
     if (config.macos?.homebrew) {
         const homebrew = config.macos.homebrew;
 
-        // Add taps first (they need to be installed before packages that depend on them)
-        if (homebrew.taps) {
-            for (const tap of homebrew.taps) {
-                packages.push(parseTapItem(tap));
-            }
-        }
-
         // Add formulae
         if (homebrew.formulae) {
             for (const item of homebrew.formulae) {
@@ -131,6 +127,13 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
             for (const item of homebrew.casks) {
                 packages.push(parseCaskItem(item));
             }
+        }
+    }
+
+    // Parse post-install scripts
+    if (config.post_install) {
+        for (const script of config.post_install) {
+            packages.push(parsePostScriptItem(script));
         }
     }
 
@@ -150,18 +153,10 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
  */
 export function parsePreset(preset: Preset): PackageInstallItem[] {
     const packages: PackageInstallItem[] = [];
-
-    // Get taps from either location
-    const taps = preset.packages?.taps || preset.macos?.homebrew?.taps || [];
     
     // Get formulae from either location
     const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
     const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
-
-    // Parse taps first (they need to be installed before packages that depend on them)
-    for (const tap of taps) {
-        packages.push(parseTapItem(tap));
-    }
 
     // Parse formulae
     for (const item of formulae) {
@@ -171,6 +166,13 @@ export function parsePreset(preset: Preset): PackageInstallItem[] {
     // Parse casks
     for (const item of casks) {
         packages.push(parseCaskItem(item));
+    }
+
+    // Parse post-install scripts
+    if (preset.post_install) {
+        for (const script of preset.post_install) {
+            packages.push(parsePostScriptItem(script));
+        }
     }
 
     return packages;
@@ -206,11 +208,11 @@ export function countPresetPackages(preset: Preset): { formulae: number; casks: 
  */
 export function hasPackages(config: PakkyConfig): boolean {
     const homebrew = config.macos?.homebrew;
-    if (!homebrew) return false;
-    
-    return (
-        (homebrew.taps?.length ?? 0) > 0 ||
+    const hasHomebrewPackages = homebrew && (
         (homebrew.formulae?.length ?? 0) > 0 ||
         (homebrew.casks?.length ?? 0) > 0
     );
+    const hasPostInstall = (config.post_install?.length ?? 0) > 0;
+    
+    return hasHomebrewPackages || hasPostInstall;
 }

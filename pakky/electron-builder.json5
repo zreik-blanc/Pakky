@@ -4,7 +4,7 @@
   "appId": "com.efee.pakky",
   "productName": "Pakky",
   "asar": true,
-  "copyright": "Copyright © 2024 efee",
+  "copyright": "Copyright © 2026 efee",
   "directories": {
     "output": "release/${version}",
     "buildResources": "build"

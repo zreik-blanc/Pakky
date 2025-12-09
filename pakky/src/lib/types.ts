@@ -177,13 +177,21 @@ export type PackageStatus =
 export interface PackageInstallItem {
     id: string;
     name: string;
-    type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'tap';
+    type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'script';
     status: PackageStatus;
     description?: string;
     version?: string;
     required?: boolean;
     postInstall?: string[];
     extensions?: string[]; // VS Code extensions for casks
+    commands?: string[]; // Commands for script type
+    promptForInput?: { // Input prompts for script type
+        [key: string]: {
+            message: string;
+            default?: string;
+            validation?: 'email' | 'url' | 'path' | 'none';
+        };
+    };
     logs: string[];
     error?: string;
     startTime?: number;
@@ -244,6 +252,7 @@ export interface Preset {
         formulae?: (string | PackageObject)[];
         casks?: (string | CaskObject)[];
     };
+    post_install?: PostInstallStep[];
 }
 
 export interface UserConfig {

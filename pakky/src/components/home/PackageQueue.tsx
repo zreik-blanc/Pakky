@@ -1,4 +1,4 @@
-import { Play, Square, Loader2, Download, PackageOpen, Sparkles, Search, Plus, Trash2 } from 'lucide-react';
+import { Play, Square, Loader2, Download, PackageOpen, Sparkles, Search, Plus, Trash2, ScrollText } from 'lucide-react';
 import type { PackageInstallItem } from '@/lib/types';
 import { PackageCard } from '@/components/packages/PackageCard';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ interface PackageQueueProps {
     onExport: () => void;
     onClear: () => void;
     onNavigateToPresets?: () => void;
+    onAddScript?: () => void;
 }
 
 export function PackageQueue({
@@ -30,7 +31,8 @@ export function PackageQueue({
     onCancelInstall,
     onExport,
     onClear,
-    onNavigateToPresets
+    onNavigateToPresets,
+    onAddScript
 }: PackageQueueProps) {
     const pendingPackages = packages.filter(p => p.status !== 'already_installed');
 
@@ -119,6 +121,18 @@ export function PackageQueue({
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {!isInstalling && onAddScript && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onAddScript}
+                            className="h-8 gap-2 text-muted-foreground hover:text-amber-500 transition-colors"
+                        >
+                            <ScrollText className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Add Script</span>
+                        </Button>
+                    )}
+
                     {!isInstalling && packages.length > 0 && (
                         <Button
                             variant="ghost"

@@ -103,8 +103,14 @@ export async function installPackage(
     pkg: PackageInstallItem,
     state: InstallationState,
     sendProgress: ProgressCallback,
-    sendLog: LogCallback
+    sendLog: LogCallback,
+    userInputValues: Record<string, string> = {}
 ): Promise<boolean> {
+    // Handle script type separately
+    if (pkg.type === 'script') {
+        return executeScript(pkg, state, sendProgress, sendLog, userInputValues)
+    }
+
     return new Promise((resolve) => {
         // Security: Validate package name before installation
         if (!isValidPackageName(pkg.name)) {
@@ -124,18 +130,11 @@ export async function installPackage(
         }
 
         // Determine the brew command based on package type and action
-        let args: string[]
-        
-        if (pkg.type === 'tap') {
-            // Handle homebrew tap
-            args = ['tap', pkg.name]
-        } else {
-            const isCask = pkg.type === 'cask'
-            const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
-            args = isCask
-                ? [command, '--cask', pkg.name]
-                : [command, pkg.name]
-        }
+        const isCask = pkg.type === 'cask'
+        const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
+        const args = isCask
+            ? [command, '--cask', pkg.name]
+            : [command, pkg.name]
 
         sendLog(`$ brew ${args.join(' ')}`, 'stdout')
         sendProgress('installing')
@@ -166,13 +165,11 @@ export async function installPackage(
                 sendProgress('skipped', 'Installation cancelled')
                 resolve(false)
             } else if (code === 0) {
-                const action = pkg.type === 'tap' ? 'tapped' : 'installed'
-                sendLog(`✓ Successfully ${action} ${pkg.name}`, 'stdout')
+                sendLog(`✓ Successfully installed ${pkg.name}`, 'stdout')
                 sendProgress('success')
                 resolve(true)
             } else {
-                const action = pkg.type === 'tap' ? 'tap' : 'install'
-                sendLog(`✗ Failed to ${action} ${pkg.name} (exit code: ${code})`, 'stderr')
+                sendLog(`✗ Failed to install ${pkg.name} (exit code: ${code})`, 'stderr')
                 sendProgress('failed', `Installation failed with exit code ${code}`)
                 resolve(false)
             }
@@ -185,6 +182,94 @@ export async function installPackage(
             resolve(false)
         })
     })
+}
+
+/**
+ * Replace {{placeholder}} variables in a command with user input values
+ */
+function replaceCommandPlaceholders(command: string, userInputValues: Record<string, string>): string {
+    return command.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
+        const value = userInputValues[key.trim()]
+        return value !== undefined ? value : match
+    })
+}
+
+/**
+ * Execute a post-install script
+ */
+async function executeScript(
+    pkg: PackageInstallItem,
+    state: InstallationState,
+    sendProgress: ProgressCallback,
+    sendLog: LogCallback,
+    userInputValues: Record<string, string> = {}
+): Promise<boolean> {
+    const commands = pkg.commands || []
+    
+    if (commands.length === 0) {
+        sendLog(`✗ No commands defined for script: ${pkg.name}`, 'stderr')
+        sendProgress('failed', 'No commands defined')
+        return false
+    }
+
+    sendLog(`▶ Running script: ${pkg.name}`, 'stdout')
+    sendProgress('installing')
+
+    for (const rawCommand of commands) {
+        if (state.isCancelled) {
+            sendProgress('skipped', 'Script execution cancelled')
+            return false
+        }
+
+        // Replace placeholders with user input values
+        const command = replaceCommandPlaceholders(rawCommand, userInputValues)
+
+        sendLog(`$ ${command}`, 'stdout')
+
+        const success = await new Promise<boolean>((resolve) => {
+            // Use shell to execute the command
+            const shellProcess = spawn('sh', ['-c', command], {
+                env: getEnhancedEnv(),
+            })
+
+            state.currentProcess = shellProcess
+
+            shellProcess.stdout.on('data', (data: Buffer) => {
+                const lines = data.toString().split('\n').filter(Boolean)
+                lines.forEach(line => sendLog(line, 'stdout'))
+            })
+
+            shellProcess.stderr.on('data', (data: Buffer) => {
+                const lines = data.toString().split('\n').filter(Boolean)
+                lines.forEach(line => sendLog(line, 'stderr'))
+            })
+
+            shellProcess.on('close', (code) => {
+                state.currentProcess = null
+                if (code === 0) {
+                    resolve(true)
+                } else {
+                    sendLog(`✗ Command failed with exit code: ${code}`, 'stderr')
+                    resolve(false)
+                }
+            })
+
+            shellProcess.on('error', (error) => {
+                state.currentProcess = null
+                sendLog(`✗ Error executing command: ${error.message}`, 'stderr')
+                resolve(false)
+            })
+        })
+
+        if (!success) {
+            sendProgress('failed', 'Script execution failed')
+            return false
+        }
+    }
+
+    sendLog(`✓ Successfully completed script: ${pkg.name}`, 'stdout')
+    sendProgress('success')
+    return true
 }
 
 /**

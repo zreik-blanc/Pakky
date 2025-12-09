@@ -10,7 +10,8 @@ import type {
     ConfigSettings,
     ConfigMetadata,
     PackageObject,
-    CaskObject 
+    CaskObject,
+    PostInstallStep
 } from './types';
 import { APP_CONFIG } from './config';
 
@@ -171,6 +172,7 @@ export function buildPakkyConfig(
 ): PakkyConfig {
     const formulae = packages.filter(p => p.type === 'formula');
     const casks = packages.filter(p => p.type === 'cask');
+    const scripts = packages.filter(p => p.type === 'script');
 
     const config: PakkyConfig = {
         $schema: './pakky-config.schema.json',
@@ -226,6 +228,23 @@ export function buildPakkyConfig(
                 options.includeDescriptions
             );
         }
+    }
+
+    // Add post_install scripts
+    if (scripts.length > 0) {
+        config.post_install = scripts.map(script => {
+            const step: PostInstallStep = {
+                name: script.name,
+                commands: script.commands || [],
+            };
+            if (script.description && script.description !== 'Post-install script') {
+                step.prompt = script.description;
+            }
+            if (script.promptForInput && Object.keys(script.promptForInput).length > 0) {
+                step.prompt_for_input = script.promptForInput;
+            }
+            return step;
+        });
     }
 
     // Add metadata if enabled

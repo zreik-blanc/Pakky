@@ -74,19 +74,27 @@ export const installAPI = {
     startInstallation: (packages: Array<{
         id: string
         name: string
-        type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'tap'
+        type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'script'
         status: string
         description?: string
         logs: string[]
         error?: string
         postInstall?: string[]
         required?: boolean
+        commands?: string[]
+        promptForInput?: {
+            [key: string]: {
+                message: string
+                default?: string
+                validation?: 'email' | 'url' | 'path' | 'none'
+            }
+        }
     }>, settings?: {
         continue_on_error?: boolean
         skip_already_installed?: boolean
         parallel_installs?: boolean
-    }): Promise<{ success: boolean; completedPackages: number; failedPackages: number }> => {
-        return window.pakky.invoke<{ success: boolean; completedPackages: number; failedPackages: number }>('install:start', { packages, settings })
+    }, userInputValues?: Record<string, string>): Promise<{ success: boolean; completedPackages: number; failedPackages: number }> => {
+        return window.pakky.invoke<{ success: boolean; completedPackages: number; failedPackages: number }>('install:start', { packages, settings, userInputValues })
     },
 
     cancelInstallation: (): Promise<void> => {

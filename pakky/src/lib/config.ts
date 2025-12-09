@@ -3,7 +3,7 @@
 // ============================================
 export const APP_CONFIG = {
     name: 'Pakky',
-    version: '0.0.2',
+    version: '0.0.3',
     packageManager: 'Homebrew',
     DEFAULTS: {
         EXPORT_NAME: 'My Pakky Config',

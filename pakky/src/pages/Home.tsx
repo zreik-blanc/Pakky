@@ -9,6 +9,8 @@ import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
 import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
 import { ImportedConfigAlert } from '@/components/alerts/ImportedConfigAlert';
+import { ScriptInputDialog } from '@/components/install/ScriptInputDialog';
+import { AddScriptDialog } from '@/components/install/AddScriptDialog';
 import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
 import { usePackageActions } from '@/hooks/usePackageActions';
 import { useHomebrewCheck } from '@/hooks/useHomebrewCheck';
@@ -43,6 +45,8 @@ export default function HomePage({
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [showImportedAlert, setShowImportedAlert] = useState(false);
+    const [showScriptInputDialog, setShowScriptInputDialog] = useState(false);
+    const [showAddScriptDialog, setShowAddScriptDialog] = useState(false);
 
     const {
         progress,
@@ -100,14 +104,45 @@ export default function HomePage({
             return;
         }
         
-        // Otherwise proceed directly
-        executeInstallation();
+        // Otherwise check for scripts that need user input
+        checkForScriptInputs();
+    };
+
+    // Check if any scripts need user input before proceeding
+    const checkForScriptInputs = () => {
+        const scriptsWithInputs = selectedPackages.filter(
+            pkg => pkg.type === 'script' && 
+            pkg.promptForInput && 
+            Object.keys(pkg.promptForInput).length > 0
+        );
+
+        if (scriptsWithInputs.length > 0) {
+            setShowScriptInputDialog(true);
+        } else {
+            executeInstallation({});
+        }
+    };
+
+    // Handle script input dialog confirmation
+    const handleScriptInputConfirm = (values: Record<string, string>) => {
+        setShowScriptInputDialog(false);
+        executeInstallation(values, selectedPackages);
+    };
+
+    // Handle skip scripts (remove scripts from installation)
+    const handleSkipScripts = () => {
+        setShowScriptInputDialog(false);
+        const nonScriptPackages = selectedPackages.filter(pkg => pkg.type !== 'script');
+        setSelectedPackages(nonScriptPackages);
+        executeInstallation({}, nonScriptPackages);
     };
 
     // Actual installation logic
-    const executeInstallation = async () => {
+    const executeInstallation = async (userInputValues: Record<string, string>, packagesToUse?: PackageInstallItem[]) => {
         if (isStartingInstall) return;
         setIsStartingInstall(true);
+
+        const packagesSource = packagesToUse || selectedPackages;
 
         try {
             const installed = await installAPI.getInstalledPackages();
@@ -116,11 +151,12 @@ export default function HomePage({
                 ...installed.casks
             ]);
 
-            const updatedPackages = selectedPackages.map(pkg => {
+            const updatedPackages = packagesSource.map(pkg => {
                 if (pkg.action === 'reinstall') {
                     return { ...pkg, status: 'pending' as const };
                 }
-                if (installedSet.has(pkg.name)) {
+                // Scripts are never "already installed"
+                if (pkg.type !== 'script' && installedSet.has(pkg.name)) {
                     return { ...pkg, status: 'already_installed' as const };
                 }
                 if (pkg.status === 'failed' || pkg.status === 'success') {
@@ -141,8 +177,8 @@ export default function HomePage({
             startInstallation();
             setInstallLogs({});
 
-            // Pass config settings if a config was imported
-            await installAPI.startInstallation(updatedPackages, loadedConfig?.settings);
+            // Pass config settings and user input values
+            await installAPI.startInstallation(updatedPackages, loadedConfig?.settings, userInputValues);
         } catch (error) {
             console.error('Installation failed:', error);
             completeInstallation();
@@ -164,7 +200,7 @@ export default function HomePage({
     const handleImportedAlertConfirm = () => {
         setShowImportedAlert(false);
         onClearImportedFlag?.(); // Clear the flag so it doesn't show again
-        executeInstallation();
+        checkForScriptInputs(); // Check for script inputs before proceeding
     };
 
     // Handle imported config alert rejection
@@ -198,6 +234,11 @@ export default function HomePage({
     const handleClearAll = () => {
         setSelectedPackages([]);
         onClearImportedFlag?.();
+    };
+
+    // Handle adding a custom script
+    const handleAddScript = (script: PackageInstallItem) => {
+        setSelectedPackages(prev => [...prev, script]);
     };
 
     const isInstalling = progress.status === 'installing';
@@ -251,6 +292,7 @@ export default function HomePage({
                     onExport={handleExportConfig}
                     onClear={handleClearAll}
                     onNavigateToPresets={onNavigateToPresets}
+                    onAddScript={() => setShowAddScriptDialog(true)}
                 />
             </div>
 
@@ -266,6 +308,20 @@ export default function HomePage({
                 onConfirm={handleConfirmExport}
                 userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
                 systemInfo={systemInfo}
+            />
+
+            <ScriptInputDialog
+                open={showScriptInputDialog}
+                onOpenChange={setShowScriptInputDialog}
+                packages={selectedPackages}
+                onConfirm={handleScriptInputConfirm}
+                onSkip={handleSkipScripts}
+            />
+
+            <AddScriptDialog
+                open={showAddScriptDialog}
+                onOpenChange={setShowAddScriptDialog}
+                onAdd={handleAddScript}
             />
         </div>
     );

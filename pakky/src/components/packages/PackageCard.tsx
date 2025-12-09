@@ -1,5 +1,5 @@
 import { PackageInstallItem } from "@/lib/types"
-import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X, RotateCw, ChevronDown, ChevronUp, GitBranch } from "lucide-react"
+import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X, RotateCw, ChevronDown, ChevronUp, ScrollText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { InstallTerminal } from "@/components/install/InstallTerminal"
@@ -95,8 +95,8 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
                 )}>
                     {pkg.type === 'cask' ? (
                         <Package className={cn("w-5 h-5 transition-colors", statusConfig.color)} />
-                    ) : pkg.type === 'tap' ? (
-                        <GitBranch className={cn("w-5 h-5 transition-colors", statusConfig.color)} />
+                    ) : pkg.type === 'script' ? (
+                        <ScrollText className={cn("w-5 h-5 transition-colors", statusConfig.color)} />
                     ) : (
                         <Terminal className={cn("w-5 h-5 transition-colors",
                             pkg.status === 'success' ? "text-green-500" :
@@ -120,7 +120,7 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
                             className={cn(
                                 "h-4.5 px-1.5 text-[9px] uppercase font-mono tracking-wider border-border/50",
                                 pkg.type === 'cask' ? "text-primary/80" : 
-                                pkg.type === 'tap' ? "text-muted-foreground" : "text-emerald-500/80"
+                                pkg.type === 'script' ? "text-amber-500/80" : "text-emerald-500/80"
                             )}
                         >
                             {pkg.type}

@@ -13,6 +13,7 @@ import {
 interface InstallRequest {
     packages: PackageInstallItem[]
     settings?: ConfigSettings
+    userInputValues?: Record<string, string>
 }
 
 // Default installation settings
@@ -50,7 +51,7 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
             throw new Error('Installation already in progress')
         }
 
-        const { packages, settings: userSettings } = request
+        const { packages, settings: userSettings, userInputValues = {} } = request
         const settings = { ...DEFAULT_SETTINGS, ...userSettings }
         
         if (!packages || packages.length === 0) {
@@ -136,7 +137,8 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
                         error,
                     }
                 },
-                (line, type) => sendLogUpdate(pkg.id, line, type)
+                (line, type) => sendLogUpdate(pkg.id, line, type),
+                userInputValues
             )
 
             if (success) {
