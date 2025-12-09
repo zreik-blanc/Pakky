@@ -23,6 +23,7 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showContent, setShowContent] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
+    const [isExiting, setIsExiting] = useState(false);
 
     // Smooth content appearance
     useEffect(() => {
@@ -55,7 +56,12 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                 systemInfo: systemInfo || undefined,
             });
             transitionToStep('complete');
-            setTimeout(onComplete, 1800);
+            // Wait for complete step to show briefly, then fade out, then call onComplete
+            setTimeout(() => {
+                setIsExiting(true);
+                // Wait for fade-out animation to complete before calling onComplete
+                setTimeout(onComplete, 400);
+            }, 800);
         } catch (error) {
             console.error('Failed to save user config:', error);
             setIsSubmitting(false);
@@ -70,6 +76,7 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
             <OnboardingBackground
                 currentStepIndex={currentStepIndex}
                 totalSteps={steps.length}
+                isExiting={isExiting}
             />
 
             {/* Main content */}
@@ -104,7 +111,7 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                     />
                 )}
 
-                {step === 'complete' && <CompleteStep />}
+                {step === 'complete' && <CompleteStep isExiting={isExiting} />}
             </div>
 
             {/* Animations */}

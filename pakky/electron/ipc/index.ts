@@ -7,6 +7,7 @@ import { registerUserInputHandlers } from './userInput'
 import { registerShellHandlers } from './shell'
 import { registerPresetsHandlers } from './presets'
 import { registerUserConfigHandlers } from './userConfig'
+import { registerWindowHandlers } from './window'
 
 /**
  * Register all IPC handlers
@@ -20,12 +21,13 @@ export function registerAllHandlers(getWindow: () => BrowserWindow | null) {
     registerUserInputHandlers()
     registerShellHandlers()
     registerPresetsHandlers();
+    registerUserConfigHandlers()
+    registerWindowHandlers(getWindow)
 
     // Core App Handlers
     ipcMain.handle('app:quit', () => {
         app.quit();
     });
-    registerUserConfigHandlers()
 }
 
 // Re-export individual registrations for selective use
@@ -37,3 +39,4 @@ export { registerUserInputHandlers } from './userInput'
 export { registerShellHandlers } from './shell'
 export { registerPresetsHandlers } from './presets'
 export { registerUserConfigHandlers } from './userConfig'
+export { registerWindowHandlers } from './window'

@@ -153,7 +153,7 @@ export const userConfigAPI = {
         return window.pakky.invoke<import('./types').UserConfig | null>('userConfig:read');
     },
 
-    save: (config: { userName: string; systemInfo?: import('./types').SystemInfo }): Promise<void> => {
+    save: (config: Partial<import('./types').UserConfig>): Promise<void> => {
         return window.pakky.invoke<void>('userConfig:save', config);
     },
 
@@ -166,5 +166,23 @@ export const userConfigAPI = {
 export const presetsAPI = {
     getPresets: (): Promise<import('./types').Preset[]> => {
         return window.pakky.invoke<import('./types').Preset[]>('presets:list');
+    },
+};
+
+// Window API
+export const windowAPI = {
+    /** Resize window to normal app size (1200x800) with animation */
+    setNormalSize: (): Promise<boolean> => {
+        return window.pakky.invoke<boolean>('window:setNormalSize');
+    },
+
+    /** Resize window to onboarding size (600x600) */
+    setOnboardingSize: (): Promise<void> => {
+        return window.pakky.invoke<void>('window:setOnboardingSize');
+    },
+
+    /** Get current window size */
+    getSize: (): Promise<{ width: number; height: number } | null> => {
+        return window.pakky.invoke<{ width: number; height: number } | null>('window:getSize');
     },
 };

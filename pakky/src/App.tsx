@@ -1,80 +1,71 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useInstallStore } from './stores/installStore';
-import { systemAPI, configAPI, userConfigAPI } from './lib/electron';
-import type { Platform, SystemInfo, PakkyConfig, PackageInstallItem } from './lib/types';
+import { configAPI, userConfigAPI } from './lib/electron';
+import type { PakkyConfig, PackageInstallItem } from './lib/types';
 import './index.css';
 
 // Components
 import AppLayout from '@/components/layout/AppLayout';
-import HomePage from './pages/Home';
-import PresetsPage from '@/pages/Presets';
-import SettingsPage from '@/pages/Settings';
 import OnboardingPage from '@/pages/Onboarding';
 import { ConfigCorruptionAlert } from '@/components/alerts/ConfigCorruptionAlert';
+import { AppRoutes } from '@/components/AppRoutes';
+import { useAppInitialization } from '@/hooks/useAppInitialization';
 
 type Page = 'home' | 'presets' | 'settings';
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOnboarding, setIsOnboarding] = useState(false);
-  const [configError, setConfigError] = useState<string | null>(null);
   const [importedPackages, setImportedPackages] = useState<PackageInstallItem[]>([]);
   const [selectedPackages, setSelectedPackages] = useState<PackageInstallItem[]>([]);
   const [installLogs, setInstallLogs] = useState<Record<string, string[]>>({});
   const { progress } = useInstallStore();
 
+  const {
+    systemInfo,
+    isLoading,
+    isOnboarding,
+    showMainApp,
+    configError,
+    handleOnboardingComplete,
+    userConfig
+  } = useAppInitialization();
+
+  // Load initial queue from user config
   useEffect(() => {
-    const initApp = async () => {
-      try {
-        // 1. Get System Info
-        const info = await systemAPI.getSystemInfo();
-        const sysInfo = {
-          platform: info.platform as Platform,
-          arch: info.arch,
-          version: info.version,
-          homeDir: info.homeDir,
-          hostname: info.hostname,
-        };
-        setSystemInfo(sysInfo);
+    if (userConfig?.queue && userConfig.queue.length > 0) {
+      console.log('Restoring queue from user config:', userConfig.queue.length, 'packages');
+      setSelectedPackages(prev => {
+        // Merge with any existing (rare, but good for safety)
+        const existingIds = new Set(prev.map(p => p.id));
+        const restored = userConfig.queue!.filter(p => !existingIds.has(p.id));
+        return [...prev, ...restored];
+      });
+    }
+  }, [userConfig]);
 
-        // 2. Check User Config (Onboarding Status)
-        const userConfig = await userConfigAPI.read();
+  // Persist queue changes to user config (debounced)
+  const saveQueueTimeout = useRef<NodeJS.Timeout>();
+  useEffect(() => {
+    if (!userConfig) return;
 
-        if (!userConfig) {
-          setIsOnboarding(true);
-        } else {
-          // Update last seen
-          await userConfigAPI.save({
-            userName: userConfig.userName,
-            systemInfo: sysInfo
-          });
-        }
-      } catch (error: unknown) {
-        console.error('Failed to initialize app:', error);
+    // Clear existing timeout
+    if (saveQueueTimeout.current) {
+      clearTimeout(saveQueueTimeout.current);
+    }
 
-        if (error instanceof Error && error.message.includes('CONFIG_CORRUPTED')) {
-          setConfigError('corrupted');
-          setIsLoading(false);
-          return;
-        }
+    // Debounce save (1s) to avoid excessive file writes while typing/clicking
+    saveQueueTimeout.current = setTimeout(() => {
+      userConfigAPI.save({
+        queue: selectedPackages
+      }).catch(err => console.error('Failed to save queue:', err));
+    }, 1000);
 
-        // Fallback for development if everything fails
-        setSystemInfo({
-          platform: 'macos',
-          arch: 'arm64',
-          version: '14.0',
-          homeDir: '/Users/dev',
-          hostname: 'dev-machine',
-        });
-      } finally {
-        setIsLoading(false);
+    return () => {
+      if (saveQueueTimeout.current) {
+        clearTimeout(saveQueueTimeout.current);
       }
     };
-
-    initApp();
-  }, []);
+  }, [selectedPackages, userConfig]);
 
   // Handle config import
   const handleImportConfig = useCallback(async () => {
@@ -149,47 +140,39 @@ function App() {
     return (
       <OnboardingPage
         systemInfo={systemInfo}
-        onComplete={() => setIsOnboarding(false)}
+        onComplete={handleOnboardingComplete}
       />
     );
   }
 
   return (
-    <AppLayout
-      currentPage={currentPage}
-      onNavigate={setCurrentPage}
-      onImportConfig={handleImportConfig}
-      systemInfo={systemInfo}
-      progress={progress}
+    <div
+      className={`transition-all duration-500 ease-out ${showMainApp ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
+        }`}
+      style={{ height: '100%' }}
     >
-      {currentPage === 'home' && (
-        <HomePage
+      <AppLayout
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        onImportConfig={handleImportConfig}
+        systemInfo={systemInfo}
+        progress={progress}
+      >
+        <AppRoutes
+          currentPage={currentPage}
           systemInfo={systemInfo}
+          userConfig={userConfig}
           importedPackages={importedPackages}
-          onClearImported={() => setImportedPackages([])}
+          setImportedPackages={setImportedPackages}
           selectedPackages={selectedPackages}
           setSelectedPackages={setSelectedPackages}
           installLogs={installLogs}
           setInstallLogs={setInstallLogs}
-          onNavigateToPresets={() => setCurrentPage('presets')}
+          onNavigate={setCurrentPage}
         />
-      )}
-      {currentPage === 'presets' && (
-        <PresetsPage
-          onLoadPreset={(packages) => {
-            setSelectedPackages(prev => {
-              const existingIds = new Set(prev.map(p => p.id));
-              const newPackages = packages.filter(p => !existingIds.has(p.id));
-              return [...prev, ...newPackages];
-            });
-            setCurrentPage('home');
-          }}
-        />
-      )}
-      {currentPage === 'settings' && <SettingsPage />}
-    </AppLayout>
+      </AppLayout>
+    </div>
   );
 }
 
 export default App;
-

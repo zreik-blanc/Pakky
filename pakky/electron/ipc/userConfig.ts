@@ -1,13 +1,14 @@
 import { ipcMain, app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { SystemInfo } from '../../src/lib/types'
+import type { SystemInfo, PackageInstallItem } from '../../src/lib/types'
 
 const USER_CONFIG_FILENAME = 'user-config.json'
 
 interface UserConfig {
     userName: string
     systemInfo: SystemInfo
+    queue?: PackageInstallItem[]
     firstLaunchAt: string
     lastSeenAt: string
 }
@@ -88,6 +89,7 @@ export function registerUserConfigHandlers() {
                 newConfig = {
                     userName: config.userName || 'User',
                     systemInfo: sysInfo,
+                    queue: config.queue || [],
                     firstLaunchAt: config.firstLaunchAt || now,
                     lastSeenAt: now,
                 }

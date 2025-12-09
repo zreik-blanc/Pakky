@@ -48,6 +48,9 @@ type PakkyInvokeChannel =
   | 'userConfig:save'
   | 'userConfig:reset'
   | 'app:quit'
+  | 'window:setNormalSize'
+  | 'window:setOnboardingSize'
+  | 'window:getSize'
 
 type PakkyOnChannel = 'install:progress' | 'install:log'
 

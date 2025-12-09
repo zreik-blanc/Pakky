@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog';
 import { userConfigAPI, systemAPI } from '@/lib/electron';
 import { APP_CONFIG } from '@/lib/config';
+import { UI_STRINGS } from '@/lib/strings';
 import type { UserConfig } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -81,14 +82,14 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto overflow-x-hidden pb-8">
+        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto overflow-x-hidden pb-8 scrollbar-hide">
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <SettingsIcon className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-                    <p className="text-muted-foreground text-sm">Manage your preferences</p>
+                    <h2 className="text-2xl font-bold tracking-tight">{UI_STRINGS.SETTINGS.TITLE}</h2>
+                    <p className="text-muted-foreground text-sm">{UI_STRINGS.SETTINGS.DESCRIPTION}</p>
                 </div>
             </div>
 
@@ -97,14 +98,14 @@ export default function SettingsPage() {
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        Profile
+                        {UI_STRINGS.SETTINGS.PROFILE_TITLE}
                     </CardTitle>
-                    <CardDescription>Your personal information</CardDescription>
+                    <CardDescription>{UI_STRINGS.SETTINGS.PROFILE_DESCRIPTION}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Name</p>
+                            <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.NAME_LABEL}</p>
                             {isEditing ? (
                                 <div className="flex items-center gap-2 mt-1">
                                     <input
@@ -115,10 +116,10 @@ export default function SettingsPage() {
                                         autoFocus
                                     />
                                     <Button size="sm" onClick={handleSaveName} disabled={isSaving}>
-                                        {isSaving ? 'Saving...' : 'Save'}
+                                        {isSaving ? UI_STRINGS.SETTINGS.SAVING : UI_STRINGS.COMMON.SAVE}
                                     </Button>
                                     <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>
-                                        Cancel
+                                        {UI_STRINGS.COMMON.CANCEL}
                                     </Button>
                                 </div>
                             ) : (
@@ -127,7 +128,7 @@ export default function SettingsPage() {
                         </div>
                         {!isEditing && (
                             <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
-                                Edit
+                                {UI_STRINGS.COMMON.EDIT}
                             </Button>
                         )}
                     </div>
@@ -135,23 +136,23 @@ export default function SettingsPage() {
                     {userConfig?.systemInfo && (
                         <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Platform</p>
+                                <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.PLATFORM_LABEL}</p>
                                 <p className="text-foreground capitalize">{userConfig.systemInfo.platform}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Architecture</p>
+                                <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.ARCH_LABEL}</p>
                                 <p className="text-foreground">{userConfig.systemInfo.arch}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">Hostname</p>
+                                <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.HOSTNAME_LABEL}</p>
                                 <p className="text-foreground">{userConfig.systemInfo.hostname}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-muted-foreground">First Launch</p>
+                                <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.FIRST_LAUNCH_LABEL}</p>
                                 <p className="text-foreground">
                                     {userConfig.firstLaunchAt
                                         ? new Date(userConfig.firstLaunchAt).toLocaleDateString()
-                                        : 'Unknown'}
+                                        : UI_STRINGS.COMMON.UNKNOWN}
                                 </p>
                             </div>
                         </div>
@@ -164,18 +165,18 @@ export default function SettingsPage() {
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base flex items-center gap-2">
                         <Info className="w-4 h-4" />
-                        About
+                        {UI_STRINGS.SETTINGS.ABOUT_TITLE}
                     </CardTitle>
-                    <CardDescription>Application information</CardDescription>
+                    <CardDescription>{UI_STRINGS.SETTINGS.ABOUT_DESCRIPTION}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Version</p>
+                            <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.VERSION_LABEL}</p>
                             <p className="text-foreground">{APP_CONFIG.version}</p>
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-muted-foreground">Package Manager</p>
+                            <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.PACKAGE_MANAGER_LABEL}</p>
                             <p className="text-foreground">{APP_CONFIG.packageManager}</p>
                         </div>
                     </div>
@@ -187,28 +188,28 @@ export default function SettingsPage() {
                 <CardHeader className="pb-3">
                     <CardTitle className="text-base text-destructive flex items-center gap-2">
                         <Trash2 className="w-4 h-4" />
-                        Danger Zone
+                        {UI_STRINGS.SETTINGS.DANGER_ZONE_TITLE}
                     </CardTitle>
-                    <CardDescription>Irreversible actions</CardDescription>
+                    <CardDescription>{UI_STRINGS.SETTINGS.DANGER_ZONE_DESCRIPTION}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm font-medium">Reset Configuration</p>
-                            <p className="text-xs text-muted-foreground">Clear all settings and restart onboarding</p>
+                            <p className="text-sm font-medium">{UI_STRINGS.SETTINGS.RESET_TITLE}</p>
+                            <p className="text-xs text-muted-foreground">{UI_STRINGS.SETTINGS.RESET_DESCRIPTION}</p>
                         </div>
-                        <Button variant="destructive" size="sm" onClick={() => setShowResetDialog(true)}>
-                            Reset
+                        <Button variant="destructive" size="sm" onClick={() => setShowResetDialog(true)} className="w-24">
+                            {UI_STRINGS.SETTINGS.RESET_BUTTON}
                         </Button>
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t border-destructive/10">
                         <div>
-                            <p className="text-sm font-medium">Quit Application</p>
-                            <p className="text-xs text-muted-foreground">Close Pakky completely</p>
+                            <p className="text-sm font-medium">{UI_STRINGS.SETTINGS.QUIT_TITLE}</p>
+                            <p className="text-xs text-muted-foreground">{UI_STRINGS.SETTINGS.QUIT_DESCRIPTION}</p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={handleQuit}>
+                        <Button variant="outline" size="sm" onClick={handleQuit} className="w-24">
                             <LogOut className="w-4 h-4 mr-2" />
-                            Quit
+                            {UI_STRINGS.COMMON.QUIT}
                         </Button>
                     </div>
                 </CardContent>
@@ -223,21 +224,21 @@ export default function SettingsPage() {
                                 <AlertTriangle className="w-5 h-5 text-destructive" />
                             </div>
                             <div>
-                                <DialogTitle>Reset Configuration</DialogTitle>
+                                <DialogTitle>{UI_STRINGS.SETTINGS.RESET_DIALOG_TITLE}</DialogTitle>
                                 <DialogDescription className="mt-1">
-                                    This action cannot be undone.
+                                    {UI_STRINGS.SETTINGS.RESET_DIALOG_DESCRIPTION}
                                 </DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
                     <div className="py-4">
                         <p className="text-sm text-muted-foreground">
-                            Are you sure you want to reset your configuration? This will:
+                            {UI_STRINGS.SETTINGS.RESET_WARNING}
                         </p>
                         <ul className="mt-2 text-sm text-muted-foreground list-disc list-inside space-y-1">
-                            <li>Clear all your settings</li>
-                            <li>Remove your profile information</li>
-                            <li>Restart the onboarding process</li>
+                            {UI_STRINGS.SETTINGS.RESET_WARNING_ITEMS.map((item, i) => (
+                                <li key={i}>{item}</li>
+                            ))}
                         </ul>
                     </div>
                     <DialogFooter className="gap-2 sm:gap-0">
@@ -246,7 +247,7 @@ export default function SettingsPage() {
                             onClick={() => setShowResetDialog(false)}
                             disabled={isResetting}
                         >
-                            Cancel
+                            {UI_STRINGS.COMMON.CANCEL}
                         </Button>
                         <Button
                             variant="destructive"
@@ -256,10 +257,10 @@ export default function SettingsPage() {
                             {isResetting ? (
                                 <>
                                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                                    Resetting...
+                                    {UI_STRINGS.SETTINGS.RESETTING_BUTTON}
                                 </>
                             ) : (
-                                'Reset Configuration'
+                                UI_STRINGS.SETTINGS.RESET_TITLE
                             )}
                         </Button>
                     </DialogFooter>

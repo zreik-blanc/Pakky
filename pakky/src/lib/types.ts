@@ -242,6 +242,7 @@ export interface Preset {
 export interface UserConfig {
     userName: string;
     systemInfo: SystemInfo;
+    queue?: PackageInstallItem[]; // Persisted queue
     firstLaunchAt: string; // ISO date
     lastSeenAt: string;
 }

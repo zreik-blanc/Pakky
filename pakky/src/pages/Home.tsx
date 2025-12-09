@@ -1,15 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { SystemInfo, PackageInstallItem } from '@/lib/types';
+import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
 import { searchAPI, installAPI, configAPI } from '@/lib/electron';
 import type { PakkyConfig, SearchResult } from '@/lib/types';
-import { INSTALL_CONFIG } from '@/lib/config';
+import { INSTALL_CONFIG, APP_CONFIG } from '@/lib/config';
+import { UI_STRINGS } from '@/lib/strings';
 import { PackageSearch } from '@/components/packages/PackageSearch';
 import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
+import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
 
 interface HomePageProps {
     systemInfo: SystemInfo | null;
+    userConfig: UserConfig | null;
     importedPackages?: PackageInstallItem[];
     onClearImported?: () => void;
     selectedPackages: PackageInstallItem[];
@@ -21,6 +24,7 @@ interface HomePageProps {
 
 export default function HomePage({
     systemInfo,
+    userConfig,
     importedPackages,
     onClearImported,
     selectedPackages,
@@ -32,6 +36,7 @@ export default function HomePage({
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [isHomebrewMissing, setIsHomebrewMissing] = useState(false);
     const [isInstallingHomebrew, setIsInstallingHomebrew] = useState(false);
+    const [exportConfig, setExportConfig] = useState<PakkyConfig | null>(null);
 
     const {
         progress,
@@ -58,7 +63,7 @@ export default function HomePage({
             setIsHomebrewMissing(false);
         } catch (error) {
             console.error('Failed to install Homebrew:', error);
-            alert('Failed to install Homebrew. Please check the logs.');
+            alert(UI_STRINGS.HOME.HOMEBREW_INSTALL_ERROR);
         } finally {
             setIsInstallingHomebrew(false);
         }
@@ -262,9 +267,9 @@ export default function HomePage({
             .map(p => p.name);
 
         const config: PakkyConfig = {
-            name: 'My Pakky Config',
-            version: '1.0.0',
-            description: 'Exported from Pakky',
+            name: APP_CONFIG.DEFAULTS.EXPORT_NAME,
+            version: APP_CONFIG.DEFAULTS.EXPORT_VERSION,
+            description: APP_CONFIG.DEFAULTS.EXPORT_DESCRIPTION,
             macos: {
                 homebrew: {
                     formulae: formulae.length > 0 ? formulae : undefined,
@@ -273,11 +278,19 @@ export default function HomePage({
             }
         };
 
+        setExportConfig(config);
+    };
+
+    const handleConfirmExport = async (config: PakkyConfig) => {
         try {
             const savedPath = await configAPI.saveConfigDialog(config);
-            if (savedPath) console.log('Config saved to:', savedPath);
+            if (savedPath) {
+                console.log('Config saved to:', savedPath);
+                setExportConfig(null);
+            }
         } catch (error) {
-            console.error('Failed to export config:', error);
+            console.error(UI_STRINGS.ERRORS.EXPORT_FAILED, error);
+            // Optional: Show error via toast or alert
         }
     };
 
@@ -295,8 +308,8 @@ export default function HomePage({
                 )}
 
                 <div className="flex flex-col gap-2">
-                    <h2 className="text-3xl font-bold tracking-tight">Library</h2>
-                    <p className="text-muted-foreground">Search and manage your packages.</p>
+                    <h2 className="text-3xl font-bold tracking-tight">{UI_STRINGS.HOME.TITLE}</h2>
+                    <p className="text-muted-foreground">{UI_STRINGS.HOME.DESCRIPTION}</p>
                 </div>
 
                 <div className="card p-1 bg-gradient-to-br from-card/50 to-background border-border/50 shadow-sm relative z-20">
@@ -320,14 +333,25 @@ export default function HomePage({
                     onStartInstall={handleStartInstall}
                     onCancelInstall={handleCancelInstall}
                     onExport={handleExportConfig}
+                    onClear={() => setSelectedPackages([])}
                     onNavigateToPresets={onNavigateToPresets}
                 />
             </div>
 
             {/* Footer Info */}
             <div className="fixed bottom-2 right-4 text-[10px] text-muted-foreground/30 pointer-events-none">
-                Homebrew • {systemInfo?.arch}
+                {UI_STRINGS.HOME.FOOTER_INFO} • {systemInfo?.arch}
             </div>
+
+            {exportConfig && (
+                <ExportPreviewDialog
+                    open={!!exportConfig}
+                    onOpenChange={(open) => !open && setExportConfig(null)}
+                    config={exportConfig}
+                    onConfirm={handleConfirmExport}
+                    userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
+                />
+            )}
         </div>
     );
 }

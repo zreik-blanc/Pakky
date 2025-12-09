@@ -1,12 +1,27 @@
 import { CheckCircle2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
-export function CompleteStep() {
+interface CompleteStepProps {
+    isExiting?: boolean;
+}
+
+export function CompleteStep({ isExiting = false }: CompleteStepProps) {
     return (
-        <div className="text-center space-y-8">
+        <div
+            className={cn(
+                "text-center space-y-8 transition-all duration-500 ease-out",
+                isExiting
+                    ? "opacity-0 scale-95 blur-sm"
+                    : "opacity-100 scale-100 blur-0"
+            )}
+        >
             {/* Checkmark with glow */}
             <div className="relative mx-auto w-28 h-28">
                 {/* Success glow */}
-                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl animate-pulse" />
+                <div className={cn(
+                    "absolute inset-0 bg-green-500/20 rounded-full blur-2xl transition-opacity duration-700",
+                    isExiting ? "opacity-0" : "animate-pulse"
+                )} />
 
                 {/* Checkmark circle */}
                 <div className="relative w-28 h-28 bg-gradient-to-br from-green-500/20 via-green-500/10 to-emerald-500/5 rounded-full flex items-center justify-center ring-2 ring-green-500/40 shadow-2xl shadow-green-500/20">
@@ -24,14 +39,17 @@ export function CompleteStep() {
             </div>
 
             {/* Loading dots */}
-            <div className="flex justify-center">
+            <div className={cn(
+                "flex justify-center transition-opacity duration-500",
+                isExiting ? "opacity-0" : "opacity-100"
+            )}>
                 <div className="flex gap-1.5">
                     {[0, 1, 2].map((i) => (
                         <div
                             key={i}
                             className="w-2 h-2 rounded-full bg-green-500"
                             style={{
-                                animation: 'pulse 1s ease-in-out infinite',
+                                animation: isExiting ? 'none' : 'pulse 1s ease-in-out infinite',
                                 animationDelay: `${i * 0.2}s`
                             }}
                         />

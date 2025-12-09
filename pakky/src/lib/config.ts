@@ -3,18 +3,33 @@
 // ============================================
 export const APP_CONFIG = {
     name: 'Pakky',
-    version: '0.0.1',
+    version: '0.0.2',
     packageManager: 'Homebrew',
+    DEFAULTS: {
+        EXPORT_NAME: 'My Pakky Config',
+        EXPORT_VERSION: '1.0.0',
+        EXPORT_DESCRIPTION: 'Exported from Pakky',
+    }
 } as const;
 
 // ============================================
 // Window Configuration
 // ============================================
 export const WINDOW_CONFIG = {
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
+    // Normal app size
+    normal: {
+        width: 1200,
+        height: 800,
+        minWidth: 900,
+        minHeight: 600,
+    },
+    // Onboarding size (smaller, focused)
+    onboarding: {
+        width: 600,
+        height: 600,
+        minWidth: 600,
+        minHeight: 600,
+    },
     backgroundColor: '#0d0d0d',
 } as const;
 

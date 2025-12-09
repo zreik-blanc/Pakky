@@ -138,7 +138,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
 
             {isOpen && results.length > 0 && (
                 <div className="absolute top-full left-0 right-0 mt-2 bg-popover/95 backdrop-blur-xl border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                    <div className="max-h-[300px] overflow-y-auto overscroll-contain p-1">
+                    <div className="max-h-[300px] overflow-y-auto overscroll-contain p-1 scrollbar-hide">
                         {results.map((result, index) => {
                             const id = `${result.type}:${result.name}`
                             const added = isAdded(id)

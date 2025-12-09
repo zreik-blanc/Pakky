@@ -27,6 +27,9 @@ const invokeChannels = [
   'userConfig:save',
   'userConfig:reset',
   'app:quit',
+  'window:setNormalSize',
+  'window:setOnboardingSize',
+  'window:getSize',
 ] as const
 
 const allowedInvokeChannels = new Set<typeof invokeChannels[number]>(invokeChannels)

@@ -1,8 +1,9 @@
-import { Play, Square, Loader2, Download, PackageOpen, Sparkles, Search, Plus } from 'lucide-react';
+import { Play, Square, Loader2, Download, PackageOpen, Sparkles, Search, Plus, Trash2 } from 'lucide-react';
 import type { PackageInstallItem } from '@/lib/types';
 import { PackageCard } from '@/components/packages/PackageCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { UI_STRINGS } from '@/lib/strings';
 
 interface PackageQueueProps {
     packages: PackageInstallItem[];
@@ -14,6 +15,7 @@ interface PackageQueueProps {
     onStartInstall: () => void;
     onCancelInstall: () => void;
     onExport: () => void;
+    onClear: () => void;
     onNavigateToPresets?: () => void;
 }
 
@@ -27,6 +29,7 @@ export function PackageQueue({
     onStartInstall,
     onCancelInstall,
     onExport,
+    onClear,
     onNavigateToPresets
 }: PackageQueueProps) {
     const pendingPackages = packages.filter(p => p.status !== 'already_installed');
@@ -56,9 +59,9 @@ export function PackageQueue({
                 </div>
 
                 <div className="space-y-2 mb-8 max-w-md">
-                    <h3 className="text-xl font-semibold tracking-tight">Your queue is empty</h3>
+                    <h3 className="text-xl font-semibold tracking-tight">{UI_STRINGS.QUEUE.EMPTY_TITLE}</h3>
                     <p className="text-muted-foreground text-sm leading-relaxed">
-                        Search for packages using the search bar above, or start with a pre-made configuration.
+                        {UI_STRINGS.QUEUE.EMPTY_DESCRIPTION}
                     </p>
                 </div>
 
@@ -71,7 +74,7 @@ export function PackageQueue({
                             onClick={onNavigateToPresets}
                         >
                             <Sparkles className="w-4 h-4" />
-                            Browse Presets
+                            {UI_STRINGS.QUEUE.BROWSE_PRESETS}
                         </Button>
                     )}
                     <Button
@@ -80,13 +83,13 @@ export function PackageQueue({
                         onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}
                     >
                         <Search className="w-4 h-4" />
-                        Search Packages
+                        {UI_STRINGS.QUEUE.SEARCH_PACKAGES}
                     </Button>
                 </div>
 
                 {/* Tip */}
                 <div className="mt-8 px-4 py-2.5 bg-muted/30 rounded-lg border border-border/30 text-xs text-muted-foreground">
-                    <span className="font-medium text-foreground/80">Tip:</span> You can also import a config file using the sidebar
+                    {UI_STRINGS.HOME.TIP_CONFIG}
                 </div>
             </div>
         );
@@ -105,12 +108,12 @@ export function PackageQueue({
                                 ? "bg-primary/10 text-primary"
                                 : "bg-muted text-muted-foreground"
                         )}>
-                            {pendingPackages.length} pending
+                            {pendingPackages.length} {UI_STRINGS.QUEUE.PENDING}
                         </span>
                     </div>
                     {packages.length > pendingPackages.length && (
                         <span className="text-xs text-muted-foreground">
-                            • {packages.length - pendingPackages.length} installed
+                            • {packages.length - pendingPackages.length} {UI_STRINGS.QUEUE.INSTALLED}
                         </span>
                     )}
                 </div>
@@ -124,7 +127,20 @@ export function PackageQueue({
                             className="h-8 gap-2 text-muted-foreground hover:text-foreground transition-colors"
                         >
                             <Download className="w-3.5 h-3.5" />
-                            <span className="hidden sm:inline">Export</span>
+                            <span className="hidden sm:inline">{UI_STRINGS.QUEUE.EXPORT}</span>
+                        </Button>
+                    )}
+
+                    {/* Clear button with micro animation */}
+                    {!isInstalling && packages.length > 0 && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClear}
+                            className="h-8 gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all animate-in fade-in zoom-in-95 duration-200"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">{UI_STRINGS.QUEUE.CLEAR}</span>
                         </Button>
                     )}
 
@@ -138,7 +154,7 @@ export function PackageQueue({
                                     className="h-8 shadow-sm gap-2 hover:shadow-md transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                                 >
                                     <Square className="w-3 h-3 fill-current" />
-                                    Cancel
+                                    {UI_STRINGS.COMMON.CANCEL}
                                 </Button>
                             ) : (
                                 <Button
@@ -152,7 +168,7 @@ export function PackageQueue({
                                     ) : (
                                         <Play className="w-3 h-3 fill-current" />
                                     )}
-                                    {isStartingInstall ? 'Checking...' : 'Install All'}
+                                    {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
                                 </Button>
                             )}
                         </>
@@ -161,7 +177,7 @@ export function PackageQueue({
             </div>
 
             {/* Package list with staggered animation - Scrollable */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pt-4">
+            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pt-4 scrollbar-hide">
                 <div className="grid gap-2.5 pb-6">
                     {packages.map((pkg, index) => (
                         <div

@@ -1,7 +1,10 @@
 import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import fs from 'node:fs'
 import { registerAllHandlers } from './ipc'
+import { ELECTRON_CONFIG } from './config'
+import { WINDOW_CONFIG } from '../src/lib/config'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -25,16 +28,34 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 
+/**
+ * Check if user has completed onboarding (has config file)
+ */
+function hasUserConfig(): boolean {
+  try {
+    const configPath = path.join(app.getPath('userData'), ELECTRON_CONFIG.PATHS.USER_CONFIG)
+    return fs.existsSync(configPath)
+  } catch {
+    return false
+  }
+}
+
 function createWindow() {
+  // Check if user has completed onboarding to determine initial window size
+  const isReturningUser = hasUserConfig()
+  const windowSize = isReturningUser ? WINDOW_CONFIG.normal : WINDOW_CONFIG.onboarding
+
+  console.log(`[Main] Creating window - Returning user: ${isReturningUser}, Size: ${windowSize.width}x${windowSize.height}`)
+
   win = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 900,
-    minHeight: 600,
-    icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
-    titleBarStyle: 'hiddenInset', // macOS native title bar
+    width: windowSize.width,
+    height: windowSize.height,
+    minWidth: windowSize.minWidth,
+    minHeight: windowSize.minHeight,
+    icon: path.join(process.env.VITE_PUBLIC, ELECTRON_CONFIG.PATHS.ICON),
+    titleBarStyle: ELECTRON_CONFIG.WINDOW.TITLE_BAR_STYLE, // macOS native title bar
     show: false, // Don't show until ready to prevent white flash
-    backgroundColor: '#0d0d0d', // Match the app's dark theme background
+    backgroundColor: ELECTRON_CONFIG.WINDOW.BACKGROUND_COLOR, // Match the app's dark theme background
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
@@ -55,8 +76,8 @@ function createWindow() {
         'Content-Security-Policy': [
           // Allow scripts and styles from self, allow unsafe-inline for Vite HMR in dev
           VITE_DEV_SERVER_URL
-            ? "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' ws://localhost:*"
-            : "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:"
+            ? ELECTRON_CONFIG.CSP.DEV
+            : ELECTRON_CONFIG.CSP.PROD
         ]
       }
     })
