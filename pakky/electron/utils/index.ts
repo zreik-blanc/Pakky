@@ -8,7 +8,13 @@ export {
 } from './security'
 
 // Shell utilities
-export { execAsync, execFileAsync } from './shell'
+export {
+    execAsync,
+    execFileAsync,
+    getHomebrewPath,
+    getEnhancedPath,
+    getEnhancedEnv,
+} from './shell'
 
 // Platform utilities
 export { getPlatformName, getSystemInfo } from './platform'

@@ -1,7 +1,7 @@
-import { Package, Home, Sparkles, Settings, Upload, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Package, Home, Sparkles, Settings, Upload, CheckCircle2, AlertCircle, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { InstallProgress } from '@/lib/types';
 
 type Page = 'home' | 'presets' | 'settings';
@@ -18,6 +18,8 @@ interface AppLayoutProps {
     progress: InstallProgress;
 }
 
+const SIDEBAR_COLLAPSED_KEY = 'pakky-sidebar-collapsed';
+
 export default function AppLayout({
     children,
     currentPage,
@@ -26,6 +28,14 @@ export default function AppLayout({
     systemInfo,
     progress
 }: AppLayoutProps) {
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        const saved = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+        return saved === 'true';
+    });
+
+    useEffect(() => {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(isCollapsed));
+    }, [isCollapsed]);
 
     const navItems = [
         { id: 'home' as Page, label: 'Home', icon: Home },
@@ -33,107 +43,198 @@ export default function AppLayout({
         { id: 'settings' as Page, label: 'Settings', icon: Settings },
     ];
 
+    const pageTitle = navItems.find(item => item.id === currentPage)?.label || 'Home';
+
     return (
-        <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
-            {/* Header - with top padding for macOS traffic lights */}
-            <header
-                className="bg-card/50 backdrop-blur-sm border-b px-6 pt-9 pb-3 flex items-center justify-between z-50 transition-all duration-300"
-                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
-            >
-                <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                    <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center ring-1 ring-primary/20">
-                        <Package className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h1 className="text-lg font-bold tracking-tight">Pakky</h1>
-                        <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-wider">
-                            {systemInfo?.platform === 'macos' ? 'macOS' : systemInfo?.platform} • {systemInfo?.arch}
-                        </p>
-                    </div>
-                </div>
-
-                {/* Status indicator */}
-                {progress.status === 'installing' && (
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-full border border-primary/20" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                        <div className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                        </div>
-                        <span className="text-xs font-medium text-primary">
-                            Installing... {progress.completedPackages}/{progress.totalPackages}
-                        </span>
-                    </div>
+        <div className="h-screen flex bg-background text-foreground overflow-hidden">
+            {/* Sidebar */}
+            <aside
+                className={cn(
+                    "bg-card/40 backdrop-blur-md border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out relative group",
+                    isCollapsed ? "w-16" : "w-60"
                 )}
-            </header>
-
-            <div className="flex-1 flex overflow-hidden">
-                {/* Sidebar Navigation */}
-                <aside className="w-64 bg-card/30 border-r flex flex-col p-4">
-                    <div className="space-y-1">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = currentPage === item.id;
-                            return (
-                                <Button
-                                    key={item.id}
-                                    variant={isActive ? "secondary" : "ghost"}
-                                    className={cn(
-                                        "w-full justify-start gap-3",
-                                        isActive && "font-semibold shadow-sm bg-secondary/80"
-                                    )}
-                                    onClick={() => onNavigate(item.id)}
-                                >
-                                    <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "text-muted-foreground")} />
-                                    {item.label}
-                                </Button>
-                            );
-                        })}
+            >
+                {/* Logo area - handles macOS traffic lights */}
+                <div
+                    className="h-20 flex items-end gap-3 px-4 pb-3 border-b border-border/30"
+                    style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                >
+                    <div
+                        className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center ring-1 ring-primary/20 shrink-0 transition-transform duration-300 hover:scale-105"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                    >
+                        <Package className="w-4 h-4" />
                     </div>
-
-                    <div className="mt-6 pt-6 border-t space-y-2">
-                        <Button
-                            variant="outline"
-                            className="w-full justify-start gap-3"
-                            onClick={onImportConfig}
-                        >
-                            <Upload className="w-4 h-4 text-muted-foreground" />
-                            Import Config
-                        </Button>
-                    </div>
-
-                    {/* Quick Stats */}
-                    {progress.totalPackages > 0 && (
-                        <div className="mt-auto pt-6 space-y-2 animate-in fade-in slide-in-from-bottom-5 duration-500">
-                            <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest pl-1">
-                                Installation Status
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center transition-all hover:bg-green-500/15">
-                                    <div className="text-lg font-bold text-green-500 flex items-center justify-center gap-1">
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        {progress.completedPackages}
-                                    </div>
-                                    <div className="text-[10px] text-green-600 font-medium">Completed</div>
-                                </div>
-                                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center transition-all hover:bg-red-500/15">
-                                    <div className="text-lg font-bold text-red-500 flex items-center justify-center gap-1">
-                                        <AlertCircle className="w-4 h-4" />
-                                        {progress.failedPackages}
-                                    </div>
-                                    <div className="text-[10px] text-red-600 font-medium">Failed</div>
-                                </div>
-                            </div>
+                    {!isCollapsed && (
+                        <div className="animate-in fade-in slide-in-from-left-2 duration-200 pb-0.5" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                            <h1 className="text-base font-bold tracking-tight leading-tight">Pakky</h1>
+                            <p className="text-[9px] text-muted-foreground/70 font-mono uppercase tracking-wider">
+                                {systemInfo?.platform === 'macos' ? 'macOS' : systemInfo?.platform} • {systemInfo?.arch}
+                            </p>
                         </div>
                     )}
-                </aside>
+                </div>
+
+                {/* Navigation */}
+                <nav className="flex-1 p-2 space-y-1 mt-2">
+                    {navItems.map((item) => {
+                        const Icon = item.icon;
+                        const isActive = currentPage === item.id;
+                        return (
+                            <Button
+                                key={item.id}
+                                variant={isActive ? "secondary" : "ghost"}
+                                className={cn(
+                                    "w-full transition-all duration-200",
+                                    isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3",
+                                    isActive && "font-semibold shadow-sm bg-secondary/80",
+                                    !isActive && "hover:bg-accent/50"
+                                )}
+                                onClick={() => onNavigate(item.id)}
+                                title={isCollapsed ? item.label : undefined}
+                            >
+                                <Icon className={cn(
+                                    "w-4 h-4 shrink-0 transition-colors",
+                                    isActive ? "text-primary" : "text-muted-foreground"
+                                )} />
+                                {!isCollapsed && (
+                                    <span className="animate-in fade-in slide-in-from-left-2 duration-200">
+                                        {item.label}
+                                    </span>
+                                )}
+                            </Button>
+                        );
+                    })}
+                </nav>
+
+                {/* Import Config Button */}
+                <div className="p-2 border-t border-border/30">
+                    <Button
+                        variant="outline"
+                        className={cn(
+                            "w-full transition-all duration-200 border-border/50 hover:bg-accent/50",
+                            isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3"
+                        )}
+                        onClick={onImportConfig}
+                        title={isCollapsed ? "Import Config" : undefined}
+                    >
+                        <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
+                        {!isCollapsed && (
+                            <span className="animate-in fade-in slide-in-from-left-2 duration-200">
+                                Import Config
+                            </span>
+                        )}
+                    </Button>
+                </div>
+
+                {/* Quick Stats */}
+                {progress.totalPackages > 0 && (
+                    <div className={cn(
+                        "p-2 border-t border-border/30 animate-in fade-in slide-in-from-bottom-2 duration-300",
+                        isCollapsed && "flex flex-col items-center gap-2"
+                    )}>
+                        {!isCollapsed && (
+                            <div className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-widest px-1 mb-2">
+                                Status
+                            </div>
+                        )}
+                        <div className={cn(
+                            "gap-2",
+                            isCollapsed ? "flex flex-col" : "grid grid-cols-2"
+                        )}>
+                            <div className={cn(
+                                "bg-green-500/10 border border-green-500/20 rounded-lg text-center transition-all hover:bg-green-500/15",
+                                isCollapsed ? "p-2" : "p-2.5"
+                            )}>
+                                <div className={cn(
+                                    "font-bold text-green-500 flex items-center justify-center gap-1",
+                                    isCollapsed ? "text-sm" : "text-base"
+                                )}>
+                                    <CheckCircle2 className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                                    {progress.completedPackages}
+                                </div>
+                                {!isCollapsed && (
+                                    <div className="text-[9px] text-green-600 font-medium">Done</div>
+                                )}
+                            </div>
+                            <div className={cn(
+                                "bg-red-500/10 border border-red-500/20 rounded-lg text-center transition-all hover:bg-red-500/15",
+                                isCollapsed ? "p-2" : "p-2.5"
+                            )}>
+                                <div className={cn(
+                                    "font-bold text-red-500 flex items-center justify-center gap-1",
+                                    isCollapsed ? "text-sm" : "text-base"
+                                )}>
+                                    <AlertCircle className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                                    {progress.failedPackages}
+                                </div>
+                                {!isCollapsed && (
+                                    <div className="text-[9px] text-red-600 font-medium">Failed</div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Collapse Toggle */}
+                <div className="p-2 border-t border-border/30">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={cn(
+                            "w-full transition-all duration-200 text-muted-foreground hover:text-foreground",
+                            isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3"
+                        )}
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    >
+                        {isCollapsed ? (
+                            <PanelLeft className="w-4 h-4 shrink-0" />
+                        ) : (
+                            <>
+                                <PanelLeftClose className="w-4 h-4 shrink-0" />
+                                <span className="text-xs animate-in fade-in slide-in-from-left-2 duration-200">Collapse</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </aside>
+
+            {/* Main area */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                {/* Minimal Header */}
+                <header
+                    className="h-12 bg-card/30 backdrop-blur-sm border-b border-border/30 px-6 flex items-center justify-between shrink-0"
+                    style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                >
+                    <div className="flex items-center gap-3" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+                        <h2 className="text-sm font-semibold text-foreground/90">{pageTitle}</h2>
+                    </div>
+
+                    {/* Status indicator */}
+                    {progress.status === 'installing' && (
+                        <div
+                            className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 animate-in fade-in zoom-in-95 duration-300"
+                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                        >
+                            <div className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
+                            </div>
+                            <span className="text-xs font-medium text-primary">
+                                Installing {progress.completedPackages}/{progress.totalPackages}
+                            </span>
+                        </div>
+                    )}
+                </header>
 
                 {/* Main Content */}
-                <main className="flex-1 bg-background relative flex flex-col overflow-hidden">
-                    <ScrollArea className="h-full">
-                        <div className="p-8">
+                <main className="flex-1 bg-background relative overflow-hidden">
+                    <div className="h-full">
+                        <div className="p-6 h-full">
                             {children}
                         </div>
-                    </ScrollArea>
+                    </div>
                 </main>
             </div>
         </div>

@@ -1,11 +1,13 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "YourAppID",
+  "appId": "com.efee.pakky",
+  "productName": "Pakky",
   "asar": true,
-  "productName": "YourAppName",
+  "copyright": "Copyright © 2024 efee",
   "directories": {
-    "output": "release/${version}"
+    "output": "release/${version}",
+    "buildResources": "build"
   },
   "files": [
     "dist",
@@ -14,33 +16,89 @@
   "extraResources": [
     "presets/**"
   ],
+
+  // macOS Configuration
   "mac": {
+    "icon": null,
     "target": [
-      "dmg"
+      {
+        "target": "dmg",
+        "arch": ["arm64"]
+      },
+      {
+        "target": "zip",
+        "arch": ["arm64"]
+      }
     ],
-    "artifactName": "${productName}-Mac-${version}-Installer.${ext}"
+    "artifactName": "${productName}-${version}-mac.${ext}",
+    "category": "public.app-category.developer-tools",
+    "hardenedRuntime": true,
+    "gatekeeperAssess": false,
+    "entitlements": "build/entitlements.mac.plist",
+    "entitlementsInherit": "build/entitlements.mac.plist"
   },
+  "dmg": {
+    "contents": [
+      {
+        "x": 130,
+        "y": 220
+      },
+      {
+        "x": 410,
+        "y": 220,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ],
+    "window": {
+      "width": 540,
+      "height": 380
+    }
+  },
+
+  // Windows Configuration
   "win": {
     "target": [
       {
         "target": "nsis",
-        "arch": [
-          "x64"
-        ]
+        "arch": ["x64"]
+      },
+      {
+        "target": "portable",
+        "arch": ["x64"]
       }
     ],
-    "artifactName": "${productName}-Windows-${version}-Setup.${ext}"
+    "artifactName": "${productName}-${version}-win-${arch}.${ext}"
   },
   "nsis": {
     "oneClick": false,
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
-    "deleteAppDataOnUninstall": false
+    "deleteAppDataOnUninstall": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Pakky"
   },
+
+  // Linux Configuration
   "linux": {
     "target": [
-      "AppImage"
+      "AppImage",
+      "deb"
     ],
-    "artifactName": "${productName}-Linux-${version}.${ext}"
+    "artifactName": "${productName}-${version}-linux-${arch}.${ext}",
+    "category": "Development",
+    "synopsis": "Cross-Platform Setup Orchestrator",
+    "description": "One-click installation of applications and configurations from shareable JSON files"
+  },
+  "deb": {
+    "depends": ["gconf2", "gconf-service", "libnotify4", "libappindicator1", "libxtst6", "libnss3"]
+  },
+
+  // Auto-update configuration (for future use with GitHub releases)
+  "publish": {
+    "provider": "github",
+    "owner": "efee",
+    "repo": "pakky"
   }
 }

@@ -81,7 +81,7 @@ export default function SettingsPage() {
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto overflow-x-hidden pb-8">
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <SettingsIcon className="w-5 h-5 text-muted-foreground" />

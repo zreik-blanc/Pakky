@@ -16,6 +16,7 @@ interface HomePageProps {
     setSelectedPackages: React.Dispatch<React.SetStateAction<PackageInstallItem[]>>;
     installLogs: Record<string, string[]>;
     setInstallLogs: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
+    onNavigateToPresets?: () => void;
 }
 
 export default function HomePage({
@@ -25,7 +26,8 @@ export default function HomePage({
     selectedPackages,
     setSelectedPackages,
     installLogs,
-    setInstallLogs
+    setInstallLogs,
+    onNavigateToPresets
 }: HomePageProps) {
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [isHomebrewMissing, setIsHomebrewMissing] = useState(false);
@@ -282,9 +284,9 @@ export default function HomePage({
     const isInstalling = progress.status === 'installing';
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500 pb-20">
-            {/* Welcome / Search Header */}
-            <div className="space-y-4">
+        <div className="max-w-4xl mx-auto flex flex-col h-full animate-in fade-in duration-500">
+            {/* Welcome / Search Header - Fixed, doesn't scroll */}
+            <div className="space-y-4 mb-6 shrink-0">
                 {isHomebrewMissing && (
                     <HomebrewAlert
                         isInstalling={isInstallingHomebrew}
@@ -306,18 +308,21 @@ export default function HomePage({
                 </div>
             </div>
 
-            {/* Selected Packages List */}
-            <PackageQueue
-                packages={selectedPackages}
-                installLogs={installLogs}
-                isInstalling={isInstalling}
-                isStartingInstall={isStartingInstall}
-                onRemove={removePackage}
-                onReinstall={handleReinstall}
-                onStartInstall={handleStartInstall}
-                onCancelInstall={handleCancelInstall}
-                onExport={handleExportConfig}
-            />
+            {/* Selected Packages List - fills remaining space */}
+            <div className="flex-1 min-h-0">
+                <PackageQueue
+                    packages={selectedPackages}
+                    installLogs={installLogs}
+                    isInstalling={isInstalling}
+                    isStartingInstall={isStartingInstall}
+                    onRemove={removePackage}
+                    onReinstall={handleReinstall}
+                    onStartInstall={handleStartInstall}
+                    onCancelInstall={handleCancelInstall}
+                    onExport={handleExportConfig}
+                    onNavigateToPresets={onNavigateToPresets}
+                />
+            </div>
 
             {/* Footer Info */}
             <div className="fixed bottom-2 right-4 text-[10px] text-muted-foreground/30 pointer-events-none">

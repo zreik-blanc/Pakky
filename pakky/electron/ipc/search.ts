@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { execFileAsync, isValidPackageName } from '../utils'
+import { execFileAsync, isValidPackageName, getHomebrewPath } from '../utils'
 
 // Search result item interface
 interface SearchResultItem {
@@ -25,6 +25,13 @@ export function registerSearchHandlers() {
             return []
         }
 
+        // Get the Homebrew path - needed for packaged apps where PATH doesn't include brew
+        const brewPath = getHomebrewPath()
+        if (!brewPath) {
+            console.error('Homebrew not found')
+            return []
+        }
+
         try {
             // Search both formulae and casks
             const results: SearchResultItem[] = []
@@ -34,19 +41,19 @@ export function registerSearchHandlers() {
             let installedCasks: string[] = []
 
             try {
-                const { stdout: formulaeList } = await execFileAsync('brew', ['list', '--formula'])
+                const { stdout: formulaeList } = await execFileAsync(brewPath, ['list', '--formula'])
                 installedFormulae = formulaeList.trim().split('\n').filter(Boolean)
             } catch { /* ignore */ }
 
             try {
-                const { stdout: casksList } = await execFileAsync('brew', ['list', '--cask'])
+                const { stdout: casksList } = await execFileAsync(brewPath, ['list', '--cask'])
                 installedCasks = casksList.trim().split('\n').filter(Boolean)
             } catch { /* ignore */ }
 
             // Security: Use execFileAsync with arguments array (prevents command injection)
             // Search formulae
             try {
-                const { stdout: formulaeOutput } = await execFileAsync('brew', ['search', '--formula', query])
+                const { stdout: formulaeOutput } = await execFileAsync(brewPath, ['search', '--formula', query])
                 const formulae = formulaeOutput.trim().split('\n').filter(Boolean).slice(0, 10)
 
                 for (const name of formulae) {
@@ -62,7 +69,7 @@ export function registerSearchHandlers() {
 
             // Search casks
             try {
-                const { stdout: casksOutput } = await execFileAsync('brew', ['search', '--cask', query])
+                const { stdout: casksOutput } = await execFileAsync(brewPath, ['search', '--cask', query])
                 const casks = casksOutput.trim().split('\n').filter(Boolean).slice(0, 10)
 
                 for (const name of casks) {
@@ -89,10 +96,16 @@ export function registerSearchHandlers() {
             return null
         }
 
+        // Get the Homebrew path - needed for packaged apps
+        const brewPath = getHomebrewPath()
+        if (!brewPath) {
+            return null
+        }
+
         try {
             const flag = type === 'cask' ? '--cask' : '--formula'
             // Security: Use execFileAsync with arguments array (prevents command injection)
-            const { stdout } = await execFileAsync('brew', ['info', flag, '--json=v2', name])
+            const { stdout } = await execFileAsync(brewPath, ['info', flag, '--json=v2', name])
             const data = JSON.parse(stdout)
 
             if (type === 'cask' && data.casks && data.casks.length > 0) {

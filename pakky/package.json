@@ -1,11 +1,22 @@
 {
   "name": "pakky",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
+  "description": "Cross-Platform Setup Orchestrator - One-click installation from shareable JSON configs",
+  "author": "efee",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/efee/pakky"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "build:mac": "tsc && vite build && electron-builder --mac",
+    "build:win": "tsc && vite build && electron-builder --win",
+    "build:linux": "tsc && vite build && electron-builder --linux",
+    "build:all": "tsc && vite build && electron-builder --mac --win --linux",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },

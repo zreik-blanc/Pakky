@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { execFileAsync, isValidPackageName } from '../utils'
+import { execFileAsync, isValidPackageName, getHomebrewPath, getEnhancedEnv } from '../utils'
 import type { PackageInstallItem } from '../../src/lib/types'
 
 /**
@@ -26,16 +26,21 @@ export type LogCallback = (line: string, type: 'stdout' | 'stderr') => void
  */
 export async function getInstalledPackages(): Promise<{ formulae: string[]; casks: string[] }> {
     const result = { formulae: [] as string[], casks: [] as string[] }
+    const brewPath = getHomebrewPath()
 
-    try {
-        const { stdout: formulaeOutput } = await execFileAsync('brew', ['list', '--formula'])
-        result.formulae = formulaeOutput.trim().split('\n').filter(Boolean)
-    } catch {
-        // Homebrew not installed or no formulae
+    if (!brewPath) {
+        return result  // Homebrew not installed
     }
 
     try {
-        const { stdout: casksOutput } = await execFileAsync('brew', ['list', '--cask'])
+        const { stdout: formulaeOutput } = await execFileAsync(brewPath, ['list', '--formula'])
+        result.formulae = formulaeOutput.trim().split('\n').filter(Boolean)
+    } catch {
+        // No formulae installed
+    }
+
+    try {
+        const { stdout: casksOutput } = await execFileAsync(brewPath, ['list', '--cask'])
         result.casks = casksOutput.trim().split('\n').filter(Boolean)
     } catch {
         // No casks installed
@@ -48,12 +53,7 @@ export async function getInstalledPackages(): Promise<{ formulae: string[]; cask
  * Check if Homebrew is installed
  */
 export async function isHomebrewInstalled(): Promise<boolean> {
-    try {
-        await execFileAsync('which', ['brew'])
-        return true
-    } catch {
-        return false
-    }
+    return getHomebrewPath() !== null
 }
 
 /**
@@ -62,31 +62,35 @@ export async function isHomebrewInstalled(): Promise<boolean> {
 export async function installHomebrew(): Promise<void> {
     console.log('Installing Homebrew...')
 
+    // Homebrew installation requires user interaction (password, sudo, etc.)
+    // We need to open Terminal.app and run the install script there
+    // This allows the user to see prompts and enter their password
+
+    const installScript = '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+
+    // AppleScript to open Terminal and run the install command
+    const appleScript = `
+        tell application "Terminal"
+            activate
+            do script "${installScript}"
+        end tell
+    `
+
     return new Promise((resolve, reject) => {
-        // /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        // We set NONINTERACTIVE=1 to avoid the "Press ENTER" prompt.
-        const installProcess = spawn('/bin/bash', ['-c', 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'], {
-            stdio: 'pipe' // We might want to stream this later, but for now just run it
-        })
+        const osascriptProcess = spawn('osascript', ['-e', appleScript])
 
-        installProcess.stdout.on('data', (data) => {
-            console.log(`Brew Install (stdout): ${data}`)
-        })
-
-        installProcess.stderr.on('data', (data) => {
-            console.error(`Brew Install (stderr): ${data}`)
-        })
-
-        installProcess.on('close', (code) => {
+        osascriptProcess.on('close', (code) => {
             if (code === 0) {
-                console.log('Homebrew installed successfully')
+                console.log('Homebrew installation started in Terminal.app')
+                // Note: This resolves when Terminal opens, not when installation completes
+                // The user needs to complete the installation in Terminal
                 resolve()
             } else {
-                reject(new Error(`Homebrew installation failed with code ${code}`))
+                reject(new Error(`Failed to open Terminal for Homebrew installation (code: ${code})`))
             }
         })
 
-        installProcess.on('error', (err) => {
+        osascriptProcess.on('error', (err) => {
             reject(new Error(`Failed to start Homebrew installation: ${err.message}`))
         })
     })
@@ -110,6 +114,15 @@ export async function installPackage(
             return
         }
 
+        // Get the Homebrew path - needed for packaged apps
+        const brewPath = getHomebrewPath()
+        if (!brewPath) {
+            sendLog(`✗ Homebrew not found. Please install Homebrew first.`, 'stderr')
+            sendProgress('failed', 'Homebrew not installed')
+            resolve(false)
+            return
+        }
+
         // Determine the brew command based on package type and action
         const isCask = pkg.type === 'cask'
         const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
@@ -121,8 +134,9 @@ export async function installPackage(
         sendProgress('installing')
 
         // Security: Don't use shell:true since we've validated the package name
-        const brewProcess = spawn('brew', args, {
-            env: { ...process.env, HOMEBREW_NO_AUTO_UPDATE: '1' },
+        // Use full brew path and enhanced env for packaged app compatibility
+        const brewProcess = spawn(brewPath, args, {
+            env: { ...getEnhancedEnv(), HOMEBREW_NO_AUTO_UPDATE: '1' },
         })
 
         // Track the current process for cancellation

@@ -171,6 +171,7 @@ function App() {
           setSelectedPackages={setSelectedPackages}
           installLogs={installLogs}
           setInstallLogs={setInstallLogs}
+          onNavigateToPresets={() => setCurrentPage('presets')}
         />
       )}
       {currentPage === 'presets' && (

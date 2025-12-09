@@ -1,27 +1,17 @@
 import { useEffect, useState } from 'react';
 import { PackageInstallItem, Preset } from '@/lib/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Package, Sparkles, BarChart3, Code2, Terminal } from 'lucide-react';
+import { Package, Layers } from 'lucide-react';
 import { presetsAPI } from '@/lib/electron';
+import { PresetSkeleton, HeroPreset, PresetCard, getPresetConfig } from '@/components/presets';
 
 interface PresetsPageProps {
     onLoadPreset: (packages: PackageInstallItem[]) => void;
 }
 
-// Map icons based on preset ID or keywords
-const getIconForPreset = (id: string) => {
-    if (id.includes('web')) return Sparkles;
-    if (id.includes('data')) return BarChart3;
-    if (id.includes('minimal')) return Package;
-    if (id.includes('dev')) return Code2;
-    return Terminal;
-};
-
 export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
     const [presets, setPresets] = useState<Preset[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
 
     useEffect(() => {
         const loadPresets = async () => {
@@ -41,14 +31,10 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
     const handleLoadPreset = (preset: Preset) => {
         const packages: PackageInstallItem[] = [];
 
-        // Extract formulae and casks from either location (root packages or macos.homebrew)
-        // detailed JSONs use macos.homebrew, simpler ones might use packages
         const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
         const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
 
-        // Add formulae
         for (const item of formulae) {
-            // item can be string or object
             const name = typeof item === 'string' ? item : item.name;
             packages.push({
                 id: `formula:${name}`,
@@ -60,9 +46,7 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
             });
         }
 
-        // Add casks
         for (const item of casks) {
-            // item can be string or object
             const name = typeof item === 'string' ? item : item.name;
             packages.push({
                 id: `cask:${name}`,
@@ -77,61 +61,87 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
         onLoadPreset(packages);
     };
 
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center p-12">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
-                    <p className="text-muted-foreground">Loading presets...</p>
-                </div>
-            </div>
-        );
-    }
+    const getPackagePreview = (preset: Preset) => {
+        const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
+        const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
+        const all = [...formulae, ...casks].slice(0, 6);
+        return all.map(item => typeof item === 'string' ? item : item.name);
+    };
+
+    // Hero preset is the first one
+    const heroPreset = presets[0];
+    const otherPresets = presets.slice(1);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500 fade-in">
-            <div className="mb-6">
-                <h2 className="text-2xl font-bold tracking-tight mb-2">Presets</h2>
-                <p className="text-muted-foreground">Pre-made configurations to get you started quickly</p>
+        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 h-full overflow-y-auto overflow-x-hidden pb-8">
+            {/* Header */}
+            <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                        <Layers className="w-4 h-4 text-primary" />
+                    </div>
+                    <h2 className="text-2xl font-bold tracking-tight">Presets</h2>
+                </div>
+                <p className="text-muted-foreground">
+                    Pre-made configurations to get you started quickly. Choose one to load it into your queue.
+                </p>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-                {presets.map((preset) => {
-                    const Icon = getIconForPreset(preset.id);
-                    const formulaeCount = (preset.packages?.formulae || preset.macos?.homebrew?.formulae || []).length;
-                    const casksCount = (preset.packages?.casks || preset.macos?.homebrew?.casks || []).length;
+            {loading ? (
+                /* Skeleton Loading */
+                <div className="space-y-6">
+                    <PresetSkeleton />
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <PresetSkeleton />
+                        <PresetSkeleton />
+                        <PresetSkeleton />
+                    </div>
+                </div>
+            ) : (
+                <>
+                    {/* Hero Preset */}
+                    {heroPreset && (
+                        <HeroPreset
+                            preset={heroPreset}
+                            packagePreview={getPackagePreview(heroPreset)}
+                            onLoad={() => handleLoadPreset(heroPreset)}
+                            onHover={() => setHoveredPreset(heroPreset.id)}
+                            onLeave={() => setHoveredPreset(null)}
+                        />
+                    )}
 
-                    return (
-                        <Card key={preset.id} className="bg-card/50 hover:bg-card/80 transition-colors border-border/50 hover:border-border">
-                            <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                                <div className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                                    <Icon className="w-5 h-5" />
-                                </div>
-                                <div className="flex-1">
-                                    <CardTitle className="text-lg">{preset.name}</CardTitle>
-                                    <CardDescription className="line-clamp-2 mt-1.5 h-10">{preset.description}</CardDescription>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pb-2">
-                                <div className="flex gap-2">
-                                    <Badge variant="secondary">{formulaeCount} CLI tools</Badge>
-                                    <Badge variant="secondary">{casksCount} Apps</Badge>
-                                </div>
-                            </CardContent>
-                            <CardFooter className="pt-4">
-                                <Button
-                                    onClick={() => handleLoadPreset(preset)}
-                                    className="w-full"
-                                    variant="outline"
-                                >
-                                    Load Preset
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    );
-                })}
-            </div>
+                    {/* Other Presets Grid */}
+                    {otherPresets.length > 0 && (
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                                More Presets
+                            </h3>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                {otherPresets.map((preset, index) => (
+                                    <PresetCard
+                                        key={preset.id}
+                                        preset={preset}
+                                        config={getPresetConfig(preset.id, index + 1)}
+                                        isHovered={hoveredPreset === preset.id}
+                                        packagePreview={getPackagePreview(preset)}
+                                        onLoad={() => handleLoadPreset(preset)}
+                                        onHover={() => setHoveredPreset(preset.id)}
+                                        onLeave={() => setHoveredPreset(null)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Empty state if no presets */}
+                    {presets.length === 0 && (
+                        <div className="text-center py-12 text-muted-foreground">
+                            <Package className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                            <p>No presets available</p>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }
-
