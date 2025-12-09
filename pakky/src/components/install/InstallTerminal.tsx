@@ -12,7 +12,7 @@ export function InstallTerminal({ logs, isInstalling, className }: InstallTermin
     if (logs.length === 0 && !isInstalling) return null
 
     return (
-        <div className={cn("mt-3 bg-[#0c0c0c] border border-border/50 rounded-lg font-mono text-xs overflow-hidden", className)}>
+        <div className={cn("mt-3 bg-background border border-border/50 rounded-lg font-mono text-xs overflow-hidden", className)}>
             <ScrollArea className="h-32 px-3 py-2 w-full">
                 <div className="space-y-1">
                     {logs.length === 0 && isInstalling && (
@@ -23,7 +23,7 @@ export function InstallTerminal({ logs, isInstalling, className }: InstallTermin
                     )}
                     {logs.map((log, i) => (
                         <div
-                            key={i}
+                            key={`${i}-${log.slice(0, 20)}`}
                             className={cn(
                                 "break-all",
                                 log.startsWith('✓') ? 'text-green-500' :

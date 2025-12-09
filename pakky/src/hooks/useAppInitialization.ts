@@ -32,11 +32,9 @@ export function useAppInitialization() {
 
                 if (!storedConfig) {
                     // First launch - keep small window for onboarding
-                    console.log('[App] First launch detected, starting onboarding');
                     setIsOnboarding(true);
                 } else {
                     // Returning user - window already started at normal size
-                    console.log('[App] Returning user, showing main app');
 
                     // Show main app immediately (no animation needed)
                     setShowMainApp(true);
@@ -74,11 +72,9 @@ export function useAppInitialization() {
     }, []);
 
     const handleOnboardingComplete = async () => {
-        console.log('[App] onComplete called, resizing window...');
         try {
             // Resize window to normal app size with animation
             await windowAPI.setNormalSize();
-            console.log('[App] Window resized, transitioning to home...');
         } catch (error) {
             console.error('[App] Failed to resize window:', error);
         }

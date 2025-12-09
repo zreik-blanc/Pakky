@@ -170,13 +170,16 @@ export const PresetSchema = z.object({
     name: z.string(),
     description: z.string(),
     icon: z.string().optional(),
+    settings: ConfigSettingsSchema.optional(),
     macos: z.object({
         homebrew: z.object({
+            taps: z.array(z.string()).optional(),
             formulae: z.array(ItemSchema).optional(),
             casks: z.array(CaskItemSchema).optional(),
         }).optional()
     }).optional(),
     packages: z.object({
+        taps: z.array(z.string()).optional(),
         formulae: z.array(ItemSchema).optional(),
         casks: z.array(CaskItemSchema).optional(),
     }).optional(),

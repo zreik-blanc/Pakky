@@ -2,6 +2,23 @@
 // Types are provided by electron/electron-env.d.ts
 import type { PakkyConfig, InstallProgress } from './types';
 
+// Security scan result from config loading
+export interface SecurityScanResult {
+    hasDangerousContent: boolean;
+    hasSuspiciousContent: boolean;
+    hasObfuscation: boolean;
+    dangerousCommands: string[];
+    suspiciousCommands: string[];
+    obfuscatedCommands: string[];
+    warnings: string[];
+    severity: 'none' | 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface ConfigLoadResult {
+    config: PakkyConfig;
+    security: SecurityScanResult;
+}
+
 // System API
 export const systemAPI = {
     getPlatform: (): Promise<string> => {
@@ -35,8 +52,8 @@ export const systemAPI = {
 
 // Config API
 export const configAPI = {
-    loadConfig: (filePath: string): Promise<PakkyConfig> => {
-        return window.pakky.invoke<PakkyConfig>('config:load', filePath);
+    loadConfig: (filePath: string): Promise<ConfigLoadResult> => {
+        return window.pakky.invoke<ConfigLoadResult>('config:load', filePath);
     },
 
     saveConfig: (filePath: string, config: PakkyConfig): Promise<void> => {
@@ -57,13 +74,19 @@ export const installAPI = {
     startInstallation: (packages: Array<{
         id: string
         name: string
-        type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman'
+        type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'tap'
         status: string
         description?: string
         logs: string[]
         error?: string
-    }>): Promise<{ success: boolean; completedPackages: number; failedPackages: number }> => {
-        return window.pakky.invoke<{ success: boolean; completedPackages: number; failedPackages: number }>('install:start', { packages })
+        postInstall?: string[]
+        required?: boolean
+    }>, settings?: {
+        continue_on_error?: boolean
+        skip_already_installed?: boolean
+        parallel_installs?: boolean
+    }): Promise<{ success: boolean; completedPackages: number; failedPackages: number }> => {
+        return window.pakky.invoke<{ success: boolean; completedPackages: number; failedPackages: number }>('install:start', { packages, settings })
     },
 
     cancelInstallation: (): Promise<void> => {

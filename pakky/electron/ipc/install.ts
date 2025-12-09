@@ -1,5 +1,5 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import type { PackageInstallItem } from '../../src/lib/types'
+import type { PackageInstallItem, ConfigSettings } from '../../src/lib/types'
 import {
     getInstalledPackages,
     installHomebrew,
@@ -12,6 +12,14 @@ import {
 // Interface for install request from renderer
 interface InstallRequest {
     packages: PackageInstallItem[]
+    settings?: ConfigSettings
+}
+
+// Default installation settings
+const DEFAULT_SETTINGS: ConfigSettings = {
+    continue_on_error: true,
+    skip_already_installed: true,
+    parallel_installs: false,
 }
 
 // Track current installation state
@@ -42,12 +50,15 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
             throw new Error('Installation already in progress')
         }
 
-        const { packages } = request
+        const { packages, settings: userSettings } = request
+        const settings = { ...DEFAULT_SETTINGS, ...userSettings }
+        
         if (!packages || packages.length === 0) {
             throw new Error('No packages to install')
         }
 
         console.log('Starting installation with packages:', packages.map(p => p.name))
+        console.log('Installation settings:', settings)
 
         // Reset installation state
         currentInstallation = {
@@ -91,8 +102,8 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
                 break
             }
 
-            // Skip already installed packages
-            if (pkg.status === 'already_installed') {
+            // Skip already installed packages (respects skip_already_installed setting)
+            if (pkg.status === 'already_installed' && settings.skip_already_installed) {
                 completedCount++
                 sendProgressUpdate({
                     status: 'installing',
@@ -132,6 +143,25 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
                 completedCount++
             } else if (!currentInstallation.isCancelled) {
                 failedCount++
+                
+                // Check if we should stop on error (respects continue_on_error setting)
+                if (!settings.continue_on_error) {
+                    // Mark remaining packages as skipped
+                    for (let j = i + 1; j < packages.length; j++) {
+                        updatedPackages[j] = { ...updatedPackages[j], status: 'skipped' as const }
+                    }
+                    
+                    sendProgressUpdate({
+                        status: 'installing',
+                        currentPackage: pkg.id,
+                        completedPackages: completedCount,
+                        failedPackages: failedCount,
+                        packages: updatedPackages,
+                    })
+                    
+                    console.log('Stopping installation due to error (continue_on_error=false)')
+                    break
+                }
             }
 
             // Send updated progress

@@ -124,11 +124,18 @@ export async function installPackage(
         }
 
         // Determine the brew command based on package type and action
-        const isCask = pkg.type === 'cask'
-        const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
-        const args = isCask
-            ? [command, '--cask', pkg.name]
-            : [command, pkg.name]
+        let args: string[]
+        
+        if (pkg.type === 'tap') {
+            // Handle homebrew tap
+            args = ['tap', pkg.name]
+        } else {
+            const isCask = pkg.type === 'cask'
+            const command = pkg.action === 'reinstall' ? 'reinstall' : 'install'
+            args = isCask
+                ? [command, '--cask', pkg.name]
+                : [command, pkg.name]
+        }
 
         sendLog(`$ brew ${args.join(' ')}`, 'stdout')
         sendProgress('installing')
@@ -159,11 +166,13 @@ export async function installPackage(
                 sendProgress('skipped', 'Installation cancelled')
                 resolve(false)
             } else if (code === 0) {
-                sendLog(`✓ Successfully installed ${pkg.name}`, 'stdout')
+                const action = pkg.type === 'tap' ? 'tapped' : 'installed'
+                sendLog(`✓ Successfully ${action} ${pkg.name}`, 'stdout')
                 sendProgress('success')
                 resolve(true)
             } else {
-                sendLog(`✗ Failed to install ${pkg.name} (exit code: ${code})`, 'stderr')
+                const action = pkg.type === 'tap' ? 'tap' : 'install'
+                sendLog(`✗ Failed to ${action} ${pkg.name} (exit code: ${code})`, 'stderr')
                 sendProgress('failed', `Installation failed with exit code ${code}`)
                 resolve(false)
             }

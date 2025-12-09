@@ -1,7 +1,23 @@
-import HomePage from '@/pages/Home';
-import PresetsPage from '@/pages/Presets';
-import SettingsPage from '@/pages/Settings';
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
+
+// Lazy load pages for code splitting
+const HomePage = lazy(() => import('@/pages/Home'));
+const PresetsPage = lazy(() => import('@/pages/Presets'));
+const SettingsPage = lazy(() => import('@/pages/Settings'));
+
+// Loading fallback component
+function PageLoader() {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <span className="text-sm text-muted-foreground">Loading...</span>
+            </div>
+        </div>
+    );
+}
 
 interface AppRoutesProps {
     currentPage: 'home' | 'presets' | 'settings';
@@ -14,6 +30,8 @@ interface AppRoutesProps {
     installLogs: Record<string, string[]>;
     setInstallLogs: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     onNavigate: (page: 'home' | 'presets' | 'settings') => void;
+    hasImportedConfig: boolean;
+    onClearImportedFlag: () => void;
 }
 
 export function AppRoutes({
@@ -26,39 +44,51 @@ export function AppRoutes({
     setSelectedPackages,
     installLogs,
     setInstallLogs,
-    onNavigate
+    onNavigate,
+    hasImportedConfig,
+    onClearImportedFlag
 }: AppRoutesProps) {
     if (currentPage === 'settings') {
-        return <SettingsPage />;
+        return (
+            <Suspense fallback={<PageLoader />}>
+                <SettingsPage />
+            </Suspense>
+        );
     }
 
     if (currentPage === 'presets') {
         return (
-            <PresetsPage
-                onLoadPreset={(packages) => {
-                    setSelectedPackages(prev => {
-                        const existingIds = new Set(prev.map(p => p.id));
-                        const newPackages = packages.filter(p => !existingIds.has(p.id));
-                        return [...prev, ...newPackages];
-                    });
-                    onNavigate('home');
-                }}
-            />
+            <Suspense fallback={<PageLoader />}>
+                <PresetsPage
+                    onLoadPreset={(packages) => {
+                        setSelectedPackages(prev => {
+                            const existingIds = new Set(prev.map(p => p.id));
+                            const newPackages = packages.filter(p => !existingIds.has(p.id));
+                            return [...prev, ...newPackages];
+                        });
+                        onNavigate('home');
+                    }}
+                />
+            </Suspense>
         );
     }
 
     // Default to home
     return (
-        <HomePage
-            systemInfo={systemInfo}
-            userConfig={userConfig}
-            importedPackages={importedPackages}
-            onClearImported={() => setImportedPackages([])}
-            selectedPackages={selectedPackages}
-            setSelectedPackages={setSelectedPackages}
-            installLogs={installLogs}
-            setInstallLogs={setInstallLogs}
-            onNavigateToPresets={() => onNavigate('presets')}
-        />
+        <Suspense fallback={<PageLoader />}>
+            <HomePage
+                systemInfo={systemInfo}
+                userConfig={userConfig}
+                importedPackages={importedPackages}
+                onClearImported={() => setImportedPackages([])}
+                selectedPackages={selectedPackages}
+                setSelectedPackages={setSelectedPackages}
+                installLogs={installLogs}
+                setInstallLogs={setInstallLogs}
+                onNavigateToPresets={() => onNavigate('presets')}
+                hasImportedConfig={hasImportedConfig}
+                onClearImportedFlag={onClearImportedFlag}
+            />
+        </Suspense>
     );
 }

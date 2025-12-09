@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
-import { searchAPI, installAPI, configAPI } from '@/lib/electron';
-import type { PakkyConfig, SearchResult } from '@/lib/types';
-import { INSTALL_CONFIG, APP_CONFIG } from '@/lib/config';
+import { installAPI, configAPI } from '@/lib/electron';
+import type { PakkyConfig } from '@/lib/types';
 import { UI_STRINGS } from '@/lib/strings';
 import { PackageSearch } from '@/components/packages/PackageSearch';
 import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
 import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
+import { ImportedConfigAlert } from '@/components/alerts/ImportedConfigAlert';
+import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
+import { usePackageActions } from '@/hooks/usePackageActions';
+import { useHomebrewCheck } from '@/hooks/useHomebrewCheck';
 
 interface HomePageProps {
     systemInfo: SystemInfo | null;
@@ -20,6 +23,8 @@ interface HomePageProps {
     installLogs: Record<string, string[]>;
     setInstallLogs: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     onNavigateToPresets?: () => void;
+    hasImportedConfig?: boolean;
+    onClearImportedFlag?: () => void;
 }
 
 export default function HomePage({
@@ -31,43 +36,47 @@ export default function HomePage({
     setSelectedPackages,
     installLogs,
     setInstallLogs,
-    onNavigateToPresets
+    onNavigateToPresets,
+    hasImportedConfig,
+    onClearImportedFlag
 }: HomePageProps) {
     const [isStartingInstall, setIsStartingInstall] = useState(false);
-    const [isHomebrewMissing, setIsHomebrewMissing] = useState(false);
-    const [isInstallingHomebrew, setIsInstallingHomebrew] = useState(false);
-    const [exportConfig, setExportConfig] = useState<PakkyConfig | null>(null);
+    const [showExportDialog, setShowExportDialog] = useState(false);
+    const [showImportedAlert, setShowImportedAlert] = useState(false);
 
     const {
         progress,
+        config: loadedConfig,
         setPackages,
         startInstallation,
-        addPackageLog,
         completeInstallation,
         cancelInstallation: cancelInstallInStore
     } = useInstallStore();
 
-    // Check for Homebrew on mount
-    useEffect(() => {
-        if (systemInfo?.platform === 'macos') {
-            installAPI.checkHomebrew().then(isInstalled => {
-                setIsHomebrewMissing(!isInstalled);
-            });
-        }
-    }, [systemInfo?.platform]);
+    // Homebrew check hook
+    const {
+        isHomebrewMissing,
+        isInstallingHomebrew,
+        handleInstallHomebrew,
+    } = useHomebrewCheck({ platform: systemInfo?.platform });
 
-    const handleInstallHomebrew = async () => {
-        setIsInstallingHomebrew(true);
-        try {
-            await installAPI.installHomebrew();
-            setIsHomebrewMissing(false);
-        } catch (error) {
-            console.error('Failed to install Homebrew:', error);
-            alert(UI_STRINGS.HOME.HOMEBREW_INSTALL_ERROR);
-        } finally {
-            setIsInstallingHomebrew(false);
-        }
-    };
+    // Installation subscription hook
+    useInstallationSubscription({
+        setSelectedPackages,
+        setInstallLogs,
+    });
+
+    // Package actions hook
+    const {
+        addPackage,
+        removePackage,
+        handleReinstall,
+    } = usePackageActions({
+        selectedPackages,
+        setSelectedPackages,
+        isStartingInstall,
+        installStatus: progress.status,
+    });
 
     // Handle imported packages
     useEffect(() => {
@@ -81,126 +90,22 @@ export default function HomePage({
         }
     }, [importedPackages, onClearImported, setSelectedPackages]);
 
-    // Subscribe to progress updates
-    useEffect(() => {
-        const unsubProgress = installAPI.onProgress((progressUpdate) => {
-            if (progressUpdate.packages) {
-                setPackages(progressUpdate.packages);
-            }
-
-            if (progressUpdate.packages) {
-                setSelectedPackages(prev => {
-                    return prev.map(pkg => {
-                        const updated = progressUpdate.packages.find((p: PackageInstallItem) => p.id === pkg.id);
-                        return updated || pkg;
-                    });
-                });
-            }
-
-            if (progressUpdate.status === 'completed' || progressUpdate.status === 'cancelled') {
-                completeInstallation();
-            }
-        });
-
-        const unsubLog = installAPI.onLog((log) => {
-            addPackageLog(log.packageId, log.line);
-            const maxLogs = INSTALL_CONFIG.maxLogsPerPackage;
-            setInstallLogs(prev => {
-                const existingLogs = prev[log.packageId] || [];
-                const newLogs = existingLogs.length >= maxLogs
-                    ? [...existingLogs.slice(-(maxLogs - 1)), log.line]
-                    : [...existingLogs, log.line];
-                return { ...prev, [log.packageId]: newLogs };
-            });
-        });
-
-        return () => {
-            unsubProgress();
-            unsubLog();
-        };
-        // Intentionally only run on mount/unmount - IPC listeners should be set up once
-        // and the callbacks use refs/external state that don't need to trigger re-subscription
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
-    const addPackage = useCallback(async (result: SearchResult) => {
-        // Double check not added
-        if (selectedPackages.some(p => p.id === `${result.type}:${result.name}`)) {
+    // Check if user wants to install from imported config
+    const handleStartInstall = () => {
+        if (isStartingInstall) return;
+        
+        // If packages came from an imported config, show confirmation first
+        if (hasImportedConfig && selectedPackages.length > 0) {
+            setShowImportedAlert(true);
             return;
         }
+        
+        // Otherwise proceed directly
+        executeInstallation();
+    };
 
-        let description = result.description;
-        if (!description) {
-            try {
-                const info = await searchAPI.getPackageInfo(result.name, result.type);
-                description = info?.description;
-            } catch { /* ignore */ }
-        }
-
-        const newPackage: PackageInstallItem = {
-            id: `${result.type}:${result.name}`,
-            name: result.name,
-            type: result.type,
-            status: result.installed ? 'already_installed' : 'pending',
-            description: description || `${result.type === 'cask' ? 'Application' : 'CLI tool'}`,
-            logs: [],
-        };
-
-        setSelectedPackages(prev => [...prev, newPackage]);
-    }, [selectedPackages, setSelectedPackages]);
-
-    const removePackage = useCallback((id: string) => {
-        setSelectedPackages(prev => prev.filter(p => p.id !== id));
-    }, [setSelectedPackages]);
-
-    const handleReinstall = useCallback((id: string) => {
-        setSelectedPackages(prev => prev.map(p => {
-            if (p.id === id) {
-                return { ...p, status: 'pending', action: 'reinstall' };
-            }
-            return p;
-        }));
-    }, [setSelectedPackages]);
-
-    // Check installed system packages periodically or on mount/import
-    // Debounced to prevent multiple concurrent API calls
-    useEffect(() => {
-        if (selectedPackages.length === 0) return;
-        if (isStartingInstall || progress.status === 'installing') return;
-
-        const timer = setTimeout(async () => {
-            try {
-                const installed = await installAPI.getInstalledPackages();
-                const installedSet = new Set([...installed.formulae, ...installed.casks]);
-
-                setSelectedPackages(prev => {
-                    const hasChanges = prev.some(pkg =>
-                        !pkg.action &&
-                        pkg.status !== 'installing' &&
-                        pkg.status !== 'success' &&
-                        pkg.status !== 'failed' &&
-                        installedSet.has(pkg.name) &&
-                        pkg.status !== 'already_installed'
-                    );
-
-                    if (!hasChanges) return prev;
-
-                    return prev.map(pkg => {
-                        if (pkg.action || pkg.status === 'installing' || pkg.status === 'success' || pkg.status === 'failed') return pkg;
-
-                        if (installedSet.has(pkg.name)) {
-                            return { ...pkg, status: 'already_installed' };
-                        }
-                        return pkg;
-                    });
-                });
-            } catch { /* ignore */ }
-        }, INSTALL_CONFIG.checkInstalledDebounceMs);
-
-        return () => clearTimeout(timer);
-    }, [selectedPackages.length, isStartingInstall, progress.status, setSelectedPackages]);
-
-    const handleStartInstall = async () => {
+    // Actual installation logic
+    const executeInstallation = async () => {
         if (isStartingInstall) return;
         setIsStartingInstall(true);
 
@@ -228,7 +133,6 @@ export default function HomePage({
 
             const packagesToInstall = updatedPackages.filter(p => p.status !== 'already_installed');
             if (packagesToInstall.length === 0) {
-                console.log('All packages are already installed');
                 setIsStartingInstall(false);
                 return;
             }
@@ -237,7 +141,8 @@ export default function HomePage({
             startInstallation();
             setInstallLogs({});
 
-            await installAPI.startInstallation(updatedPackages);
+            // Pass config settings if a config was imported
+            await installAPI.startInstallation(updatedPackages, loadedConfig?.settings);
         } catch (error) {
             console.error('Installation failed:', error);
             completeInstallation();
@@ -255,49 +160,60 @@ export default function HomePage({
         }
     };
 
-    const handleExportConfig = async () => {
+    // Handle imported config alert confirmation
+    const handleImportedAlertConfirm = () => {
+        setShowImportedAlert(false);
+        onClearImportedFlag?.(); // Clear the flag so it doesn't show again
+        executeInstallation();
+    };
+
+    // Handle imported config alert rejection
+    const handleImportedAlertReject = () => {
+        setShowImportedAlert(false);
+    };
+
+    // Handle review config (opens export dialog)
+    const handleReviewConfig = () => {
+        setShowImportedAlert(false);
+        setShowExportDialog(true);
+    };
+
+    const handleExportConfig = () => {
         if (selectedPackages.length === 0) return;
-
-        const formulae = selectedPackages
-            .filter(p => p.type === 'formula')
-            .map(p => p.name);
-
-        const casks = selectedPackages
-            .filter(p => p.type === 'cask')
-            .map(p => p.name);
-
-        const config: PakkyConfig = {
-            name: APP_CONFIG.DEFAULTS.EXPORT_NAME,
-            version: APP_CONFIG.DEFAULTS.EXPORT_VERSION,
-            description: APP_CONFIG.DEFAULTS.EXPORT_DESCRIPTION,
-            macos: {
-                homebrew: {
-                    formulae: formulae.length > 0 ? formulae : undefined,
-                    casks: casks.length > 0 ? casks : undefined,
-                }
-            }
-        };
-
-        setExportConfig(config);
+        setShowExportDialog(true);
     };
 
     const handleConfirmExport = async (config: PakkyConfig) => {
         try {
             const savedPath = await configAPI.saveConfigDialog(config);
             if (savedPath) {
-                console.log('Config saved to:', savedPath);
-                setExportConfig(null);
+                setShowExportDialog(false);
             }
         } catch (error) {
             console.error(UI_STRINGS.ERRORS.EXPORT_FAILED, error);
-            // Optional: Show error via toast or alert
         }
+    };
+
+    // Clear all packages and reset imported flag
+    const handleClearAll = () => {
+        setSelectedPackages([]);
+        onClearImportedFlag?.();
     };
 
     const isInstalling = progress.status === 'installing';
 
     return (
         <div className="max-w-4xl mx-auto flex flex-col h-full animate-in fade-in duration-500">
+            {/* Imported config confirmation alert */}
+            {showImportedAlert && (
+                <ImportedConfigAlert
+                    packageCount={selectedPackages.length}
+                    onConfirm={handleImportedAlertConfirm}
+                    onReject={handleImportedAlertReject}
+                    onReviewConfig={handleReviewConfig}
+                />
+            )}
+
             {/* Welcome / Search Header - Fixed, doesn't scroll */}
             <div className="space-y-4 mb-6 shrink-0">
                 {isHomebrewMissing && (
@@ -333,7 +249,7 @@ export default function HomePage({
                     onStartInstall={handleStartInstall}
                     onCancelInstall={handleCancelInstall}
                     onExport={handleExportConfig}
-                    onClear={() => setSelectedPackages([])}
+                    onClear={handleClearAll}
                     onNavigateToPresets={onNavigateToPresets}
                 />
             </div>
@@ -343,15 +259,14 @@ export default function HomePage({
                 {UI_STRINGS.HOME.FOOTER_INFO} • {systemInfo?.arch}
             </div>
 
-            {exportConfig && (
-                <ExportPreviewDialog
-                    open={!!exportConfig}
-                    onOpenChange={(open) => !open && setExportConfig(null)}
-                    config={exportConfig}
-                    onConfirm={handleConfirmExport}
-                    userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
-                />
-            )}
+            <ExportPreviewDialog
+                open={showExportDialog}
+                onOpenChange={setShowExportDialog}
+                packages={selectedPackages}
+                onConfirm={handleConfirmExport}
+                userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
+                systemInfo={systemInfo}
+            />
         </div>
     );
 }

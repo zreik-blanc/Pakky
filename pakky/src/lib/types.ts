@@ -177,9 +177,13 @@ export type PackageStatus =
 export interface PackageInstallItem {
     id: string;
     name: string;
-    type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman';
+    type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'tap';
     status: PackageStatus;
     description?: string;
+    version?: string;
+    required?: boolean;
+    postInstall?: string[];
+    extensions?: string[]; // VS Code extensions for casks
     logs: string[];
     error?: string;
     startTime?: number;
@@ -227,13 +231,16 @@ export interface Preset {
     name: string;
     description: string;
     icon?: string; // Icon name if we want to dynamic load icons later, but for now we might rely on hardcoded mapping or generic ones
+    settings?: ConfigSettings;
     macos?: {
         homebrew?: {
+            taps?: string[];
             formulae?: (string | PackageObject)[];
             casks?: (string | CaskObject)[];
         }
     };
     packages?: {
+        taps?: string[];
         formulae?: (string | PackageObject)[];
         casks?: (string | CaskObject)[];
     };

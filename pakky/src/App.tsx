@@ -1,13 +1,15 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useInstallStore } from './stores/installStore';
-import { configAPI, userConfigAPI } from './lib/electron';
-import type { PakkyConfig, PackageInstallItem } from './lib/types';
+import { configAPI, userConfigAPI, type SecurityScanResult } from './lib/electron';
+import type { PackageInstallItem } from './lib/types';
+import { parseConfig } from './lib/configParser';
 import './index.css';
 
 // Components
 import AppLayout from '@/components/layout/AppLayout';
 import OnboardingPage from '@/pages/Onboarding';
 import { ConfigCorruptionAlert } from '@/components/alerts/ConfigCorruptionAlert';
+import { SecurityWarningAlert } from '@/components/alerts/SecurityWarningAlert';
 import { AppRoutes } from '@/components/AppRoutes';
 import { useAppInitialization } from '@/hooks/useAppInitialization';
 
@@ -16,8 +18,11 @@ type Page = 'home' | 'presets' | 'settings';
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [importedPackages, setImportedPackages] = useState<PackageInstallItem[]>([]);
+  const [hasImportedConfig, setHasImportedConfig] = useState(false); // Track if packages came from import
   const [selectedPackages, setSelectedPackages] = useState<PackageInstallItem[]>([]);
   const [installLogs, setInstallLogs] = useState<Record<string, string[]>>({});
+  const [securityWarning, setSecurityWarning] = useState<SecurityScanResult | null>(null);
+  const [pendingImport, setPendingImport] = useState<{ packages: PackageInstallItem[] } | null>(null);
   const { progress } = useInstallStore();
 
   const {
@@ -33,7 +38,6 @@ function App() {
   // Load initial queue from user config
   useEffect(() => {
     if (userConfig?.queue && userConfig.queue.length > 0) {
-      console.log('Restoring queue from user config:', userConfig.queue.length, 'packages');
       setSelectedPackages(prev => {
         // Merge with any existing (rare, but good for safety)
         const existingIds = new Set(prev.map(p => p.id));
@@ -73,52 +77,51 @@ function App() {
       const filePath = await configAPI.selectConfigFile();
       if (!filePath) return;
 
-      const config: PakkyConfig = await configAPI.loadConfig(filePath);
+      const { config, security } = await configAPI.loadConfig(filePath);
 
-      // Convert config to packages
-      const packages: PackageInstallItem[] = [];
+      // Parse config using the centralized parser (handles rich schemas)
+      const { packages, settings } = parseConfig(config);
 
-      // Parse macOS homebrew packages
-      if (config.macos?.homebrew) {
-        // Add formulae
-        if (config.macos.homebrew.formulae) {
-          for (const pkg of config.macos.homebrew.formulae) {
-            const name = typeof pkg === 'string' ? pkg : pkg.name;
-            const description = typeof pkg === 'string' ? undefined : pkg.description;
-            packages.push({
-              id: `formula:${name}`,
-              name,
-              type: 'formula',
-              status: 'pending',
-              description: description || 'CLI tool',
-              logs: [],
-            });
-          }
-        }
+      // Store config settings in install store for use during installation
+      if (settings) {
+        useInstallStore.getState().setConfig(config);
+      }
 
-        // Add casks
-        if (config.macos.homebrew.casks) {
-          for (const pkg of config.macos.homebrew.casks) {
-            const name = typeof pkg === 'string' ? pkg : pkg.name;
-            const description = typeof pkg === 'string' ? undefined : pkg.description;
-            packages.push({
-              id: `cask:${name}`,
-              name,
-              type: 'cask',
-              status: 'pending',
-              description: description || 'Application',
-              logs: [],
-            });
-          }
-        }
+      // Check for security warnings
+      if (security.hasDangerousContent || security.hasSuspiciousContent || security.hasObfuscation) {
+        setSecurityWarning(security);
+        setPendingImport({ packages });
+        return; // Wait for user confirmation
       }
 
       setImportedPackages(packages);
+      setHasImportedConfig(true); // Mark that we have imported packages
       setCurrentPage('home'); // Navigate to home to show imported packages
-      console.log('Imported', packages.length, 'packages from config');
     } catch (error) {
       console.error('Failed to import config:', error);
     }
+  }, []);
+
+  // Handle security warning confirmation
+  const handleSecurityConfirm = useCallback(() => {
+    if (pendingImport) {
+      setImportedPackages(pendingImport.packages);
+      setHasImportedConfig(true); // Mark that we have imported packages
+      setCurrentPage('home');
+    }
+    setSecurityWarning(null);
+    setPendingImport(null);
+  }, [pendingImport]);
+
+  // Handle security warning rejection
+  const handleSecurityReject = useCallback(() => {
+    setSecurityWarning(null);
+    setPendingImport(null);
+  }, []);
+
+  // Clear the imported flag when user clears all packages
+  const handleClearImportedFlag = useCallback(() => {
+    setHasImportedConfig(false);
   }, []);
 
   if (isLoading) {
@@ -151,6 +154,15 @@ function App() {
         }`}
       style={{ height: '100%' }}
     >
+      {/* Security warning modal */}
+      {securityWarning && (
+        <SecurityWarningAlert
+          security={securityWarning}
+          onConfirm={handleSecurityConfirm}
+          onReject={handleSecurityReject}
+        />
+      )}
+
       <AppLayout
         currentPage={currentPage}
         onNavigate={setCurrentPage}
@@ -169,6 +181,8 @@ function App() {
           installLogs={installLogs}
           setInstallLogs={setInstallLogs}
           onNavigate={setCurrentPage}
+          hasImportedConfig={hasImportedConfig}
+          onClearImportedFlag={handleClearImportedFlag}
         />
       </AppLayout>
     </div>

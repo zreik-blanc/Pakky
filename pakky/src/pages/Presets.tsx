@@ -3,6 +3,7 @@ import { PackageInstallItem, Preset } from '@/lib/types';
 import { Package, Layers } from 'lucide-react';
 import { presetsAPI } from '@/lib/electron';
 import { PresetSkeleton, HeroPreset, PresetCard, getPresetConfig } from '@/components/presets';
+import { parsePreset, getPackageNamesPreview } from '@/lib/configParser';
 
 interface PresetsPageProps {
     onLoadPreset: (packages: PackageInstallItem[]) => void;
@@ -29,43 +30,13 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
     }, []);
 
     const handleLoadPreset = (preset: Preset) => {
-        const packages: PackageInstallItem[] = [];
-
-        const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
-        const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
-
-        for (const item of formulae) {
-            const name = typeof item === 'string' ? item : item.name;
-            packages.push({
-                id: `formula:${name}`,
-                name,
-                type: 'formula',
-                status: 'pending',
-                description: 'CLI tool',
-                logs: [],
-            });
-        }
-
-        for (const item of casks) {
-            const name = typeof item === 'string' ? item : item.name;
-            packages.push({
-                id: `cask:${name}`,
-                name,
-                type: 'cask',
-                status: 'pending',
-                description: 'Application',
-                logs: [],
-            });
-        }
-
+        // Use centralized parser that handles rich schemas (descriptions, post_install, etc.)
+        const packages = parsePreset(preset);
         onLoadPreset(packages);
     };
 
     const getPackagePreview = (preset: Preset) => {
-        const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
-        const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
-        const all = [...formulae, ...casks].slice(0, 6);
-        return all.map(item => typeof item === 'string' ? item : item.name);
+        return getPackageNamesPreview(preset, 6);
     };
 
     // Hero preset is the first one

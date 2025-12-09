@@ -5,7 +5,10 @@ export {
     isPathAllowed,
     isValidPackageName,
     isSafeUrl,
+    scanShellCommands,
+    extractShellCommands,
 } from './security'
+export type { SecurityScanResult } from './security'
 
 // Shell utilities
 export {

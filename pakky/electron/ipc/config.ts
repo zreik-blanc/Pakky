@@ -1,15 +1,21 @@
 import { ipcMain, dialog } from 'electron'
 import fs from 'node:fs/promises'
-import { isPathAllowed } from '../utils'
+import { isPathAllowed, scanShellCommands, extractShellCommands, type SecurityScanResult } from '../utils'
 import type { PakkyConfig } from '../../src/lib/types'
 import { PakkyConfigSchema } from './schemas'
 import { ZodError } from 'zod'
+
+// Extended return type that includes security scan results
+interface ConfigLoadResult {
+    config: PakkyConfig
+    security: SecurityScanResult
+}
 
 /**
  * Register config-related IPC handlers
  */
 export function registerConfigHandlers() {
-    ipcMain.handle('config:load', async (_, filePath: string) => {
+    ipcMain.handle('config:load', async (_, filePath: string): Promise<ConfigLoadResult> => {
         // Security: Validate path to prevent path traversal attacks
         if (!isPathAllowed(filePath)) {
             throw new Error('Access to this file path is not allowed')
@@ -18,7 +24,17 @@ export function registerConfigHandlers() {
         try {
             const content = await fs.readFile(filePath, 'utf-8')
             const json = JSON.parse(content)
-            return PakkyConfigSchema.parse(json)
+            const config = PakkyConfigSchema.parse(json)
+            
+            // Security: Scan for dangerous shell commands
+            const shellCommands = extractShellCommands(json)
+            const security = scanShellCommands(shellCommands)
+            
+            if (security.hasDangerousContent) {
+                console.warn('[Security] Dangerous commands detected in config:', security.dangerousCommands)
+            }
+            
+            return { config, security }
         } catch (error) {
             console.error('Config load error:', error)
 

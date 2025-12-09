@@ -1,19 +1,22 @@
-import { Package, Sparkles, BarChart3, Code2, Terminal } from 'lucide-react';
+import { Package, Sparkles, BarChart3, Code2, Terminal, Server } from 'lucide-react';
 
 // Map icons and colors based on preset ID or keywords
+// Using consistent green/gray theme
 export const getPresetConfig = (id: string, index: number) => {
     const configs = [
-        { icon: Sparkles, gradient: 'from-violet-500/20 via-purple-500/10 to-fuchsia-500/20', accent: 'text-violet-400', ring: 'ring-violet-500/20' },
-        { icon: Code2, gradient: 'from-emerald-500/20 via-green-500/10 to-teal-500/20', accent: 'text-emerald-400', ring: 'ring-emerald-500/20' },
-        { icon: BarChart3, gradient: 'from-blue-500/20 via-cyan-500/10 to-sky-500/20', accent: 'text-blue-400', ring: 'ring-blue-500/20' },
-        { icon: Terminal, gradient: 'from-orange-500/20 via-amber-500/10 to-yellow-500/20', accent: 'text-orange-400', ring: 'ring-orange-500/20' },
-        { icon: Package, gradient: 'from-rose-500/20 via-pink-500/10 to-red-500/20', accent: 'text-rose-400', ring: 'ring-rose-500/20' },
+        { icon: Code2, gradient: 'from-emerald-500/10 via-green-500/5 to-transparent', accent: 'text-emerald-400', ring: 'ring-emerald-500/20' },
+        { icon: Terminal, gradient: 'from-green-500/10 via-emerald-500/5 to-transparent', accent: 'text-green-400', ring: 'ring-green-500/20' },
+        { icon: Server, gradient: 'from-muted/30 via-muted/10 to-transparent', accent: 'text-muted-foreground', ring: 'ring-border' },
+        { icon: Package, gradient: 'from-emerald-500/10 via-muted/10 to-transparent', accent: 'text-emerald-500', ring: 'ring-emerald-500/20' },
+        { icon: Sparkles, gradient: 'from-primary/10 via-primary/5 to-transparent', accent: 'text-primary', ring: 'ring-primary/20' },
     ];
 
-    if (id.includes('web')) return { ...configs[0], icon: Sparkles };
-    if (id.includes('data')) return { ...configs[2], icon: BarChart3 };
-    if (id.includes('minimal')) return { ...configs[4], icon: Package };
-    if (id.includes('dev')) return { ...configs[1], icon: Code2 };
+    // Match based on preset ID keywords
+    if (id.includes('devops') || id.includes('infra')) return { ...configs[2], icon: Server };
+    if (id.includes('web') || id.includes('frontend')) return { ...configs[0], icon: Code2 };
+    if (id.includes('data') || id.includes('science')) return { ...configs[1], icon: BarChart3 };
+    if (id.includes('minimal') || id.includes('basic')) return { ...configs[3], icon: Package };
+    if (id.includes('dev')) return { ...configs[0], icon: Code2 };
 
     return configs[index % configs.length];
 };

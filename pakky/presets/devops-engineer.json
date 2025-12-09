@@ -1,0 +1,94 @@
+{
+    "name": "DevOps Engineer",
+    "version": "1.0.0",
+    "author": "Pakky",
+    "description": "Container orchestration, cloud tools, and infrastructure automation for DevOps workflows",
+    "tags": [
+        "devops",
+        "kubernetes",
+        "docker",
+        "cloud",
+        "infrastructure"
+    ],
+    "settings": {
+        "continue_on_error": true,
+        "skip_already_installed": true,
+        "parallel_installs": false
+    },
+    "macos": {
+        "homebrew": {
+            "taps": [
+                "hashicorp/tap",
+                "homebrew/cask-fonts"
+            ],
+            "formulae": [
+                {
+                    "name": "kubernetes-cli",
+                    "description": "Kubernetes command-line interface (kubectl)"
+                },
+                {
+                    "name": "helm",
+                    "description": "Kubernetes package manager"
+                },
+                {
+                    "name": "k9s",
+                    "description": "Terminal-based Kubernetes UI"
+                },
+                {
+                    "name": "kubectx",
+                    "description": "Tool to switch between Kubernetes contexts"
+                },
+                {
+                    "name": "minikube",
+                    "description": "Run Kubernetes locally"
+                },
+                {
+                    "name": "terraform",
+                    "description": "Infrastructure as Code tool"
+                },
+                {
+                    "name": "ansible",
+                    "description": "IT automation platform"
+                },
+                {
+                    "name": "awscli",
+                    "description": "Official Amazon Web Services CLI"
+                },
+                {
+                    "name": "azure-cli",
+                    "description": "Microsoft Azure CLI"
+                },
+                "gh",
+                "jq",
+                "yq",
+                "htop",
+                "tmux"
+            ],
+            "casks": [
+                {
+                    "name": "docker",
+                    "description": "Container platform for building and sharing applications"
+                },
+                {
+                    "name": "lens",
+                    "description": "Kubernetes IDE for managing clusters"
+                },
+                {
+                    "name": "visual-studio-code",
+                    "description": "Code editor with excellent DevOps extensions",
+                    "extensions": [
+                        "ms-kubernetes-tools.vscode-kubernetes-tools",
+                        "hashicorp.terraform",
+                        "ms-azuretools.vscode-docker"
+                    ]
+                },
+                {
+                    "name": "iterm2",
+                    "description": "Feature-rich terminal emulator for macOS"
+                },
+                "slack",
+                "1password"
+            ]
+        }
+    }
+}
