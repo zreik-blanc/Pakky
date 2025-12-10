@@ -11,6 +11,14 @@ export default defineConfig({
       main: {
         // Shortcut of `build.lib.entry`.
         entry: 'electron/main.ts',
+        vite: {
+          build: {
+            rollupOptions: {
+              // Mark bash-parser and its dependencies as external - they'll be required at runtime
+              external: ['bash-parser', 'iterable-transform-replace'],
+            },
+          },
+        },
       },
       preload: {
         // Shortcut of `build.rollupOptions.input`.

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings as SettingsIcon, User, Info, Trash2, LogOut, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, User, Info, Trash2, LogOut, AlertTriangle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -156,6 +156,92 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     )}
+                </CardContent>
+            </Card>
+
+            {/* Security Level */}
+            <Card className="bg-card/50 border-border/50">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Script Security Level
+                    </CardTitle>
+                    <CardDescription>
+                        Controls how strictly imported configuration scripts are validated
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {(['STRICT', 'STANDARD', 'PERMISSIVE'] as const).map((level) => {
+                        const isSelected = (userConfig?.securityLevel || 'STRICT') === level;
+                        const config = {
+                            STRICT: {
+                                name: 'Strict',
+                                description: 'Only safe commands allowed. No network or package installations in scripts.',
+                                badge: 'Recommended',
+                                badgeClass: 'bg-green-500/10 text-green-500 border-green-500/20',
+                                selectedBorder: 'border-green-500',
+                                selectedBg: 'bg-green-500/5',
+                                radioColor: 'border-green-500',
+                                dotColor: 'bg-green-500',
+                            },
+                            STANDARD: {
+                                name: 'Standard',
+                                description: 'Allows package managers and git in scripts. For trusted configs.',
+                                badge: null,
+                                badgeClass: '',
+                                selectedBorder: 'border-amber-500',
+                                selectedBg: 'bg-amber-500/5',
+                                radioColor: 'border-amber-500',
+                                dotColor: 'bg-amber-500',
+                            },
+                            PERMISSIVE: {
+                                name: 'Permissive',
+                                description: 'Allows most operations with warnings. Only for fully trusted configs.',
+                                badge: 'Use with caution',
+                                badgeClass: 'bg-red-500/10 text-red-500 border-red-500/20',
+                                selectedBorder: 'border-red-500',
+                                selectedBg: 'bg-red-500/5',
+                                radioColor: 'border-red-500',
+                                dotColor: 'bg-red-500',
+                            },
+                        }[level];
+
+                        return (
+                            <div
+                                key={level}
+                                className={`relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected
+                                    ? `${config.selectedBorder} ${config.selectedBg}`
+                                    : 'border-border/50 hover:border-border hover:bg-muted/30'
+                                    }`}
+                                onClick={async () => {
+                                    if (!isSelected) {
+                                        try {
+                                            await userConfigAPI.save({ securityLevel: level });
+                                            setUserConfig(prev => prev ? { ...prev, securityLevel: level } : null);
+                                        } catch (error) {
+                                            console.error('Failed to save security level:', error);
+                                        }
+                                    }
+                                }}
+                            >
+                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? config.radioColor : 'border-muted-foreground/30'
+                                    }`}>
+                                    {isSelected && <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />}
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{config.name}</span>
+                                        {config.badge && (
+                                            <span className={`text-xs px-1.5 py-0.5 rounded border ${config.badgeClass}`}>
+                                                {config.badge}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{config.description}</p>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </CardContent>
             </Card>
 

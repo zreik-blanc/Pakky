@@ -4,9 +4,9 @@
  * Handles rich schemas with descriptions, scripts, required flags, etc.
  */
 
-import type { 
-    PakkyConfig, 
-    PackageInstallItem, 
+import type {
+    PakkyConfig,
+    PackageInstallItem,
     Preset,
     PackageObject,
     CaskObject,
@@ -48,6 +48,7 @@ function parseFormulaItem(item: string | PackageObject): PackageInstallItem {
         id: `formula:${item.name}`,
         name: item.name,
         type: 'formula',
+        position: item.position, // Preserve position from config
         status: 'pending',
         description: item.description || 'CLI tool',
         version: item.version,
@@ -76,6 +77,7 @@ function parseCaskItem(item: string | CaskObject): PackageInstallItem {
         id: `cask:${item.name}`,
         name: item.name,
         type: 'cask',
+        position: item.position, // Preserve position from config
         status: 'pending',
         description: item.description || 'Application',
         required: item.required,
@@ -93,6 +95,7 @@ function parseScriptItem(script: ScriptStep): PackageInstallItem {
         id: `script:${script.name}`,
         name: script.name,
         type: 'script',
+        position: script.position, // Preserve position from config
         status: 'pending',
         description: script.prompt || 'Script',
         commands: script.commands,
@@ -137,10 +140,29 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
         }
     }
 
+    // Check if any packages have positions from the imported config
+    const hasImportedPositions = packages.some(pkg => pkg.position !== undefined);
+
+    let packagesWithPositions: PackageInstallItem[];
+    if (hasImportedPositions) {
+        // Sort by imported positions, then assign sequential positions
+        const sorted = [...packages].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
+        packagesWithPositions = sorted.map((pkg, index) => ({
+            ...pkg,
+            position: index + 1,
+        }));
+    } else {
+        // No imported positions, assign sequential positions
+        packagesWithPositions = packages.map((pkg, index) => ({
+            ...pkg,
+            position: index + 1,
+        }));
+    }
+
     // TODO: Add support for MAS apps, Windows packages, Linux packages when those features are implemented
 
     return {
-        packages,
+        packages: packagesWithPositions,
         settings: config.settings,
         configName: config.name,
         configDescription: config.description,
@@ -153,7 +175,7 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
  */
 export function parsePreset(preset: Preset): PackageInstallItem[] {
     const packages: PackageInstallItem[] = [];
-    
+
     // Get formulae from either location
     const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
     const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
@@ -175,7 +197,23 @@ export function parsePreset(preset: Preset): PackageInstallItem[] {
         }
     }
 
-    return packages;
+    // Check if any packages have positions from the preset
+    const hasImportedPositions = packages.some(pkg => pkg.position !== undefined);
+
+    if (hasImportedPositions) {
+        // Sort by imported positions, then assign sequential positions
+        const sorted = [...packages].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
+        return sorted.map((pkg, index) => ({
+            ...pkg,
+            position: index + 1,
+        }));
+    }
+
+    // No imported positions, assign sequential positions
+    return packages.map((pkg, index) => ({
+        ...pkg,
+        position: index + 1,
+    }));
 }
 
 /**
@@ -184,7 +222,7 @@ export function parsePreset(preset: Preset): PackageInstallItem[] {
 export function getPackageNamesPreview(preset: Preset, maxItems: number = 6): string[] {
     const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
     const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
-    
+
     const all = [...formulae, ...casks].slice(0, maxItems);
     return all.map(item => typeof item === 'string' ? item : item.name);
 }
@@ -195,7 +233,7 @@ export function getPackageNamesPreview(preset: Preset, maxItems: number = 6): st
 export function countPresetPackages(preset: Preset): { formulae: number; casks: number; total: number } {
     const formulae = preset.packages?.formulae || preset.macos?.homebrew?.formulae || [];
     const casks = preset.packages?.casks || preset.macos?.homebrew?.casks || [];
-    
+
     return {
         formulae: formulae.length,
         casks: casks.length,
@@ -213,6 +251,6 @@ export function hasPackages(config: PakkyConfig): boolean {
         (homebrew.casks?.length ?? 0) > 0
     );
     const hasScripts = (config.scripts?.length ?? 0) > 0;
-    
+
     return hasHomebrewPackages || hasScripts;
 }

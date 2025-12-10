@@ -61,46 +61,46 @@ export function generateTagSuggestions(packages: PackageInstallItem[]): string[]
 // ============================================
 
 /**
- * Convert packages to package objects with optional descriptions
+ * Convert packages to package objects with optional descriptions and position
  */
 function convertToPackageObjects(
     packages: PackageInstallItem[],
     includeDescriptions: boolean
 ): (string | PackageObject)[] {
-    if (!includeDescriptions) {
-        return packages.map(p => p.name);
-    }
-
+    // Always use object format to include position
     return packages.map(p => {
-        if (p.description) {
-            return {
-                name: p.name,
-                description: p.description,
-            } as PackageObject;
+        const obj: PackageObject = {
+            name: p.name,
+        };
+        if (includeDescriptions && p.description) {
+            obj.description = p.description;
         }
-        return p.name;
+        if (p.position !== undefined) {
+            obj.position = p.position;
+        }
+        return obj;
     });
 }
 
 /**
- * Convert cask packages to cask objects with optional descriptions
+ * Convert cask packages to cask objects with optional descriptions and position
  */
 function convertToCaskObjects(
     packages: PackageInstallItem[],
     includeDescriptions: boolean
 ): (string | CaskObject)[] {
-    if (!includeDescriptions) {
-        return packages.map(p => p.name);
-    }
-
+    // Always use object format to include position
     return packages.map(p => {
-        if (p.description) {
-            return {
-                name: p.name,
-                description: p.description,
-            } as CaskObject;
+        const obj: CaskObject = {
+            name: p.name,
+        };
+        if (includeDescriptions && p.description) {
+            obj.description = p.description;
         }
-        return p.name;
+        if (p.position !== undefined) {
+            obj.position = p.position;
+        }
+        return obj;
     });
 }
 
@@ -145,9 +145,12 @@ export function buildPakkyConfig(
     packages: PackageInstallItem[],
     options: BuildConfigOptions
 ): PakkyConfig {
-    const formulae = packages.filter(p => p.type === 'formula');
-    const casks = packages.filter(p => p.type === 'cask');
-    const scripts = packages.filter(p => p.type === 'script');
+    // Sort by position to preserve user's queue order
+    const sortedPackages = [...packages].sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+
+    const formulae = sortedPackages.filter(p => p.type === 'formula');
+    const casks = sortedPackages.filter(p => p.type === 'cask');
+    const scripts = sortedPackages.filter(p => p.type === 'script');
 
     const config: PakkyConfig = {
         $schema: './pakky-config.schema.json',
@@ -212,6 +215,9 @@ export function buildPakkyConfig(
                 name: script.name,
                 commands: script.commands || [],
             };
+            if (script.position !== undefined) {
+                step.position = script.position;
+            }
             if (script.description && script.description !== 'Script') {
                 step.prompt = script.description;
             }

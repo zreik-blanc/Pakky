@@ -86,6 +86,13 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
             pkg.status === 'already_installed' && "opacity-75 hover:opacity-100"
         )}>
             <div className="p-3.5 flex items-center gap-3">
+                {/* Position Number */}
+                {pkg.position && (
+                    <div className="w-6 h-6 rounded-md bg-muted/50 flex items-center justify-center shrink-0 text-xs font-medium text-muted-foreground">
+                        {pkg.position}
+                    </div>
+                )}
+
                 {/* Package Icon */}
                 <div className={cn(
                     "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 ring-1",
@@ -119,8 +126,8 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
                             variant="outline"
                             className={cn(
                                 "h-4.5 px-1.5 text-[9px] uppercase font-mono tracking-wider border-border/50 gap-1",
-                                pkg.type === 'cask' ? "text-primary/80" : 
-                                pkg.type === 'script' ? "text-amber-500/80" : "text-emerald-500/80"
+                                pkg.type === 'cask' ? "text-primary/80" :
+                                    pkg.type === 'script' ? "text-amber-500/80" : "text-emerald-500/80"
                             )}
                         >
                             {(pkg.type === 'formula' || pkg.type === 'cask') && (
@@ -128,7 +135,7 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
                             )}
                             {(pkg.type === 'script') && (
                                 <ScrollText className="w-3 h-3 text-amber-500" />
-                            )}                            
+                            )}
                             {pkg.type}
                         </Badge>
 

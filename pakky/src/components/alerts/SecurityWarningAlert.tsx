@@ -66,7 +66,7 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                                 {config.title}
                             </CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">
-                                {isCritical 
+                                {isCritical
                                     ? 'This configuration shows signs of intentional obfuscation'
                                     : isHighOrCritical
                                         ? 'This configuration contains potentially dangerous commands'
@@ -96,8 +96,8 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                                 </p>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                Commands in this config appear to be intentionally obscured using techniques 
-                                commonly used by malware to bypass security filters. This is a strong indicator 
+                                Commands in this config appear to be intentionally obscured using techniques
+                                commonly used by malware to bypass security filters. This is a strong indicator
                                 of malicious intent.
                             </p>
                             <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-1 max-h-24 overflow-y-auto">
@@ -116,17 +116,12 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                             <p className="text-sm font-medium text-destructive">
                                 Dangerous commands ({security.dangerousCommands.length}):
                             </p>
-                            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-1 max-h-32 overflow-y-auto scrollbar-hide">
-                                {security.dangerousCommands.slice(0, 5).map((cmd, i) => (
-                                    <code key={i} className="block text-xs font-mono text-destructive/80 truncate" title={cmd}>
+                            <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-3 space-y-1 max-h-40 overflow-y-auto scrollbar-hide">
+                                {security.dangerousCommands.map((cmd, i) => (
+                                    <code key={i} className="block text-xs font-mono text-destructive/80" title={cmd}>
                                         {cmd}
                                     </code>
                                 ))}
-                                {security.dangerousCommands.length > 5 && (
-                                    <p className="text-xs text-destructive/60">
-                                        +{security.dangerousCommands.length - 5} more dangerous commands
-                                    </p>
-                                )}
                             </div>
                         </div>
                     )}
@@ -137,18 +132,34 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                             <p className="text-sm font-medium text-orange-500">
                                 Commands that will run ({security.suspiciousCommands.length}):
                             </p>
-                            <div className="bg-orange-500/5 border border-orange-500/20 rounded-lg p-3 space-y-1 max-h-32 overflow-y-auto">
-                                {security.suspiciousCommands.slice(0, 5).map((cmd, i) => (
-                                    <code key={i} className="block text-xs font-mono text-orange-500/80 truncate" title={cmd}>
+                            <div className="bg-orange-500/5 border border-orange-500/20 rounded-lg p-3 space-y-1 max-h-40 overflow-y-auto">
+                                {security.suspiciousCommands.map((cmd, i) => (
+                                    <code key={i} className="block text-xs font-mono text-orange-500/80" title={cmd}>
                                         {cmd}
                                     </code>
                                 ))}
-                                {security.suspiciousCommands.length > 5 && (
-                                    <p className="text-xs text-muted-foreground">
-                                        +{security.suspiciousCommands.length - 5} more commands
-                                    </p>
-                                )}
                             </div>
+                        </div>
+                    )}
+
+                    {/* Blocked commands by security level */}
+                    {security.blockedCommands && security.blockedCommands.length > 0 && (
+                        <div className="space-y-2">
+                            <p className="text-sm font-medium text-amber-500">
+                                Blocked by {security.securityLevel} mode ({security.blockedCommands.length}):
+                            </p>
+                            <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 space-y-1 max-h-32 overflow-y-auto">
+                                {security.blockedCommands.map((cmd, i) => (
+                                    <code key={i} className="block text-xs font-mono text-amber-500/80" title={cmd}>
+                                        {cmd}
+                                    </code>
+                                ))}
+                            </div>
+                            {security.recommendations && security.recommendations.length > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    💡 {security.recommendations[0]}
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -160,7 +171,7 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                             </p>
                         )}
                         <p>
-                            Only import configurations from sources you trust. Shell commands can execute 
+                            Only import configurations from sources you trust. Shell commands can execute
                             any code on your system with your user permissions.
                         </p>
                     </div>

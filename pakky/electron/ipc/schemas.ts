@@ -6,6 +6,7 @@ const PackageObjectSchema = z.object({
     version: z.string().optional(),
     description: z.string().optional(),
     required: z.boolean().optional(),
+    position: z.number().optional(), // Queue position for ordering
     post_install: z.array(z.string()).optional(),
 });
 
@@ -13,6 +14,7 @@ const CaskObjectSchema = z.object({
     name: z.string(),
     description: z.string().optional(),
     required: z.boolean().optional(),
+    position: z.number().optional(), // Queue position for ordering
     extensions: z.array(z.string()).optional(),
     post_install: z.array(z.string()).optional(),
 });
@@ -123,6 +125,7 @@ const LinuxConfigSchema = z.object({
 
 const ScriptStepSchema = z.object({
     name: z.string(),
+    position: z.number().optional(), // Queue position for ordering
     condition: z.string().optional(),
     prompt: z.string().optional(),
     prompt_for_input: z.record(z.string(), z.object({

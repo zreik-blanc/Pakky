@@ -10,6 +10,23 @@ export {
 } from './security'
 export type { SecurityScanResult } from './security'
 
+// Command allowlist utilities
+export {
+    COMMAND_CATEGORIES,
+    getCommandCategory,
+    isCommandAllowed,
+} from './command-allowlist'
+
+// AST parser utilities
+export {
+    parseShellCommand,
+    extractCommandNames,
+    hasSubshellOrSubstitution,
+    hasPiping,
+} from './bash-parser'
+export type { ParsedCommand, CommandParseResult } from './bash-parser'
+
+
 // Shell utilities
 export {
     execAsync,

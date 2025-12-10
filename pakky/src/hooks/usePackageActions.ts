@@ -35,20 +35,30 @@ export function usePackageActions({
             } catch { /* ignore */ }
         }
 
-        const newPackage: PackageInstallItem = {
-            id: `${result.type}:${result.name}`,
-            name: result.name,
-            type: result.type,
-            status: result.installed ? 'already_installed' : 'pending',
-            description: description || `${result.type === 'cask' ? 'Application' : 'CLI tool'}`,
-            logs: [],
-        };
-
-        setSelectedPackages(prev => [...prev, newPackage]);
+        setSelectedPackages(prev => {
+            const newPackage: PackageInstallItem = {
+                id: `${result.type}:${result.name}`,
+                name: result.name,
+                type: result.type,
+                position: prev.length + 1, // Assign 1-indexed position
+                status: result.installed ? 'already_installed' : 'pending',
+                description: description || `${result.type === 'cask' ? 'Application' : 'CLI tool'}`,
+                logs: [],
+            };
+            return [...prev, newPackage];
+        });
     }, [selectedPackages, setSelectedPackages]);
 
     const removePackage = useCallback((id: string) => {
-        setSelectedPackages(prev => prev.filter(p => p.id !== id));
+        setSelectedPackages(prev => {
+            // Filter out the removed package
+            const filtered = prev.filter(p => p.id !== id);
+            // Re-index positions to be sequential (1, 2, 3...)
+            return filtered.map((pkg, index) => ({
+                ...pkg,
+                position: index + 1,
+            }));
+        });
     }, [setSelectedPackages]);
 
     const handleReinstall = useCallback((id: string) => {

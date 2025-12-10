@@ -43,6 +43,7 @@ export interface PackageObject {
     version?: string;
     description?: string;
     required?: boolean;
+    position?: number; // Queue position for ordering
     post_install?: string[];
 }
 
@@ -50,6 +51,7 @@ export interface CaskObject {
     name: string;
     description?: string;
     required?: boolean;
+    position?: number; // Queue position for ordering
     extensions?: string[]; // VS Code extensions
     post_install?: string[];
 }
@@ -143,6 +145,7 @@ export interface LinuxConfig {
 // Script Configuration
 export interface ScriptStep {
     name: string;
+    position?: number; // Queue position for ordering
     condition?: string; // 'always', 'macos', 'windows', 'linux', 'package_installed:<name>'
     prompt?: string; // Ask user before running
     prompt_for_input?: {
@@ -178,6 +181,7 @@ export interface PackageInstallItem {
     id: string;
     name: string;
     type: 'formula' | 'cask' | 'mas' | 'winget' | 'chocolatey' | 'apt' | 'dnf' | 'pacman' | 'script';
+    position?: number; // Queue position (1-indexed) to preserve order during export
     status: PackageStatus;
     description?: string;
     version?: string;
@@ -255,10 +259,13 @@ export interface Preset {
     scripts?: ScriptStep[];
 }
 
+export type SecurityLevelKey = 'STRICT' | 'STANDARD' | 'PERMISSIVE';
+
 export interface UserConfig {
     userName: string;
     systemInfo: SystemInfo;
     queue?: PackageInstallItem[]; // Persisted queue
+    securityLevel?: SecurityLevelKey; // Security level for script validation (default: STRICT)
     firstLaunchAt: string; // ISO date
     lastSeenAt: string;
 }

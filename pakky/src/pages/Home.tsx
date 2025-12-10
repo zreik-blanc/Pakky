@@ -88,7 +88,19 @@ export default function HomePage({
             setSelectedPackages(prev => {
                 const existingIds = new Set(prev.map(p => p.id));
                 const newPackages = importedPackages.filter(p => !existingIds.has(p.id));
-                return [...prev, ...newPackages];
+
+                if (prev.length === 0) {
+                    // No existing packages - use imported packages as-is (already sorted with positions)
+                    return newPackages;
+                }
+
+                // Merge with existing packages: adjust imported positions by offset
+                const maxExistingPosition = Math.max(...prev.map(p => p.position ?? 0));
+                const packagesWithAdjustedPositions = newPackages.map(pkg => ({
+                    ...pkg,
+                    position: (pkg.position ?? 0) + maxExistingPosition,
+                }));
+                return [...prev, ...packagesWithAdjustedPositions];
             });
             onClearImported?.();
         }
@@ -238,7 +250,14 @@ export default function HomePage({
 
     // Handle adding a custom script
     const handleAddScript = (script: PackageInstallItem) => {
-        setSelectedPackages(prev => [...prev, script]);
+        setSelectedPackages(prev => {
+            // Assign position based on current queue length
+            const scriptWithPosition = {
+                ...script,
+                position: prev.length + 1,
+            };
+            return [...prev, scriptWithPosition];
+        });
     };
 
     const isInstalling = progress.status === 'installing';

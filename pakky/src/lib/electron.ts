@@ -12,6 +12,12 @@ export interface SecurityScanResult {
     obfuscatedCommands: string[];
     warnings: string[];
     severity: 'none' | 'low' | 'medium' | 'high' | 'critical';
+    // AST-based fields
+    blockedCommands: string[];
+    unknownCommands: string[];
+    securityLevel: 'STRICT' | 'STANDARD' | 'PERMISSIVE';
+    astParsingFailed: boolean;
+    recommendations: string[];
 }
 
 export interface ConfigLoadResult {
