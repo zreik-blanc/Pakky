@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
+import { QueueManager } from '@/lib/managers/queueManager';
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('@/pages/Home'));
@@ -61,11 +62,7 @@ export function AppRoutes({
             <Suspense fallback={<PageLoader />}>
                 <PresetsPage
                     onLoadPreset={(packages) => {
-                        setSelectedPackages(prev => {
-                            const existingIds = new Set(prev.map(p => p.id));
-                            const newPackages = packages.filter(p => !existingIds.has(p.id));
-                            return [...prev, ...newPackages];
-                        });
+                        setSelectedPackages(prev => QueueManager.merge(prev, packages));
                         onNavigate('home');
                     }}
                 />

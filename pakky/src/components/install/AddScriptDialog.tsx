@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ScrollText, Plus, AlertCircle, Variable } from 'lucide-react';
 import type { PackageInstallItem } from '@/lib/types';
+import { QueueManager } from '@/lib/managers/queueManager';
 
 interface AddScriptDialogProps {
     open: boolean;
@@ -45,7 +46,7 @@ export function AddScriptDialog({ open, onOpenChange, onAdd }: AddScriptDialogPr
     const handleCommandsChange = (value: string) => {
         setCommands(value);
         setError('');
-        
+
         const newVariables = extractVariables(value);
         setVariableConfigs(prev => {
             const updated: Record<string, VariableConfig> = {};
@@ -119,16 +120,13 @@ export function AddScriptDialog({ open, onOpenChange, onAdd }: AddScriptDialogPr
             }
         }
 
-        const script: PackageInstallItem = {
-            id: `script:${name.trim().toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-            name: name.trim(),
+        const script = QueueManager.createItem({
             type: 'script',
-            status: 'pending',
+            name: name.trim(),
             description: description.trim() || 'Custom script',
             commands: commandList,
             promptForInput: Object.keys(promptForInput).length > 0 ? promptForInput : undefined,
-            logs: [],
-        };
+        });
 
         onAdd(script);
         handleClose(false);
@@ -199,7 +197,7 @@ export function AddScriptDialog({ open, onOpenChange, onAdd }: AddScriptDialogPr
                                 <p className="text-xs text-muted-foreground">
                                     Configure prompts for each variable. Users will be asked to enter these values before the script runs.
                                 </p>
-                                
+
                                 <div className="space-y-4 pl-1">
                                     {detectedVariables.map(varName => (
                                         <div key={varName} className="p-3 bg-muted/30 rounded-lg space-y-3">

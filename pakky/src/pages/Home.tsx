@@ -9,6 +9,7 @@ import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
 import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
 import { ImportedConfigAlert } from '@/components/alerts/ImportedConfigAlert';
+import { QueueManager } from '@/lib/managers/queueManager';
 import { ScriptInputDialog } from '@/components/install/ScriptInputDialog';
 import { AddScriptDialog } from '@/components/install/AddScriptDialog';
 import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
@@ -85,23 +86,7 @@ export default function HomePage({
     // Handle imported packages
     useEffect(() => {
         if (importedPackages && importedPackages.length > 0) {
-            setSelectedPackages(prev => {
-                const existingIds = new Set(prev.map(p => p.id));
-                const newPackages = importedPackages.filter(p => !existingIds.has(p.id));
-
-                if (prev.length === 0) {
-                    // No existing packages - use imported packages as-is (already sorted with positions)
-                    return newPackages;
-                }
-
-                // Merge with existing packages: adjust imported positions by offset
-                const maxExistingPosition = Math.max(...prev.map(p => p.position ?? 0));
-                const packagesWithAdjustedPositions = newPackages.map(pkg => ({
-                    ...pkg,
-                    position: (pkg.position ?? 0) + maxExistingPosition,
-                }));
-                return [...prev, ...packagesWithAdjustedPositions];
-            });
+            setSelectedPackages(prev => QueueManager.merge(prev, importedPackages));
             onClearImported?.();
         }
     }, [importedPackages, onClearImported, setSelectedPackages]);
@@ -251,12 +236,8 @@ export default function HomePage({
     // Handle adding a custom script
     const handleAddScript = (script: PackageInstallItem) => {
         setSelectedPackages(prev => {
-            // Assign position based on current queue length
-            const scriptWithPosition = {
-                ...script,
-                position: prev.length + 1,
-            };
-            return [...prev, scriptWithPosition];
+            const { added } = QueueManager.addMultiple(prev, [script]);
+            return [...prev, ...added];
         });
     };
 

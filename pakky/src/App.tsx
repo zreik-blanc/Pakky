@@ -3,6 +3,7 @@ import { useInstallStore } from './stores/installStore';
 import { configAPI, userConfigAPI, type SecurityScanResult } from './lib/electron';
 import type { PackageInstallItem } from './lib/types';
 import { parseConfig } from './lib/configParser';
+import { QueueManager } from '@/lib/managers/queueManager';
 import { UI_STRINGS } from './lib/constants';
 import './index.css';
 
@@ -40,10 +41,8 @@ function App() {
   useEffect(() => {
     if (userConfig?.queue && userConfig.queue.length > 0) {
       setSelectedPackages(prev => {
-        // Merge with any existing (rare, but good for safety)
-        const existingIds = new Set(prev.map(p => p.id));
-        const restored = userConfig.queue!.filter(p => !existingIds.has(p.id));
-        return [...prev, ...restored];
+        // Merge with any existing (safely adjusting positions)
+        return QueueManager.merge(prev, userConfig.queue!);
       });
     }
   }, [userConfig]);

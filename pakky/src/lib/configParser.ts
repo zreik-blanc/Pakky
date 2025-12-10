@@ -13,6 +13,12 @@ import type {
     ConfigSettings,
     ScriptStep
 } from './types';
+import { QueueManager } from '@/lib/managers/queueManager';
+import {
+    parseFormulaToParams,
+    parseCaskToParams,
+    parseScriptToParams
+} from '@/lib/managers/parsers';
 
 // ============================================
 // Types
@@ -33,75 +39,21 @@ export interface ParsedConfig {
  * Parse a formula item (string or PackageObject) into PackageInstallItem
  */
 function parseFormulaItem(item: string | PackageObject): PackageInstallItem {
-    if (typeof item === 'string') {
-        return {
-            id: `formula:${item}`,
-            name: item,
-            type: 'formula',
-            status: 'pending',
-            description: 'CLI tool',
-            logs: [],
-        };
-    }
-
-    return {
-        id: `formula:${item.name}`,
-        name: item.name,
-        type: 'formula',
-        position: item.position, // Preserve position from config
-        status: 'pending',
-        description: item.description || 'CLI tool',
-        version: item.version,
-        required: item.required,
-        postInstall: item.post_install, // per-package post-install commands
-        logs: [],
-    };
+    return QueueManager.createItem(parseFormulaToParams(item));
 }
 
 /**
  * Parse a cask item (string or CaskObject) into PackageInstallItem
  */
 function parseCaskItem(item: string | CaskObject): PackageInstallItem {
-    if (typeof item === 'string') {
-        return {
-            id: `cask:${item}`,
-            name: item,
-            type: 'cask',
-            status: 'pending',
-            description: 'Application',
-            logs: [],
-        };
-    }
-
-    return {
-        id: `cask:${item.name}`,
-        name: item.name,
-        type: 'cask',
-        position: item.position, // Preserve position from config
-        status: 'pending',
-        description: item.description || 'Application',
-        required: item.required,
-        extensions: item.extensions,
-        postInstall: item.post_install, // per-package post-install commands
-        logs: [],
-    };
+    return QueueManager.createItem(parseCaskToParams(item));
 }
 
 /**
  * Parse a script step into PackageInstallItem
  */
 function parseScriptItem(script: ScriptStep): PackageInstallItem {
-    return {
-        id: `script:${script.name}`,
-        name: script.name,
-        type: 'script',
-        position: script.position, // Preserve position from config
-        status: 'pending',
-        description: script.prompt || 'Script',
-        commands: script.commands,
-        promptForInput: script.prompt_for_input,
-        logs: [],
-    };
+    return QueueManager.createItem(parseScriptToParams(script));
 }
 
 // ============================================
@@ -140,24 +92,8 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
         }
     }
 
-    // Check if any packages have positions from the imported config
-    const hasImportedPositions = packages.some(pkg => pkg.position !== undefined);
-
-    let packagesWithPositions: PackageInstallItem[];
-    if (hasImportedPositions) {
-        // Sort by imported positions, then assign sequential positions
-        const sorted = [...packages].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
-        packagesWithPositions = sorted.map((pkg, index) => ({
-            ...pkg,
-            position: index + 1,
-        }));
-    } else {
-        // No imported positions, assign sequential positions
-        packagesWithPositions = packages.map((pkg, index) => ({
-            ...pkg,
-            position: index + 1,
-        }));
-    }
+    // Apply reindexing based on positions or default order
+    const packagesWithPositions = QueueManager.reindex(packages);
 
     // TODO: Add support for MAS apps, Windows packages, Linux packages when those features are implemented
 
@@ -197,23 +133,8 @@ export function parsePreset(preset: Preset): PackageInstallItem[] {
         }
     }
 
-    // Check if any packages have positions from the preset
-    const hasImportedPositions = packages.some(pkg => pkg.position !== undefined);
-
-    if (hasImportedPositions) {
-        // Sort by imported positions, then assign sequential positions
-        const sorted = [...packages].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
-        return sorted.map((pkg, index) => ({
-            ...pkg,
-            position: index + 1,
-        }));
-    }
-
-    // No imported positions, assign sequential positions
-    return packages.map((pkg, index) => ({
-        ...pkg,
-        position: index + 1,
-    }));
+    // Apply reindexing
+    return QueueManager.reindex(packages);
 }
 
 /**

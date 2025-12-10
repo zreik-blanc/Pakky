@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { searchAPI, installAPI } from '@/lib/electron';
 import { INSTALL } from '@/lib/constants';
 import type { PackageInstallItem, SearchResult } from '@/lib/types';
+import { QueueManager } from '@/lib/managers/queueManager';
 
 interface UsePackageActionsProps {
     selectedPackages: PackageInstallItem[];
@@ -23,6 +24,7 @@ export function usePackageActions({
 
     const addPackage = useCallback(async (result: SearchResult) => {
         // Double check not added
+        // Although QueueManager.add also checks, avoiding the API call for description if possible is good optimization
         if (selectedPackages.some(p => p.id === `${result.type}:${result.name}`)) {
             return;
         }
@@ -36,29 +38,19 @@ export function usePackageActions({
         }
 
         setSelectedPackages(prev => {
-            const newPackage: PackageInstallItem = {
-                id: `${result.type}:${result.name}`,
+            const { added } = QueueManager.add(prev, {
                 name: result.name,
                 type: result.type,
-                position: prev.length + 1, // Assign 1-indexed position
-                status: result.installed ? 'already_installed' : 'pending',
-                description: description || `${result.type === 'cask' ? 'Application' : 'CLI tool'}`,
-                logs: [],
-            };
-            return [...prev, newPackage];
+                description,
+                installed: result.installed,
+            });
+
+            return added.length > 0 ? [...prev, ...added] : prev;
         });
     }, [selectedPackages, setSelectedPackages]);
 
     const removePackage = useCallback((id: string) => {
-        setSelectedPackages(prev => {
-            // Filter out the removed package
-            const filtered = prev.filter(p => p.id !== id);
-            // Re-index positions to be sequential (1, 2, 3...)
-            return filtered.map((pkg, index) => ({
-                ...pkg,
-                position: index + 1,
-            }));
-        });
+        setSelectedPackages(prev => QueueManager.remove(prev, id));
     }, [setSelectedPackages]);
 
     const handleReinstall = useCallback((id: string) => {
