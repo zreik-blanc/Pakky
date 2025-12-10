@@ -4,6 +4,7 @@ import { isPathAllowed, scanShellCommands, extractShellCommands, type SecuritySc
 import type { PakkyConfig } from '../../src/lib/types'
 import { PakkyConfigSchema } from './schemas'
 import { ZodError } from 'zod'
+import { DIALOGS } from '../constants'
 
 // Extended return type that includes security scan results
 interface ConfigLoadResult {
@@ -25,15 +26,15 @@ export function registerConfigHandlers() {
             const content = await fs.readFile(filePath, 'utf-8')
             const json = JSON.parse(content)
             const config = PakkyConfigSchema.parse(json)
-            
+
             // Security: Scan for dangerous shell commands
             const shellCommands = extractShellCommands(json)
             const security = scanShellCommands(shellCommands)
-            
+
             if (security.hasDangerousContent) {
                 console.warn('[Security] Dangerous commands detected in config:', security.dangerousCommands)
             }
-            
+
             return { config, security }
         } catch (error) {
             console.error('Config load error:', error)
@@ -64,11 +65,8 @@ export function registerConfigHandlers() {
 
     ipcMain.handle('config:selectFile', async () => {
         const result = await dialog.showOpenDialog({
-            title: 'Select Pakky Configuration',
-            filters: [
-                { name: 'JSON Files', extensions: ['json'] },
-                { name: 'All Files', extensions: ['*'] },
-            ],
+            title: DIALOGS.CONFIG_SELECT.TITLE,
+            filters: DIALOGS.CONFIG_SELECT.FILTERS as Electron.FileFilter[],
             properties: ['openFile'],
         })
 
@@ -80,11 +78,9 @@ export function registerConfigHandlers() {
 
     ipcMain.handle('config:saveDialog', async (_, config: PakkyConfig) => {
         const result = await dialog.showSaveDialog({
-            title: 'Save Pakky Configuration',
-            defaultPath: 'pakky-config.json',
-            filters: [
-                { name: 'JSON Files', extensions: ['json'] },
-            ],
+            title: DIALOGS.CONFIG_SAVE.TITLE,
+            defaultPath: DIALOGS.CONFIG_SAVE.DEFAULT_PATH,
+            filters: DIALOGS.CONFIG_SAVE.FILTERS as Electron.FileFilter[],
         })
 
         if (result.canceled || !result.filePath) {

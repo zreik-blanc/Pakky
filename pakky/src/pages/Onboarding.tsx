@@ -113,34 +113,6 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
 
                 {step === 'complete' && <CompleteStep isExiting={isExiting} />}
             </div>
-
-            {/* Animations */}
-            <style>{`
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-12px); }
-                }
-                @keyframes rocketFloat {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    25% { transform: translateY(-8px) rotate(2deg); }
-                    75% { transform: translateY(-4px) rotate(-2deg); }
-                }
-                @keyframes trail {
-                    0%, 100% { opacity: 0.6; transform: scaleX(1); }
-                    50% { opacity: 0.8; transform: scaleX(1.2); }
-                }
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.3; transform: scale(1); }
-                    50% { opacity: 0.8; transform: scale(1.2); }
-                }
-                @keyframes gradient {
-                    0%, 100% { background-position: 0% 50%; }
-                    50% { background-position: 100% 50%; }
-                }
-                .animate-gradient {
-                    animation: gradient 4s ease infinite;
-                }
-            `}</style>
         </div>
     );
 }

@@ -1,5 +1,5 @@
 import { PackageInstallItem } from "@/lib/types"
-import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X, RotateCw, ChevronDown, ChevronUp, ScrollText } from "lucide-react"
+import { Package, Terminal, CheckCircle2, XCircle, Clock, Loader2, Check, AlertCircle, X, RotateCw, ChevronDown, ChevronUp, ScrollText, Beer } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { InstallTerminal } from "@/components/install/InstallTerminal"
@@ -118,11 +118,17 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
                         <Badge
                             variant="outline"
                             className={cn(
-                                "h-4.5 px-1.5 text-[9px] uppercase font-mono tracking-wider border-border/50",
+                                "h-4.5 px-1.5 text-[9px] uppercase font-mono tracking-wider border-border/50 gap-1",
                                 pkg.type === 'cask' ? "text-primary/80" : 
                                 pkg.type === 'script' ? "text-amber-500/80" : "text-emerald-500/80"
                             )}
                         >
+                            {(pkg.type === 'formula' || pkg.type === 'cask') && (
+                                <Beer className="w-3 h-3 text-amber-500" />
+                            )}
+                            {(pkg.type === 'script') && (
+                                <ScrollText className="w-3 h-3 text-amber-500" />
+                            )}                            
                             {pkg.type}
                         </Badge>
 

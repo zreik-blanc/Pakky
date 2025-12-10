@@ -22,3 +22,6 @@ export {
 // Platform utilities
 export { getPlatformName, getSystemInfo } from './platform'
 export type { PlatformName } from './platform'
+
+// Logger utilities
+export { createLogger, logger } from './logger'

@@ -2,6 +2,7 @@ import { ipcMain, app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { SystemInfo, PackageInstallItem } from '../../src/lib/types'
+import { logger } from '../utils'
 
 const USER_CONFIG_FILENAME = 'user-config.json'
 
@@ -40,12 +41,12 @@ export function registerUserConfigHandlers() {
             const configPath = await getUserConfigPath()
             const backupPath = `${configPath}.corrupted.${Date.now()}.json`
             await fs.rename(configPath, backupPath)
-            console.log(`Backed up corrupted config to: ${backupPath}`)
+            logger.config.info(`Backed up corrupted config to: ${backupPath}`)
         } catch (backupError: unknown) {
             // If file is gone (ENOENT), it means another process handled it.
             const isENOENT = backupError instanceof Error && 'code' in backupError && (backupError as NodeJS.ErrnoException).code === 'ENOENT'
             if (!isENOENT) {
-                console.error('Failed to backup corrupted config:', backupError)
+                logger.config.error('Failed to backup corrupted config:', backupError)
                 throw new Error('Failed to reset configuration')
             }
         }
@@ -98,7 +99,7 @@ export function registerUserConfigHandlers() {
             await fs.writeFile(configPath, JSON.stringify(newConfig, null, 2), 'utf-8')
             return newConfig
         } catch (error) {
-            console.error('Failed to save user config:', error)
+            logger.config.error('Failed to save user config:', error)
             throw new Error('Failed to save user configuration')
         }
     })

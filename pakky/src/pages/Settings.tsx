@@ -11,8 +11,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { userConfigAPI, systemAPI } from '@/lib/electron';
-import { APP_CONFIG } from '@/lib/config';
-import { UI_STRINGS } from '@/lib/strings';
+import { APP, UI_STRINGS } from '@/lib/constants';
 import type { UserConfig } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -173,11 +172,11 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.VERSION_LABEL}</p>
-                            <p className="text-foreground">{APP_CONFIG.version}</p>
+                            <p className="text-foreground">{APP.VERSION}</p>
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.PACKAGE_MANAGER_LABEL}</p>
-                            <p className="text-foreground">{APP_CONFIG.packageManager}</p>
+                            <p className="text-foreground">{APP.PACKAGE_MANAGER}</p>
                         </div>
                     </div>
                 </CardContent>

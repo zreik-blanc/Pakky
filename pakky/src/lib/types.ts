@@ -11,7 +11,7 @@ export interface PakkyConfig {
     macos?: MacOSConfig;
     windows?: WindowsConfig;
     linux?: LinuxConfig;
-    post_install?: PostInstallStep[];
+    scripts?: ScriptStep[];
     metadata?: ConfigMetadata;
 }
 
@@ -140,8 +140,8 @@ export interface LinuxConfig {
     shell?: ShellConfig;
 }
 
-// Post-install Configuration
-export interface PostInstallStep {
+// Script Configuration
+export interface ScriptStep {
     name: string;
     condition?: string; // 'always', 'macos', 'windows', 'linux', 'package_installed:<name>'
     prompt?: string; // Ask user before running
@@ -252,7 +252,7 @@ export interface Preset {
         formulae?: (string | PackageObject)[];
         casks?: (string | CaskObject)[];
     };
-    post_install?: PostInstallStep[];
+    scripts?: ScriptStep[];
 }
 
 export interface UserConfig {

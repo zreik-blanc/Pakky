@@ -4,6 +4,7 @@ import { Package, Layers } from 'lucide-react';
 import { presetsAPI } from '@/lib/electron';
 import { PresetSkeleton, HeroPreset, PresetCard, getPresetConfig } from '@/components/presets';
 import { parsePreset, getPackageNamesPreview } from '@/lib/configParser';
+import { UI_STRINGS } from '@/lib/constants';
 
 interface PresetsPageProps {
     onLoadPreset: (packages: PackageInstallItem[]) => void;
@@ -51,10 +52,10 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
                     <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
                         <Layers className="w-4 h-4 text-primary" />
                     </div>
-                    <h2 className="text-2xl font-bold tracking-tight">Presets</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">{UI_STRINGS.PRESETS.TITLE}</h2>
                 </div>
                 <p className="text-muted-foreground">
-                    Pre-made configurations to get you started quickly. Choose one to load it into your queue.
+                    {UI_STRINGS.PRESETS.DESCRIPTION}
                 </p>
             </div>
 
@@ -85,7 +86,7 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
                     {otherPresets.length > 0 && (
                         <div className="space-y-4">
                             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                                More Presets
+                                {UI_STRINGS.PRESETS.MORE_PRESETS}
                             </h3>
                             <div className="grid gap-4 md:grid-cols-2">
                                 {otherPresets.map((preset, index) => (
@@ -108,7 +109,7 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
                     {presets.length === 0 && (
                         <div className="text-center py-12 text-muted-foreground">
                             <Package className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                            <p>No presets available</p>
+                            <p>{UI_STRINGS.PRESETS.EMPTY_STATE}</p>
                         </div>
                     )}
                 </>

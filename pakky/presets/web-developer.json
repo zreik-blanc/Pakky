@@ -70,7 +70,7 @@
             ]
         }
     },
-    "post_install": [
+    "scripts": [
         {
             "name": "Configure Git",
             "prompt": "Would you like to configure Git?",

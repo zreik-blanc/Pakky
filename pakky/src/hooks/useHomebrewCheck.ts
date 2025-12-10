@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { installAPI } from '@/lib/electron';
-import { UI_STRINGS } from '@/lib/strings';
+import { UI_STRINGS } from '@/lib/constants';
 
 interface UseHomebrewCheckProps {
     platform: string | undefined;

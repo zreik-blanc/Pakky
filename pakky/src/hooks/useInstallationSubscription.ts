@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { installAPI } from '@/lib/electron';
 import { useInstallStore } from '@/stores/installStore';
-import { INSTALL_CONFIG } from '@/lib/config';
+import { INSTALL } from '@/lib/constants';
 import type { PackageInstallItem } from '@/lib/types';
 
 interface UseInstallationSubscriptionProps {
@@ -45,7 +45,7 @@ export function useInstallationSubscription({
 
         const unsubLog = installAPI.onLog((log) => {
             addPackageLog(log.packageId, log.line);
-            const maxLogs = INSTALL_CONFIG.maxLogsPerPackage;
+            const maxLogs = INSTALL.MAX_LOGS_PER_PACKAGE;
             setInstallLogs(prev => {
                 const existingLogs = prev[log.packageId] || [];
                 const newLogs = existingLogs.length >= maxLogs

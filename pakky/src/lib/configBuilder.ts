@@ -3,17 +3,17 @@
  * Builds rich PakkyConfig objects from selected packages
  */
 
-import type { 
-    PakkyConfig, 
-    PackageInstallItem, 
-    SystemInfo, 
+import type {
+    PakkyConfig,
+    PackageInstallItem,
+    SystemInfo,
     ConfigSettings,
     ConfigMetadata,
     PackageObject,
     CaskObject,
-    PostInstallStep
+    ScriptStep
 } from './types';
-import { APP_CONFIG } from './config';
+import { APP, EXPORT_DEFAULTS, TAG_RULES } from './constants';
 
 // ============================================
 // Types
@@ -35,32 +35,7 @@ export interface BuildConfigOptions {
 // Auto-Tag Suggestions
 // ============================================
 
-interface TagRule {
-    keywords: string[];
-    tags: string[];
-}
-
-const TAG_RULES: TagRule[] = [
-    { keywords: ['node', 'npm', 'yarn', 'pnpm', 'typescript', 'deno', 'bun'], tags: ['javascript', 'web-dev'] },
-    { keywords: ['python', 'pip', 'conda', 'jupyter', 'pandas', 'numpy'], tags: ['python', 'data-science'] },
-    { keywords: ['docker', 'kubernetes', 'podman', 'k9s', 'helm'], tags: ['devops', 'containerization'] },
-    { keywords: ['visual-studio-code', 'sublime', 'atom', 'vim', 'neovim', 'emacs'], tags: ['editor', 'development'] },
-    { keywords: ['git', 'gh', 'gitlab', 'hub', 'lazygit'], tags: ['version-control'] },
-    { keywords: ['postgres', 'mysql', 'redis', 'mongodb', 'sqlite', 'mariadb'], tags: ['database'] },
-    { keywords: ['react', 'vue', 'angular', 'svelte', 'next', 'nuxt', 'vite'], tags: ['frontend'] },
-    { keywords: ['aws', 'azure', 'gcloud', 'terraform', 'pulumi'], tags: ['cloud'] },
-    { keywords: ['go', 'golang', 'rust', 'cargo'], tags: ['systems-programming'] },
-    { keywords: ['java', 'kotlin', 'gradle', 'maven'], tags: ['java'] },
-    { keywords: ['ruby', 'rails', 'rbenv'], tags: ['ruby'] },
-    { keywords: ['php', 'composer', 'laravel'], tags: ['php'] },
-    { keywords: ['figma', 'sketch', 'adobe'], tags: ['design'] },
-    { keywords: ['slack', 'discord', 'zoom', 'teams'], tags: ['communication'] },
-    { keywords: ['1password', 'bitwarden', 'lastpass'], tags: ['security'] },
-    { keywords: ['raycast', 'alfred', 'rectangle', 'magnet'], tags: ['productivity'] },
-    { keywords: ['iterm', 'warp', 'alacritty', 'kitty', 'hyper'], tags: ['terminal'] },
-    { keywords: ['arc', 'firefox', 'chrome', 'brave', 'safari'], tags: ['browser'] },
-    { keywords: ['spotify', 'vlc', 'iina'], tags: ['media'] },
-];
+// TAG_RULES is now imported from './constants/tags'
 
 /**
  * Generate tag suggestions based on package names
@@ -70,7 +45,7 @@ export function generateTagSuggestions(packages: PackageInstallItem[]): string[]
     const suggestedTags = new Set<string>();
 
     for (const rule of TAG_RULES) {
-        const hasMatch = rule.keywords.some(keyword => 
+        const hasMatch = rule.keywords.some(keyword =>
             packageNames.some(name => name.includes(keyword))
         );
         if (hasMatch) {
@@ -89,7 +64,7 @@ export function generateTagSuggestions(packages: PackageInstallItem[]): string[]
  * Convert packages to package objects with optional descriptions
  */
 function convertToPackageObjects(
-    packages: PackageInstallItem[], 
+    packages: PackageInstallItem[],
     includeDescriptions: boolean
 ): (string | PackageObject)[] {
     if (!includeDescriptions) {
@@ -111,7 +86,7 @@ function convertToPackageObjects(
  * Convert cask packages to cask objects with optional descriptions
  */
 function convertToCaskObjects(
-    packages: PackageInstallItem[], 
+    packages: PackageInstallItem[],
     includeDescriptions: boolean
 ): (string | CaskObject)[] {
     if (!includeDescriptions) {
@@ -134,19 +109,19 @@ function convertToCaskObjects(
  */
 function generateMetadata(systemInfo?: SystemInfo): ConfigMetadata {
     const now = new Date().toISOString();
-    
+
     let exportedFrom = 'Unknown';
     if (systemInfo) {
-        const platformName = systemInfo.platform === 'macos' ? 'macOS' : 
-                            systemInfo.platform === 'windows' ? 'Windows' : 
-                            systemInfo.platform === 'linux' ? 'Linux' : 'Unknown';
+        const platformName = systemInfo.platform === 'macos' ? 'macOS' :
+            systemInfo.platform === 'windows' ? 'Windows' :
+                systemInfo.platform === 'linux' ? 'Linux' : 'Unknown';
         exportedFrom = `${platformName} ${systemInfo.version} (${systemInfo.arch})`;
     }
 
     return {
         created_at: now,
         updated_at: now,
-        pakky_version: APP_CONFIG.version,
+        pakky_version: APP.VERSION,
         exported_from: exportedFrom,
     };
 }
@@ -177,7 +152,7 @@ export function buildPakkyConfig(
     const config: PakkyConfig = {
         $schema: './pakky-config.schema.json',
         name: options.name,
-        version: APP_CONFIG.DEFAULTS.EXPORT_VERSION,
+        version: EXPORT_DEFAULTS.VERSION,
     };
 
     // Add optional top-level fields
@@ -216,7 +191,7 @@ export function buildPakkyConfig(
         // Add formulae
         if (formulae.length > 0) {
             config.macos.homebrew!.formulae = convertToPackageObjects(
-                formulae, 
+                formulae,
                 options.includeDescriptions
             );
         }
@@ -224,20 +199,20 @@ export function buildPakkyConfig(
         // Add casks
         if (casks.length > 0) {
             config.macos.homebrew!.casks = convertToCaskObjects(
-                casks, 
+                casks,
                 options.includeDescriptions
             );
         }
     }
 
-    // Add post_install scripts
+    // Add scripts
     if (scripts.length > 0) {
-        config.post_install = scripts.map(script => {
-            const step: PostInstallStep = {
+        config.scripts = scripts.map(script => {
+            const step: ScriptStep = {
                 name: script.name,
                 commands: script.commands || [],
             };
-            if (script.description && script.description !== 'Post-install script') {
+            if (script.description && script.description !== 'Script') {
                 step.prompt = script.description;
             }
             if (script.promptForInput && Object.keys(script.promptForInput).length > 0) {

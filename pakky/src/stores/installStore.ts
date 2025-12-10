@@ -5,7 +5,7 @@ import type {
     PackageInstallItem,
     PackageStatus
 } from '../lib/types';
-import { INSTALL_CONFIG } from '../lib/config';
+import { INSTALL } from '../lib/constants';
 
 interface InstallStore {
     // State
@@ -129,7 +129,7 @@ export const useInstallStore = create<InstallStore>((set) => ({
     }),
 
     addPackageLog: (packageId, log) => set((state) => {
-        const maxLogs = INSTALL_CONFIG.maxLogsPerPackage;
+        const maxLogs = INSTALL.MAX_LOGS_PER_PACKAGE;
         return {
             progress: {
                 ...state.progress,

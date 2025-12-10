@@ -103,11 +103,15 @@
 
   /* Hide scrollbar utility - hides scrollbar but keeps functionality */
   .scrollbar-hide {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+    scrollbar-width: none;
+    /* Firefox */
   }
+
   .scrollbar-hide::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+    /* Chrome, Safari, Opera */
   }
 }
 
@@ -208,5 +212,79 @@
 
   .animate-float {
     animation: float 3s ease-in-out infinite;
+  }
+
+  /* Onboarding-specific animations */
+  /* Note: These keyframe names must match exactly what components use in inline styles */
+  @keyframes rocketFloat {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    25% {
+      transform: translateY(-8px) rotate(2deg);
+    }
+
+    75% {
+      transform: translateY(-4px) rotate(-2deg);
+    }
+  }
+
+  @keyframes trail {
+
+    0%,
+    100% {
+      opacity: 0.6;
+      transform: scaleX(1);
+    }
+
+    50% {
+      opacity: 0.8;
+      transform: scaleX(1.2);
+    }
+  }
+
+  @keyframes twinkle {
+
+    0%,
+    100% {
+      opacity: 0.3;
+      transform: scale(1);
+    }
+
+    50% {
+      opacity: 0.8;
+      transform: scale(1.2);
+    }
+  }
+
+  @keyframes gradient {
+
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-rocket-float {
+    animation: rocketFloat 3s ease-in-out infinite;
+  }
+
+  .animate-trail {
+    animation: trail 2s ease-in-out infinite;
+  }
+
+  .animate-twinkle {
+    animation: twinkle 2s ease-in-out infinite;
+  }
+
+  .animate-gradient {
+    animation: gradient 4s ease infinite;
   }
 }

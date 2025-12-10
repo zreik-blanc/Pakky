@@ -47,7 +47,7 @@ export function WelcomeStep({ onNext, isTransitioning }: WelcomeStepProps) {
                         <Rocket className="w-16 h-16 text-primary transform -rotate-45" />
                         {/* Rocket trail */}
                         <div
-                            className="absolute -bottom-1 -left-1 w-8 h-3 bg-gradient-to-l from-primary/60 via-orange-400/40 to-transparent blur-sm rounded-full"
+                            className="absolute bottom-0 left-2 w-8 h-3 bg-gradient-to-l from-primary/60 via-orange-400/40 to-transparent blur-sm rounded-full"
                             style={{ animation: 'trail 0.5s ease-in-out infinite' }}
                         />
                     </div>

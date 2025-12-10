@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { Search, Loader2, Package, Terminal, Check, Plus } from "lucide-react"
+import { Search, Loader2, Package, Terminal, Check, Plus, Beer } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { searchAPI } from "@/lib/electron"
 import { cn } from "@/lib/utils"
 import { SearchResult } from "@/lib/types"
-import { SEARCH_CONFIG } from "@/lib/config"
+import { SEARCH } from '@/lib/constants'
 
 interface PackageSearchProps {
     onAddPackage: (result: SearchResult) => Promise<void>
@@ -51,7 +51,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
 
     // Debounced search
     useEffect(() => {
-        if (query.length < SEARCH_CONFIG.minQueryLength) {
+        if (query.length < SEARCH.MIN_QUERY_LENGTH) {
             setResults([])
             setIsOpen(false)
             return
@@ -70,7 +70,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
             } finally {
                 setIsSearching(false)
             }
-        }, SEARCH_CONFIG.debounceMs)
+        }, SEARCH.DEBOUNCE_MS)
 
         return () => clearTimeout(timer)
     }, [query])
@@ -173,7 +173,8 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                                             )}
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 border-border/50 text-muted-foreground">
+                                            <Badge variant="outline" className="text-[10px] h-4 px-1.5 py-0 border-border/50 text-muted-foreground gap-1">
+                                                <Beer className="w-3 h-3 text-amber-500" />
                                                 {result.type}
                                             </Badge>
                                             <span className="text-xs text-muted-foreground truncate max-w-[200px]">

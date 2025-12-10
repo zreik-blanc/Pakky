@@ -11,8 +11,8 @@ import { JsonPreview } from '@/components/ui/json-preview';
 import { Badge } from '@/components/ui/badge';
 import type { PakkyConfig, PackageInstallItem, SystemInfo, ConfigSettings } from '@/lib/types';
 import { buildPakkyConfig, generateTagSuggestions, DEFAULT_BUILD_OPTIONS, type BuildConfigOptions } from '@/lib/configBuilder';
-import { getSuggestedTemplates, templatesToSteps, type PostInstallTemplate } from '@/lib/postInstallTemplates';
-import { APP_CONFIG } from '@/lib/config';
+import { getSuggestedTemplates, templatesToSteps, type ScriptTemplate } from '@/lib/scriptTemplates';
+import { EXPORT_DEFAULTS } from '@/lib/constants';
 
 interface ExportPreviewDialogProps {
     open: boolean;
@@ -24,15 +24,15 @@ interface ExportPreviewDialogProps {
 }
 
 // Toggle Switch Component
-function ToggleSwitch({ 
-    checked, 
-    onChange, 
-    label, 
-    description 
-}: { 
-    checked: boolean; 
-    onChange: (checked: boolean) => void; 
-    label: string; 
+function ToggleSwitch({
+    checked,
+    onChange,
+    label,
+    description
+}: {
+    checked: boolean;
+    onChange: (checked: boolean) => void;
+    label: string;
     description?: string;
 }) {
     return (
@@ -70,13 +70,13 @@ function ToggleSwitch({
 }
 
 // Tag Input Component
-function TagInput({ 
-    tags, 
-    suggestions, 
-    onChange 
-}: { 
-    tags: string[]; 
-    suggestions: string[]; 
+function TagInput({
+    tags,
+    suggestions,
+    onChange
+}: {
+    tags: string[];
+    suggestions: string[];
     onChange: (tags: string[]) => void;
 }) {
     const [inputValue, setInputValue] = useState('');
@@ -152,12 +152,12 @@ function TagInput({
 }
 
 // Post-Install Template Selector
-function PostInstallSelector({
+function ScriptSelector({
     templates,
     selectedIds,
     onChange
 }: {
-    templates: PostInstallTemplate[];
+    templates: ScriptTemplate[];
     selectedIds: string[];
     onChange: (ids: string[]) => void;
 }) {
@@ -187,8 +187,8 @@ function PostInstallSelector({
                             onClick={() => toggleTemplate(template.id)}
                             className={`
                                 w-full flex items-start gap-3 p-3 rounded-lg text-left transition-all
-                                ${isSelected 
-                                    ? 'bg-primary/10 ring-1 ring-primary/30' 
+                                ${isSelected
+                                    ? 'bg-primary/10 ring-1 ring-primary/30'
                                     : 'hover:bg-muted/50'
                                 }
                             `}
@@ -196,8 +196,8 @@ function PostInstallSelector({
                             <div
                                 className={`
                                     mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors
-                                    ${isSelected 
-                                        ? 'border-primary bg-primary text-primary-foreground' 
+                                    ${isSelected
+                                        ? 'border-primary bg-primary text-primary-foreground'
                                         : 'border-muted-foreground/30'
                                     }
                                 `}
@@ -233,8 +233,8 @@ export function ExportPreviewDialog({
     systemInfo
 }: ExportPreviewDialogProps) {
     // Basic info
-    const [name, setName] = useState<string>(APP_CONFIG.DEFAULTS.EXPORT_NAME);
-    const [description, setDescription] = useState<string>(APP_CONFIG.DEFAULTS.EXPORT_DESCRIPTION);
+    const [name, setName] = useState<string>(EXPORT_DEFAULTS.NAME);
+    const [description, setDescription] = useState<string>(EXPORT_DEFAULTS.DESCRIPTION);
     const [tags, setTags] = useState<string[]>([]);
 
     // Export options
@@ -252,16 +252,16 @@ export function ExportPreviewDialog({
     const tagSuggestions = useMemo(() => generateTagSuggestions(packages), [packages]);
 
     // Suggested post-install templates based on packages
-    const suggestedTemplates = useMemo(() => 
-        getSuggestedTemplates(packages.map(p => p.name)), 
+    const suggestedTemplates = useMemo(() =>
+        getSuggestedTemplates(packages.map(p => p.name)),
         [packages]
     );
 
     // Reset state when dialog opens
     useEffect(() => {
         if (open) {
-            setName(APP_CONFIG.DEFAULTS.EXPORT_NAME);
-            setDescription(APP_CONFIG.DEFAULTS.EXPORT_DESCRIPTION);
+            setName(EXPORT_DEFAULTS.NAME);
+            setDescription(EXPORT_DEFAULTS.DESCRIPTION);
             setTags([]);
             setIncludeDescriptions(DEFAULT_BUILD_OPTIONS.includeDescriptions);
             setIncludeMetadata(DEFAULT_BUILD_OPTIONS.includeMetadata);
@@ -287,9 +287,9 @@ export function ExportPreviewDialog({
 
         const config = buildPakkyConfig(packages, options);
 
-        // Add post-install steps if any selected
+        // Add script steps if any selected
         if (selectedTemplates.length > 0) {
-            config.post_install = templatesToSteps(selectedTemplates);
+            config.scripts = templatesToSteps(selectedTemplates);
         }
 
         return config;
@@ -374,7 +374,7 @@ export function ExportPreviewDialog({
                             </div>
 
                             {suggestedTemplates.length > 0 && (
-                                <PostInstallSelector
+                                <ScriptSelector
                                     templates={suggestedTemplates}
                                     selectedIds={selectedTemplates}
                                     onChange={setSelectedTemplates}

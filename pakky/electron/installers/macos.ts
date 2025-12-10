@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { execFileAsync, isValidPackageName, getHomebrewPath, getEnhancedEnv } from '../utils'
+import { execFileAsync, isValidPackageName, getHomebrewPath, getEnhancedEnv, logger } from '../utils'
 import type { PackageInstallItem } from '../../src/lib/types'
 
 /**
@@ -60,7 +60,7 @@ export async function isHomebrewInstalled(): Promise<boolean> {
  * Install Homebrew using the official install script
  */
 export async function installHomebrew(): Promise<void> {
-    console.log('Installing Homebrew...')
+    logger.install.info('Installing Homebrew...')
 
     // Homebrew installation requires user interaction (password, sudo, etc.)
     // We need to open Terminal.app and run the install script there
@@ -81,7 +81,7 @@ export async function installHomebrew(): Promise<void> {
 
         osascriptProcess.on('close', (code) => {
             if (code === 0) {
-                console.log('Homebrew installation started in Terminal.app')
+                logger.install.info('Homebrew installation started in Terminal.app')
                 // Note: This resolves when Terminal opens, not when installation completes
                 // The user needs to complete the installation in Terminal
                 resolve()
@@ -195,7 +195,7 @@ function replaceCommandPlaceholders(command: string, userInputValues: Record<str
 }
 
 /**
- * Execute a post-install script
+ * Execute a script
  */
 async function executeScript(
     pkg: PackageInstallItem,
@@ -205,7 +205,7 @@ async function executeScript(
     userInputValues: Record<string, string> = {}
 ): Promise<boolean> {
     const commands = pkg.commands || []
-    
+
     if (commands.length === 0) {
         sendLog(`✗ No commands defined for script: ${pkg.name}`, 'stderr')
         sendProgress('failed', 'No commands defined')
@@ -285,7 +285,7 @@ export function cancelInstallation(state: InstallationState): void {
         // Security: Add SIGKILL fallback if process doesn't terminate
         setTimeout(() => {
             if (processToKill && !processToKill.killed) {
-                console.log('Process did not terminate with SIGTERM, sending SIGKILL')
+                logger.install.warn('Process did not terminate with SIGTERM, sending SIGKILL')
                 processToKill.kill('SIGKILL')
             }
         }, 5000)

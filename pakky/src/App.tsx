@@ -3,6 +3,7 @@ import { useInstallStore } from './stores/installStore';
 import { configAPI, userConfigAPI, type SecurityScanResult } from './lib/electron';
 import type { PackageInstallItem } from './lib/types';
 import { parseConfig } from './lib/configParser';
+import { UI_STRINGS } from './lib/constants';
 import './index.css';
 
 // Components
@@ -129,7 +130,7 @@ function App() {
       <div className="h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-muted-foreground animate-pulse">Loading Pakky...</p>
+          <p className="text-muted-foreground animate-pulse">{UI_STRINGS.COMMON.LOADING_APP}</p>
         </div>
       </div>
     );

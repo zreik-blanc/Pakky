@@ -8,6 +8,7 @@ import {
     cancelInstallation,
     type InstallationState,
 } from '../installers'
+import { logger } from '../utils'
 
 // Interface for install request from renderer
 interface InstallRequest {
@@ -53,13 +54,13 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
 
         const { packages, settings: userSettings, userInputValues = {} } = request
         const settings = { ...DEFAULT_SETTINGS, ...userSettings }
-        
+
         if (!packages || packages.length === 0) {
             throw new Error('No packages to install')
         }
 
-        console.log('Starting installation with packages:', packages.map(p => p.name))
-        console.log('Installation settings:', settings)
+        logger.install.info('Starting installation with packages:', packages.map(p => p.name))
+        logger.install.debug('Installation settings:', settings)
 
         // Reset installation state
         currentInstallation = {
@@ -145,14 +146,14 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
                 completedCount++
             } else if (!currentInstallation.isCancelled) {
                 failedCount++
-                
+
                 // Check if we should stop on error (respects continue_on_error setting)
                 if (!settings.continue_on_error) {
                     // Mark remaining packages as skipped
                     for (let j = i + 1; j < packages.length; j++) {
                         updatedPackages[j] = { ...updatedPackages[j], status: 'skipped' as const }
                     }
-                    
+
                     sendProgressUpdate({
                         status: 'installing',
                         currentPackage: pkg.id,
@@ -160,8 +161,8 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
                         failedPackages: failedCount,
                         packages: updatedPackages,
                     })
-                    
-                    console.log('Stopping installation due to error (continue_on_error=false)')
+
+                    logger.install.info('Stopping installation due to error (continue_on_error=false)')
                     break
                 }
             }
@@ -189,7 +190,7 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
             packages: updatedPackages,
         })
 
-        console.log(`Installation complete: ${completedCount} succeeded, ${failedCount} failed`)
+        logger.install.info(`Installation complete: ${completedCount} succeeded, ${failedCount} failed`)
 
         return {
             success: failedCount === 0,
@@ -199,7 +200,7 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
     })
 
     ipcMain.handle('install:cancel', async () => {
-        console.log('Cancelling installation...')
+        logger.install.info('Cancelling installation...')
         cancelInstallation(currentInstallation)
         return { cancelled: true }
     })

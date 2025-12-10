@@ -3,8 +3,9 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import fs from 'node:fs'
 import { registerAllHandlers } from './ipc'
-import { ELECTRON_CONFIG } from './config'
-import { WINDOW_CONFIG } from '../src/lib/config'
+import { ELECTRON_CONFIG } from './constants'
+import { WINDOW } from '../src/lib/constants'
+import { logger } from './utils'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -43,15 +44,15 @@ function hasUserConfig(): boolean {
 function createWindow() {
   // Check if user has completed onboarding to determine initial window size
   const isReturningUser = hasUserConfig()
-  const windowSize = isReturningUser ? WINDOW_CONFIG.normal : WINDOW_CONFIG.onboarding
+  const windowConfig = isReturningUser ? WINDOW.NORMAL : WINDOW.ONBOARDING
 
-  console.log(`[Main] Creating window - Returning user: ${isReturningUser}, Size: ${windowSize.width}x${windowSize.height}`)
+  logger.main.info(`Creating window - Returning user: ${isReturningUser}, Size: ${windowConfig.WIDTH}x${windowConfig.HEIGHT}`)
 
   win = new BrowserWindow({
-    width: windowSize.width,
-    height: windowSize.height,
-    minWidth: windowSize.minWidth,
-    minHeight: windowSize.minHeight,
+    width: windowConfig.WIDTH,
+    height: windowConfig.HEIGHT,
+    minWidth: windowConfig.MIN_WIDTH,
+    minHeight: windowConfig.MIN_HEIGHT,
     icon: path.join(process.env.VITE_PUBLIC, ELECTRON_CONFIG.PATHS.ICON),
     titleBarStyle: ELECTRON_CONFIG.WINDOW.TITLE_BAR_STYLE, // macOS native title bar
     show: false, // Don't show until ready to prevent white flash

@@ -1,25 +1,25 @@
 /**
- * Post-Install Script Templates
- * Provides reusable post-install step templates for common configurations
+ * Script Templates
+ * Provides reusable script step templates for common configurations
  */
 
-import type { PostInstallStep } from './types';
+import type { ScriptStep } from './types';
 
 // ============================================
 // Template Definitions
 // ============================================
 
-export interface PostInstallTemplate {
+export interface ScriptTemplate {
     id: string;
     name: string;
     description: string;
     category: 'git' | 'shell' | 'npm' | 'ssh' | 'system';
-    step: PostInstallStep;
+    step: ScriptStep;
     /** Packages that should trigger this template suggestion */
     suggestedFor?: string[];
 }
 
-export const POST_INSTALL_TEMPLATES: PostInstallTemplate[] = [
+export const SCRIPT_TEMPLATES: ScriptTemplate[] = [
     // Git Configuration
     {
         id: 'git-config',
@@ -192,10 +192,10 @@ export const POST_INSTALL_TEMPLATES: PostInstallTemplate[] = [
 /**
  * Get templates suggested for the given packages
  */
-export function getSuggestedTemplates(packageNames: string[]): PostInstallTemplate[] {
+export function getSuggestedTemplates(packageNames: string[]): ScriptTemplate[] {
     const lowerNames = packageNames.map(n => n.toLowerCase());
     
-    return POST_INSTALL_TEMPLATES.filter(template => {
+    return SCRIPT_TEMPLATES.filter(template => {
         if (!template.suggestedFor) return false;
         return template.suggestedFor.some(pkg => 
             lowerNames.some(name => name.includes(pkg))
@@ -206,22 +206,22 @@ export function getSuggestedTemplates(packageNames: string[]): PostInstallTempla
 /**
  * Get all templates by category
  */
-export function getTemplatesByCategory(category: PostInstallTemplate['category']): PostInstallTemplate[] {
-    return POST_INSTALL_TEMPLATES.filter(t => t.category === category);
+export function getTemplatesByCategory(category: ScriptTemplate['category']): ScriptTemplate[] {
+    return SCRIPT_TEMPLATES.filter(t => t.category === category);
 }
 
 /**
  * Get a template by ID
  */
-export function getTemplateById(id: string): PostInstallTemplate | undefined {
-    return POST_INSTALL_TEMPLATES.find(t => t.id === id);
+export function getTemplateById(id: string): ScriptTemplate | undefined {
+    return SCRIPT_TEMPLATES.find(t => t.id === id);
 }
 
 /**
- * Convert selected templates to PostInstallStep array
+ * Convert selected templates to ScriptStep array
  */
-export function templatesToSteps(templateIds: string[]): PostInstallStep[] {
+export function templatesToSteps(templateIds: string[]): ScriptStep[] {
     return templateIds
         .map(id => getTemplateById(id)?.step)
-        .filter((step): step is PostInstallStep => step !== undefined);
+        .filter((step): step is ScriptStep => step !== undefined);
 }

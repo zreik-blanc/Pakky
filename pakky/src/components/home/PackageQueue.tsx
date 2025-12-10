@@ -3,7 +3,7 @@ import type { PackageInstallItem } from '@/lib/types';
 import { PackageCard } from '@/components/packages/PackageCard';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { UI_STRINGS } from '@/lib/strings';
+import { UI_STRINGS } from '@/lib/constants';
 
 interface PackageQueueProps {
     packages: PackageInstallItem[];
@@ -87,6 +87,16 @@ export function PackageQueue({
                         <Search className="w-4 h-4" />
                         {UI_STRINGS.QUEUE.SEARCH_PACKAGES}
                     </Button>
+                    {onAddScript && (
+                        <Button
+                            variant="outline"
+                            className="gap-2 hover:bg-accent/50 transition-all duration-200"
+                            onClick={onAddScript}
+                        >
+                            <ScrollText className="w-4 h-4" />
+                            {UI_STRINGS.QUEUE.ADD_SCRIPT}
+                        </Button>
+                    )}
                 </div>
 
                 {/* Tip */}

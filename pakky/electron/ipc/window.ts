@@ -1,20 +1,20 @@
 import { ipcMain, type BrowserWindow } from 'electron'
+import { WINDOW } from '../../src/lib/constants'
+import { logger } from '../utils'
 
-// Window configuration constants
-export const WINDOW_CONFIG = {
-    // Normal app size
+// Use the centralized window config with lowercase property names for compatibility
+const WINDOW_CONFIG = {
     normal: {
-        width: 1200,
-        height: 800,
-        minWidth: 900,
-        minHeight: 600,
+        width: WINDOW.NORMAL.WIDTH,
+        height: WINDOW.NORMAL.HEIGHT,
+        minWidth: WINDOW.NORMAL.MIN_WIDTH,
+        minHeight: WINDOW.NORMAL.MIN_HEIGHT,
     },
-    // Onboarding size (smaller, focused)
     onboarding: {
-        width: 600,
-        height: 600,
-        minWidth: 600,
-        minHeight: 600,
+        width: WINDOW.ONBOARDING.WIDTH,
+        height: WINDOW.ONBOARDING.HEIGHT,
+        minWidth: WINDOW.ONBOARDING.MIN_WIDTH,
+        minHeight: WINDOW.ONBOARDING.MIN_HEIGHT,
     },
 } as const
 
@@ -23,26 +23,26 @@ export const WINDOW_CONFIG = {
  * @param getWindow - Function to get the main BrowserWindow instance
  */
 export function registerWindowHandlers(getWindow: () => BrowserWindow | null) {
-    console.log('[Window IPC] Registering window handlers...')
+    logger.window.debug('Registering window handlers...')
 
     // Resize window to normal app size (after onboarding)
     ipcMain.handle('window:setNormalSize', async () => {
         const win = getWindow()
-        console.log('[Window IPC] setNormalSize called, window exists:', !!win)
+        logger.window.debug('setNormalSize called, window exists:', !!win)
         if (!win) {
-            console.error('[Window IPC] Window is null!')
+            logger.window.error('Window is null!')
             return false
         }
 
         const { width, height, minWidth, minHeight } = WINDOW_CONFIG.normal
-        console.log('[Window IPC] Resizing to:', { width, height, minWidth, minHeight })
+        logger.window.debug('Resizing to:', { width, height, minWidth, minHeight })
 
         // Update minimum size first
         win.setMinimumSize(minWidth, minHeight)
 
         // Get current bounds
         const currentBounds = win.getBounds()
-        console.log('[Window IPC] Current bounds:', currentBounds)
+        logger.window.debug('Current bounds:', currentBounds)
 
         // Calculate new position to center the expanded window
         const newX = Math.max(0, currentBounds.x - Math.floor((width - currentBounds.width) / 2))
@@ -59,7 +59,7 @@ export function registerWindowHandlers(getWindow: () => BrowserWindow | null) {
         // Wait for animation to complete (approx 250ms on macOS)
         await new Promise(resolve => setTimeout(resolve, 300))
 
-        console.log('[Window IPC] Resize complete')
+        logger.window.debug('Resize complete')
         return true
     })
 

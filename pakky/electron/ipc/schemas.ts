@@ -121,7 +121,7 @@ const LinuxConfigSchema = z.object({
     shell: ShellConfigSchema.optional(),
 });
 
-const PostInstallStepSchema = z.object({
+const ScriptStepSchema = z.object({
     name: z.string(),
     condition: z.string().optional(),
     prompt: z.string().optional(),
@@ -161,7 +161,7 @@ export const PakkyConfigSchema = z.object({
     macos: MacOSConfigSchema.optional(),
     windows: WindowsConfigSchema.optional(),
     linux: LinuxConfigSchema.optional(),
-    post_install: z.array(PostInstallStepSchema).optional(),
+    scripts: z.array(ScriptStepSchema).optional(),
     metadata: ConfigMetadataSchema.optional(),
 });
 
@@ -183,4 +183,5 @@ export const PresetSchema = z.object({
         formulae: z.array(ItemSchema).optional(),
         casks: z.array(CaskItemSchema).optional(),
     }).optional(),
+    scripts: z.array(ScriptStepSchema).optional(),
 });

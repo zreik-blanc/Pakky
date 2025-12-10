@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { searchAPI, installAPI } from '@/lib/electron';
-import { INSTALL_CONFIG } from '@/lib/config';
+import { INSTALL } from '@/lib/constants';
 import type { PackageInstallItem, SearchResult } from '@/lib/types';
 
 interface UsePackageActionsProps {
@@ -20,7 +20,7 @@ export function usePackageActions({
     isStartingInstall,
     installStatus,
 }: UsePackageActionsProps) {
-    
+
     const addPackage = useCallback(async (result: SearchResult) => {
         // Double check not added
         if (selectedPackages.some(p => p.id === `${result.type}:${result.name}`)) {
@@ -93,7 +93,7 @@ export function usePackageActions({
                     });
                 });
             } catch { /* ignore */ }
-        }, INSTALL_CONFIG.checkInstalledDebounceMs);
+        }, INSTALL.CHECK_INSTALLED_DEBOUNCE_MS);
 
         return () => clearTimeout(timer);
     }, [selectedPackages.length, isStartingInstall, installStatus, setSelectedPackages]);

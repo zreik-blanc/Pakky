@@ -3,7 +3,7 @@ import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
 import { installAPI, configAPI } from '@/lib/electron';
 import type { PakkyConfig } from '@/lib/types';
-import { UI_STRINGS } from '@/lib/strings';
+import { UI_STRINGS } from '@/lib/constants';
 import { PackageSearch } from '@/components/packages/PackageSearch';
 import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
@@ -97,13 +97,13 @@ export default function HomePage({
     // Check if user wants to install from imported config
     const handleStartInstall = () => {
         if (isStartingInstall) return;
-        
+
         // If packages came from an imported config, show confirmation first
         if (hasImportedConfig && selectedPackages.length > 0) {
             setShowImportedAlert(true);
             return;
         }
-        
+
         // Otherwise check for scripts that need user input
         checkForScriptInputs();
     };
@@ -111,9 +111,9 @@ export default function HomePage({
     // Check if any scripts need user input before proceeding
     const checkForScriptInputs = () => {
         const scriptsWithInputs = selectedPackages.filter(
-            pkg => pkg.type === 'script' && 
-            pkg.promptForInput && 
-            Object.keys(pkg.promptForInput).length > 0
+            pkg => pkg.type === 'script' &&
+                pkg.promptForInput &&
+                Object.keys(pkg.promptForInput).length > 0
         );
 
         if (scriptsWithInputs.length > 0) {

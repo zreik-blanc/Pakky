@@ -1,7 +1,7 @@
 /**
  * Config Parser Utility
  * Parses PakkyConfig and Preset objects into PackageInstallItem arrays
- * Handles rich schemas with descriptions, post_install, required flags, etc.
+ * Handles rich schemas with descriptions, scripts, required flags, etc.
  */
 
 import type { 
@@ -11,7 +11,7 @@ import type {
     PackageObject,
     CaskObject,
     ConfigSettings,
-    PostInstallStep
+    ScriptStep
 } from './types';
 
 // ============================================
@@ -52,7 +52,7 @@ function parseFormulaItem(item: string | PackageObject): PackageInstallItem {
         description: item.description || 'CLI tool',
         version: item.version,
         required: item.required,
-        postInstall: item.post_install,
+        postInstall: item.post_install, // per-package post-install commands
         logs: [],
     };
 }
@@ -80,21 +80,21 @@ function parseCaskItem(item: string | CaskObject): PackageInstallItem {
         description: item.description || 'Application',
         required: item.required,
         extensions: item.extensions,
-        postInstall: item.post_install,
+        postInstall: item.post_install, // per-package post-install commands
         logs: [],
     };
 }
 
 /**
- * Parse a post-install script into PackageInstallItem
+ * Parse a script step into PackageInstallItem
  */
-function parsePostScriptItem(script: PostInstallStep): PackageInstallItem {
+function parseScriptItem(script: ScriptStep): PackageInstallItem {
     return {
         id: `script:${script.name}`,
         name: script.name,
         type: 'script',
         status: 'pending',
-        description: script.prompt || 'Post-install script',
+        description: script.prompt || 'Script',
         commands: script.commands,
         promptForInput: script.prompt_for_input,
         logs: [],
@@ -130,10 +130,10 @@ export function parseConfig(config: PakkyConfig): ParsedConfig {
         }
     }
 
-    // Parse post-install scripts
-    if (config.post_install) {
-        for (const script of config.post_install) {
-            packages.push(parsePostScriptItem(script));
+    // Parse scripts
+    if (config.scripts) {
+        for (const script of config.scripts) {
+            packages.push(parseScriptItem(script));
         }
     }
 
@@ -168,10 +168,10 @@ export function parsePreset(preset: Preset): PackageInstallItem[] {
         packages.push(parseCaskItem(item));
     }
 
-    // Parse post-install scripts
-    if (preset.post_install) {
-        for (const script of preset.post_install) {
-            packages.push(parsePostScriptItem(script));
+    // Parse scripts
+    if (preset.scripts) {
+        for (const script of preset.scripts) {
+            packages.push(parseScriptItem(script));
         }
     }
 
@@ -212,7 +212,7 @@ export function hasPackages(config: PakkyConfig): boolean {
         (homebrew.formulae?.length ?? 0) > 0 ||
         (homebrew.casks?.length ?? 0) > 0
     );
-    const hasPostInstall = (config.post_install?.length ?? 0) > 0;
+    const hasScripts = (config.scripts?.length ?? 0) > 0;
     
-    return hasHomebrewPackages || hasPostInstall;
+    return hasHomebrewPackages || hasScripts;
 }
