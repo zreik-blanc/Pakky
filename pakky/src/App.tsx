@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { LayoutGroup } from 'motion/react';
 import { useInstallStore } from './stores/installStore';
 import { configAPI, userConfigAPI, type SecurityScanResult } from './lib/electron';
 import type { PackageInstallItem } from './lib/types';
@@ -139,54 +140,65 @@ function App() {
     return <ConfigCorruptionAlert />;
   }
 
-  if (isOnboarding) {
-    return (
-      <OnboardingPage
-        systemInfo={systemInfo}
-        onComplete={handleOnboardingComplete}
-      />
-    );
-  }
-
+  // Render both onboarding and main app simultaneously for seamless layoutId animation
+  // Onboarding is rendered as an overlay that fades out, while main app is always underneath
   return (
-    <div
-      className={`transition-all duration-500 ease-out ${showMainApp ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
-        }`}
-      style={{ height: '100%' }}
-    >
-      {/* Security warning modal */}
-      {securityWarning && (
-        <SecurityWarningAlert
-          security={securityWarning}
-          onConfirm={handleSecurityConfirm}
-          onReject={handleSecurityReject}
-        />
-      )}
-
-      <AppLayout
-        currentPage={currentPage}
-        onNavigate={setCurrentPage}
-        onImportConfig={handleImportConfig}
-        systemInfo={systemInfo}
-        progress={progress}
+    <LayoutGroup>
+      {/* Main app - always rendered, but starts hidden during onboarding */}
+      <div
+        className={`h-full transition-all duration-700 ease-out ${showMainApp && !isOnboarding ? 'opacity-100 scale-100' : 'opacity-0 scale-[0.98]'
+          }`}
+        style={{
+          height: '100%',
+          pointerEvents: showMainApp && !isOnboarding ? 'auto' : 'none'
+        }}
       >
-        <AppRoutes
+        {/* Security warning modal */}
+        {securityWarning && (
+          <SecurityWarningAlert
+            security={securityWarning}
+            onConfirm={handleSecurityConfirm}
+            onReject={handleSecurityReject}
+          />
+        )}
+
+        <AppLayout
           currentPage={currentPage}
-          systemInfo={systemInfo}
-          userConfig={userConfig}
-          importedPackages={importedPackages}
-          setImportedPackages={setImportedPackages}
-          selectedPackages={selectedPackages}
-          setSelectedPackages={setSelectedPackages}
-          installLogs={installLogs}
-          setInstallLogs={setInstallLogs}
           onNavigate={setCurrentPage}
-          hasImportedConfig={hasImportedConfig}
-          onClearImportedFlag={handleClearImportedFlag}
-        />
-      </AppLayout>
-    </div>
+          onImportConfig={handleImportConfig}
+          systemInfo={systemInfo}
+          progress={progress}
+        >
+          <AppRoutes
+            currentPage={currentPage}
+            systemInfo={systemInfo}
+            userConfig={userConfig}
+            importedPackages={importedPackages}
+            setImportedPackages={setImportedPackages}
+            selectedPackages={selectedPackages}
+            setSelectedPackages={setSelectedPackages}
+            installLogs={installLogs}
+            setInstallLogs={setInstallLogs}
+            onNavigate={setCurrentPage}
+            hasImportedConfig={hasImportedConfig}
+            onClearImportedFlag={handleClearImportedFlag}
+          />
+        </AppLayout>
+      </div>
+
+      {/* Onboarding overlay - only rendered during onboarding, fades out when complete */}
+      {isOnboarding && (
+        <div className="fixed inset-0 z-50 bg-background">
+          <OnboardingPage
+            systemInfo={systemInfo}
+            onComplete={handleOnboardingComplete}
+          />
+        </div>
+      )}
+    </LayoutGroup>
   );
 }
 
 export default App;
+
+

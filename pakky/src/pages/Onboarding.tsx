@@ -56,16 +56,18 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                 systemInfo: systemInfo || undefined,
             });
             transitionToStep('complete');
-            // Wait for complete step to show briefly, then fade out, then call onComplete
-            setTimeout(() => {
-                setIsExiting(true);
-                // Wait for fade-out animation to complete before calling onComplete
-                setTimeout(onComplete, 400);
-            }, 800);
+            // The morph animation in CompleteStep will call onMorphComplete
+            // which triggers the actual transition to the main app
         } catch (error) {
             console.error('Failed to save user config:', error);
             setIsSubmitting(false);
         }
+    };
+
+    const handleMorphComplete = () => {
+        setIsExiting(true);
+        // Wait for fade-out animation to complete before calling onComplete
+        setTimeout(onComplete, 300);
     };
 
     const steps: Step[] = ['welcome', 'name', 'system', 'complete'];
@@ -111,7 +113,7 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                     />
                 )}
 
-                {step === 'complete' && <CompleteStep isExiting={isExiting} />}
+                {step === 'complete' && <CompleteStep isExiting={isExiting} onMorphComplete={handleMorphComplete} />}
             </div>
         </div>
     );

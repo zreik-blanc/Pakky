@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Package, Home, Sparkles, Settings, Upload, CheckCircle2, AlertCircle, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -59,12 +60,21 @@ export default function AppLayout({
                     className="h-20 flex items-end gap-3 px-4 pb-3 border-b border-border/30"
                     style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
                 >
-                    <div
-                        className="w-8 h-8 bg-primary/10 text-primary rounded-lg flex items-center justify-center ring-1 ring-primary/20 shrink-0 transition-transform duration-300 hover:scale-105"
+                    <motion.div
+                        layoutId="pakky-logo"
+                        className="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center ring-1 ring-primary/20 shrink-0"
                         style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                        transition={{
+                            layout: {
+                                type: 'tween',
+                                ease: [0.32, 0.72, 0, 1],
+                                duration: 0.8
+                            }
+                        }}
+                        whileHover={{ scale: 1.05 }}
                     >
-                        <Package className="w-4 h-4" />
-                    </div>
+                        <Package className="w-5 h-5" />
+                    </motion.div>
                     {!isCollapsed && (
                         <div className="animate-in fade-in slide-in-from-left-2 duration-200 pb-0.5" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
                             <h1 className="text-base font-bold tracking-tight leading-tight">Pakky</h1>
@@ -76,7 +86,7 @@ export default function AppLayout({
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-2 space-y-1 mt-2">
+                <nav className="flex-1 p-2 space-y-1 mt-4">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const isActive = currentPage === item.id;
