@@ -6,6 +6,66 @@ import { InstallTerminal } from "@/components/install/InstallTerminal"
 import { cn } from "@/lib/utils"
 import { useState } from "react"
 
+/**
+ * Status configuration map for package installation states
+ * Replaces switch statement with declarative config
+ */
+const STATUS_CONFIG = {
+    success: {
+        icon: <CheckCircle2 className="w-4 h-4" />,
+        color: 'text-green-500',
+        bg: 'bg-green-500/10',
+        ring: 'ring-green-500/20',
+        label: 'Installed'
+    },
+    already_installed: {
+        icon: <Check className="w-4 h-4" />,
+        color: 'text-muted-foreground',
+        bg: 'bg-muted/50',
+        ring: 'ring-border/50',
+        label: 'Already Installed'
+    },
+    failed: {
+        icon: <XCircle className="w-4 h-4" />,
+        color: 'text-red-500',
+        bg: 'bg-red-500/10',
+        ring: 'ring-red-500/20',
+        label: 'Failed'
+    },
+    installing: {
+        icon: <Loader2 className="w-4 h-4 animate-spin" />,
+        color: 'text-primary',
+        bg: 'bg-primary/10',
+        ring: 'ring-primary/30',
+        label: 'Installing...'
+    },
+    checking: {
+        icon: <Loader2 className="w-4 h-4 animate-spin" />,
+        color: 'text-muted-foreground',
+        bg: 'bg-muted/30',
+        ring: 'ring-border/30',
+        label: 'Checking...'
+    },
+    skipped: {
+        icon: <AlertCircle className="w-4 h-4" />,
+        color: 'text-yellow-500',
+        bg: 'bg-yellow-500/10',
+        ring: 'ring-yellow-500/20',
+        label: 'Skipped'
+    },
+    pending: {
+        icon: <Clock className="w-4 h-4" />,
+        color: 'text-muted-foreground/60',
+        bg: 'bg-muted/30',
+        ring: 'ring-border/30',
+        label: 'Pending'
+    },
+} as const
+
+/** Get status config with fallback to pending state */
+const getStatusConfig = (status: PackageInstallItem['status']) => 
+    STATUS_CONFIG[status] ?? STATUS_CONFIG.pending
+
 interface PackageCardProps {
     pkg: PackageInstallItem
     onRemove: (id: string) => void
@@ -19,59 +79,6 @@ export function PackageCard({ pkg, onRemove, onReinstall, disabled, logs = [] }:
     const isInstalling = pkg.status === 'installing'
     const hasLogs = logs.length > 0
     const showActivity = isInstalling || hasLogs
-
-    const getStatusConfig = (status: PackageInstallItem['status']) => {
-        switch (status) {
-            case 'success':
-                return {
-                    icon: <CheckCircle2 className="w-4 h-4" />,
-                    color: 'text-green-500',
-                    bg: 'bg-green-500/10',
-                    ring: 'ring-green-500/20',
-                    label: 'Installed'
-                };
-            case 'already_installed':
-                return {
-                    icon: <Check className="w-4 h-4" />,
-                    color: 'text-muted-foreground',
-                    bg: 'bg-muted/50',
-                    ring: 'ring-border/50',
-                    label: 'Already Installed'
-                };
-            case 'failed':
-                return {
-                    icon: <XCircle className="w-4 h-4" />,
-                    color: 'text-red-500',
-                    bg: 'bg-red-500/10',
-                    ring: 'ring-red-500/20',
-                    label: 'Failed'
-                };
-            case 'installing':
-                return {
-                    icon: <Loader2 className="w-4 h-4 animate-spin" />,
-                    color: 'text-primary',
-                    bg: 'bg-primary/10',
-                    ring: 'ring-primary/30',
-                    label: 'Installing...'
-                };
-            case 'skipped':
-                return {
-                    icon: <AlertCircle className="w-4 h-4" />,
-                    color: 'text-yellow-500',
-                    bg: 'bg-yellow-500/10',
-                    ring: 'ring-yellow-500/20',
-                    label: 'Skipped'
-                };
-            default:
-                return {
-                    icon: <Clock className="w-4 h-4" />,
-                    color: 'text-muted-foreground/60',
-                    bg: 'bg-muted/30',
-                    ring: 'ring-border/30',
-                    label: 'Pending'
-                };
-        }
-    };
 
     const statusConfig = getStatusConfig(pkg.status);
     const canReinstall = pkg.status === 'already_installed' && onReinstall

@@ -1,18 +1,10 @@
 import { ipcMain, app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import type { SystemInfo, PackageInstallItem } from '../../src/lib/types'
+import type { UserConfig } from '../../src/lib/types'
 import { logger } from '../utils'
 
 const USER_CONFIG_FILENAME = 'user-config.json'
-
-interface UserConfig {
-    userName: string
-    systemInfo: SystemInfo
-    queue?: PackageInstallItem[]
-    firstLaunchAt: string
-    lastSeenAt: string
-}
 
 async function getUserConfigPath(): Promise<string> {
     return path.join(app.getPath('userData'), USER_CONFIG_FILENAME)

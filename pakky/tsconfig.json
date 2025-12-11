@@ -25,12 +25,16 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@shared/*": [
+        "./shared/*"
       ]
     }
   },
   "include": [
     "src",
-    "electron"
+    "electron",
+    "shared"
   ],
   "references": [
     {

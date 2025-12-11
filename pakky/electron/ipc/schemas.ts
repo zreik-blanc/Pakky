@@ -153,13 +153,21 @@ const ConfigMetadataSchema = z.object({
 });
 
 // Main Config Schema
+// Constants for validation
+export const CONFIG_LIMITS = {
+    MAX_TAGS: 5,
+} as const;
+
+// Main Config Schema
 export const PakkyConfigSchema = z.object({
     $schema: z.string().optional(),
     name: z.string(),
     version: z.string(),
     author: z.string().optional(),
     description: z.string().optional(),
-    tags: z.array(z.string()).optional(),
+    tags: z.array(z.string()).max(CONFIG_LIMITS.MAX_TAGS, {
+        message: `Maximum ${CONFIG_LIMITS.MAX_TAGS} tags allowed`
+    }).optional(),
     settings: ConfigSettingsSchema.optional(),
     macos: MacOSConfigSchema.optional(),
     windows: WindowsConfigSchema.optional(),

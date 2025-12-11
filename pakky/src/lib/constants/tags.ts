@@ -1,7 +1,10 @@
 /**
- * Tag Suggestion Rules
+ * Tag Configuration and Rules
  * Mapping of package keywords to suggested tags for exports
  */
+
+/** Maximum number of tags allowed per config */
+export const MAX_TAGS = 5;
 
 export interface TagRule {
     keywords: string[];

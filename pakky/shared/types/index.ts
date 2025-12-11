@@ -1,13 +1,11 @@
 /**
- * Types - Re-export from shared
- * 
- * This file re-exports all types from the shared types package.
- * This maintains backward compatibility with existing imports
- * while centralizing type definitions in one place.
+ * Shared Types - Barrel Export
+ * Central export point for all shared types used by both
+ * the Electron main process and the React renderer process.
  */
 
+// Configuration types
 export type {
-    // Config types
     PakkyConfig,
     ConfigSettings,
     ConfigMetadata,
@@ -22,26 +20,34 @@ export type {
     LinuxConfig,
     ScriptStep,
     SecurityLevelKey,
-    
-    // Package & Installation types
+} from './config';
+
+// Package & Installation types
+export type {
     PackageType,
     PackageStatus,
     PackageInstallItem,
     InstallStatus,
     InstallProgress,
     SearchResult,
-    
-    // Security types
+} from './packages';
+
+// Security types
+export type {
     ParsedCommand,
     SecurityScanResult,
     ConfigLoadResult,
-    
-    // System & User types
+} from './security';
+
+// System & User types
+export type {
     Platform,
     SystemInfo,
     UserConfig,
     UserInputValues,
-    
-    // Preset types
+} from './system';
+
+// Preset types
+export type {
     Preset,
-} from '@shared/types';
+} from './presets';

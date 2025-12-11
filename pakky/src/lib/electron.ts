@@ -1,29 +1,9 @@
 // Electron IPC API wrapper for renderer process
 // Types are provided by electron/electron-env.d.ts
-import type { PakkyConfig, InstallProgress } from './types';
+import type { PakkyConfig, InstallProgress, SecurityScanResult, ConfigLoadResult } from './types';
 
-// Security scan result from config loading
-export interface SecurityScanResult {
-    hasDangerousContent: boolean;
-    hasSuspiciousContent: boolean;
-    hasObfuscation: boolean;
-    dangerousCommands: string[];
-    suspiciousCommands: string[];
-    obfuscatedCommands: string[];
-    warnings: string[];
-    severity: 'none' | 'low' | 'medium' | 'high' | 'critical';
-    // AST-based fields
-    blockedCommands: string[];
-    unknownCommands: string[];
-    securityLevel: 'STRICT' | 'STANDARD' | 'PERMISSIVE';
-    astParsingFailed: boolean;
-    recommendations: string[];
-}
-
-export interface ConfigLoadResult {
-    config: PakkyConfig;
-    security: SecurityScanResult;
-}
+// Re-export for convenience
+export type { SecurityScanResult, ConfigLoadResult };
 
 // System API
 export const systemAPI = {
@@ -45,10 +25,6 @@ export const systemAPI = {
             homeDir: string;
             hostname: string;
         }>('system:getInfo');
-    },
-
-    checkHomebrew: (): Promise<boolean> => {
-        return window.pakky.invoke<boolean>('system:checkHomebrew');
     },
 
     quitApp: (): Promise<void> => {

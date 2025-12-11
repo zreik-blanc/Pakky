@@ -14,7 +14,7 @@ import { ScriptInputDialog } from '@/components/install/ScriptInputDialog';
 import { AddScriptDialog } from '@/components/install/AddScriptDialog';
 import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
 import { usePackageActions } from '@/hooks/usePackageActions';
-import { useHomebrewCheck } from '@/hooks/useHomebrewCheck';
+import { usePackageManagerCheck } from '@/hooks/usePackageManagerCheck';
 
 interface HomePageProps {
     systemInfo: SystemInfo | null;
@@ -58,12 +58,12 @@ export default function HomePage({
         cancelInstallation: cancelInstallInStore
     } = useInstallStore();
 
-    // Homebrew check hook
+    // Package manager check hook (Homebrew on macOS, Winget on Windows, etc.)
     const {
-        isHomebrewMissing,
-        isInstallingHomebrew,
-        handleInstallHomebrew,
-    } = useHomebrewCheck({ platform: systemInfo?.platform });
+        isMissing: isPackageManagerMissing,
+        isInstalling: isInstallingPackageManager,
+        handleInstall: handleInstallPackageManager,
+    } = usePackageManagerCheck({ platform: systemInfo?.platform });
 
     // Installation subscription hook
     useInstallationSubscription({
@@ -257,10 +257,10 @@ export default function HomePage({
 
             {/* Welcome / Search Header - Fixed, doesn't scroll */}
             <div className="space-y-4 mb-6 shrink-0">
-                {isHomebrewMissing && (
+                {isPackageManagerMissing && (
                     <HomebrewAlert
-                        isInstalling={isInstallingHomebrew}
-                        onInstall={handleInstallHomebrew}
+                        isInstalling={isInstallingPackageManager}
+                        onInstall={handleInstallPackageManager}
                     />
                 )}
 

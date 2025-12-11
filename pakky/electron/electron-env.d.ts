@@ -26,7 +26,6 @@ declare namespace NodeJS {
 type PakkyInvokeChannel =
   | 'system:getPlatform'
   | 'system:getInfo'
-  | 'system:checkHomebrew'
   | 'config:load'
   | 'config:save'
   | 'config:selectFile'

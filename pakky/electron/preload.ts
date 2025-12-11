@@ -5,7 +5,6 @@ import { ipcRenderer, contextBridge, IpcRendererEvent } from 'electron'
 const invokeChannels = [
   'system:getPlatform',
   'system:getInfo',
-  'system:checkHomebrew',
   'config:load',
   'config:save',
   'config:selectFile',

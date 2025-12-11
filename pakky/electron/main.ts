@@ -56,7 +56,7 @@ function createWindow() {
     icon: path.join(process.env.VITE_PUBLIC, ELECTRON_CONFIG.PATHS.ICON),
     titleBarStyle: ELECTRON_CONFIG.WINDOW.TITLE_BAR_STYLE, // macOS native title bar
     show: false, // Don't show until ready to prevent white flash
-    backgroundColor: ELECTRON_CONFIG.WINDOW.BACKGROUND_COLOR, // Match the app's dark theme background
+    backgroundColor: WINDOW.BACKGROUND_COLOR, // Match the app's dark theme background
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,

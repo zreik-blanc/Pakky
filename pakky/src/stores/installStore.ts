@@ -7,6 +7,28 @@ import type {
 } from '../lib/types';
 import { INSTALL } from '../lib/constants';
 
+// ============================================
+// Helper Functions
+// ============================================
+
+/**
+ * Calculate package counts from status values
+ * Centralized to avoid duplication
+ */
+function calculatePackageCounts(packages: PackageInstallItem[]) {
+    return {
+        completedPackages: packages.filter(
+            (p) => p.status === 'success' || p.status === 'already_installed'
+        ).length,
+        failedPackages: packages.filter((p) => p.status === 'failed').length,
+        skippedPackages: packages.filter((p) => p.status === 'skipped').length,
+    };
+}
+
+// ============================================
+// Store Interface
+// ============================================
+
 interface InstallStore {
     // State
     progress: InstallProgress;
@@ -76,21 +98,14 @@ export const useInstallStore = create<InstallStore>((set) => ({
     })),
 
     setPackages: (packages) => set((state) => {
-        // Recalculate counts from package statuses
-        const completedPackages = packages.filter(
-            (p) => p.status === 'success' || p.status === 'already_installed'
-        ).length;
-        const failedPackages = packages.filter((p) => p.status === 'failed').length;
-        const skippedPackages = packages.filter((p) => p.status === 'skipped').length;
+        const counts = calculatePackageCounts(packages);
 
         return {
             progress: {
                 ...state.progress,
                 packages,
                 totalPackages: packages.length,
-                completedPackages,
-                failedPackages,
-                skippedPackages,
+                ...counts,
             },
         };
     }),
@@ -111,19 +126,13 @@ export const useInstallStore = create<InstallStore>((set) => ({
             return pkg;
         });
 
-        const completedPackages = packages.filter(
-            (p) => p.status === 'success' || p.status === 'already_installed'
-        ).length;
-        const failedPackages = packages.filter((p) => p.status === 'failed').length;
-        const skippedPackages = packages.filter((p) => p.status === 'skipped').length;
+        const counts = calculatePackageCounts(packages);
 
         return {
             progress: {
                 ...state.progress,
                 packages,
-                completedPackages,
-                failedPackages,
-                skippedPackages,
+                ...counts,
             },
         };
     }),

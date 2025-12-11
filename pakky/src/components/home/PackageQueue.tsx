@@ -34,7 +34,14 @@ export function PackageQueue({
     onNavigateToPresets,
     onAddScript
 }: PackageQueueProps) {
-    const pendingPackages = packages.filter(p => p.status !== 'already_installed');
+    // Packages that can still be installed (not completed/failed/skipped)
+    const pendingPackages = packages.filter(p => 
+        p.status === 'pending' || p.status === 'checking' || p.status === 'installing'
+    );
+    // Packages that are done (success or already installed)
+    const completedPackages = packages.filter(p => 
+        p.status === 'success' || p.status === 'already_installed'
+    );
 
     if (packages.length === 0) {
         return (
@@ -125,7 +132,7 @@ export function PackageQueue({
                     </div>
                     {packages.length > pendingPackages.length && (
                         <span className="text-xs text-muted-foreground">
-                            • {packages.length - pendingPackages.length} {UI_STRINGS.QUEUE.INSTALLED}
+                            • {completedPackages.length} {UI_STRINGS.QUEUE.INSTALLED}
                         </span>
                     )}
                 </div>

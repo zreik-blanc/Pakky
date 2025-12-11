@@ -5,7 +5,7 @@
 
 export const APP = {
     NAME: 'Pakky',
-    VERSION: '0.0.3',
+    VERSION: '0.0.4',
     PACKAGE_MANAGER: 'Homebrew',
 } as const;
 

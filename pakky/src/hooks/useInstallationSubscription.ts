@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { installAPI } from '@/lib/electron';
 import { useInstallStore } from '@/stores/installStore';
-import { INSTALL } from '@/lib/constants';
 import type { PackageInstallItem } from '@/lib/types';
 
 interface UseInstallationSubscriptionProps {
@@ -44,15 +43,14 @@ export function useInstallationSubscription({
         });
 
         const unsubLog = installAPI.onLog((log) => {
+            // Store handles log truncation via addPackageLog
             addPackageLog(log.packageId, log.line);
-            const maxLogs = INSTALL.MAX_LOGS_PER_PACKAGE;
-            setInstallLogs(prev => {
-                const existingLogs = prev[log.packageId] || [];
-                const newLogs = existingLogs.length >= maxLogs
-                    ? [...existingLogs.slice(-(maxLogs - 1)), log.line]
-                    : [...existingLogs, log.line];
-                return { ...prev, [log.packageId]: newLogs };
-            });
+            
+            // Also update local state for UI (store is source of truth for truncation)
+            setInstallLogs(prev => ({
+                ...prev,
+                [log.packageId]: [...(prev[log.packageId] || []), log.line]
+            }));
         });
 
         return () => {
