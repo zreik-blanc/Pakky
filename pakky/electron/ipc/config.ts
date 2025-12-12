@@ -93,6 +93,51 @@ export function registerConfigHandlers() {
         }
     })
 
+    // New handler: Parse config content directly (for paste import)
+    ipcMain.handle('config:parseContent', async (_, content: string): Promise<ConfigLoadResult> => {
+        try {
+            const json = JSON.parse(content)
+            const config = PakkyConfigSchema.parse(json)
+
+            // Get user's security level preference
+            const securityLevel = await getUserSecurityLevel()
+            console.log(`[Security] Parsing pasted content with security level: ${securityLevel}`)
+
+            // Security: Scan for dangerous shell commands using user's security level
+            const shellCommands = extractShellCommands(json)
+            const security = scanShellCommands(shellCommands, securityLevel)
+
+            console.log(`[Security] Pasted content scan result:`, {
+                level: securityLevel,
+                dangerous: security.dangerousCommands.length,
+                suspicious: security.suspiciousCommands.length,
+                blocked: security.blockedCommands.length,
+                unknown: security.unknownCommands.length,
+            })
+
+            if (security.hasDangerousContent) {
+                console.warn('[Security] Dangerous commands detected in pasted config:', security.dangerousCommands)
+            }
+            if (security.blockedCommands.length > 0) {
+                console.warn(`[Security] Commands blocked at ${securityLevel} level:`, security.blockedCommands)
+            }
+
+            return { config, security }
+        } catch (error) {
+            console.error('Config parse error:', error)
+
+            if (error instanceof SyntaxError) {
+                throw new Error('Invalid JSON format. Please check your configuration syntax.')
+            }
+
+            if (error instanceof ZodError) {
+                throw new Error(`Invalid configuration: ${error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`)
+            }
+
+            throw new Error('Failed to parse configuration content')
+        }
+    })
+
     ipcMain.handle('config:selectFile', async () => {
         const result = await dialog.showOpenDialog({
             title: DIALOGS.CONFIG_SELECT.TITLE,

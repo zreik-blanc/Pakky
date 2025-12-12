@@ -49,6 +49,10 @@ export const configAPI = {
     saveConfigDialog: (config: PakkyConfig): Promise<string | null> => {
         return window.pakky.invoke<string | null>('config:saveDialog', config);
     },
+
+    parseContent: (content: string): Promise<ConfigLoadResult> => {
+        return window.pakky.invoke<ConfigLoadResult>('config:parseContent', content);
+    },
 };
 
 // Install API

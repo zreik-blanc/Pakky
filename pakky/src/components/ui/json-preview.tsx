@@ -12,7 +12,7 @@ export function JsonPreview({ data, className }: JsonPreviewProps) {
 
         // Simple regex-based syntax highlighting
         const highlighted = json.replace(
-            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+            /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
             (match) => {
                 let cls = 'text-orange-400'; // number
                 if (/^"/.test(match)) {

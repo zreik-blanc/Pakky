@@ -1,5 +1,5 @@
-import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
+import { motion, type HTMLMotionProps } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
@@ -24,13 +24,20 @@ const badgeVariants = cva(
 )
 
 export interface BadgeProps
-    extends React.HTMLAttributes<HTMLDivElement>,
+    extends HTMLMotionProps<'div'>,
     VariantProps<typeof badgeVariants> { }
 
 function Badge({ className, variant, ...props }: BadgeProps) {
     return (
-        <div className={cn(badgeVariants({ variant }), className)} {...props} />
+        <motion.div
+            className={cn(badgeVariants({ variant }), className)}
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+            {...props}
+        />
     )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- badgeVariants is needed for external styling
 export { Badge, badgeVariants }

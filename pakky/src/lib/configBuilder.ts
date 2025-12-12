@@ -29,6 +29,11 @@ export interface BuildConfigOptions {
     includeSystemRequirements: boolean;
     settings: ConfigSettings;
     systemInfo?: SystemInfo;
+    // User-specified system requirements (for export customization)
+    systemRequirements?: {
+        minVersion?: string;
+        architectures?: ('arm64' | 'x86_64')[];
+    };
 }
 
 // ============================================
@@ -130,7 +135,7 @@ function generateMetadata(systemInfo?: SystemInfo): ConfigMetadata {
  * Get macOS version from system info version string
  * Extracts major.minor version (e.g., "14.2" from "14.2.1")
  */
-function getMacOSMinVersion(version: string): string {
+export function getMacOSMinVersion(version: string): string {
     const parts = version.split('.');
     if (parts.length >= 2) {
         return `${parts[0]}.${parts[1]}`;
@@ -183,12 +188,18 @@ export function buildPakkyConfig(
             homebrew: {}
         };
 
-        // Add system requirements if enabled
-        if (options.includeSystemRequirements && options.systemInfo) {
-            config.macos.requires = {
-                min_version: getMacOSMinVersion(options.systemInfo.version),
-                arch: [options.systemInfo.arch as 'arm64' | 'x86_64'],
-            };
+        // Add system requirements if enabled (inside macos config)
+        if (options.includeSystemRequirements && options.systemRequirements) {
+            const { minVersion, architectures } = options.systemRequirements;
+            if (minVersion || (architectures && architectures.length > 0)) {
+                config.macos.requires = {};
+                if (minVersion) {
+                    config.macos.requires.min_version = minVersion;
+                }
+                if (architectures && architectures.length > 0) {
+                    config.macos.requires.arch = architectures;
+                }
+            }
         }
 
         // Add formulae
@@ -243,7 +254,7 @@ export function buildPakkyConfig(
 export const DEFAULT_BUILD_OPTIONS: Omit<BuildConfigOptions, 'name'> = {
     includeDescriptions: true,
     includeMetadata: true,
-    includeSystemRequirements: true,
+    includeSystemRequirements: false,
     settings: {
         continue_on_error: true,
         skip_already_installed: true,

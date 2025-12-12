@@ -182,13 +182,14 @@ export const PresetSchema = z.object({
     description: z.string(),
     icon: z.string().optional(),
     settings: ConfigSettingsSchema.optional(),
-    macos: z.object({
-        homebrew: z.object({
-            taps: z.array(z.string()).optional(),
-            formulae: z.array(ItemSchema).optional(),
-            casks: z.array(CaskItemSchema).optional(),
-        }).optional()
-    }).optional(),
+    macos: MacOSConfigSchema.optional(), // Use the full MacOS schema
+    windows: WindowsConfigSchema.optional(),
+    linux: LinuxConfigSchema.optional(),
+    // Keep legacy packages support for backward compatibility if needed, or remove if we want strict adherence to new schema
+    // The previous schema had a generic 'packages' object which seems to be a simplified macos/homebrew mirror. 
+    // Given the direction is "future ready" and "every schema", usage of specific OS schemas is better.
+    // However, to avoid breaking existing presets that might use 'packages' (though checking devops-engineer.json it uses macos.homebrew), 
+    // I will keep it but make it optional as it was.
     packages: z.object({
         taps: z.array(z.string()).optional(),
         formulae: z.array(ItemSchema).optional(),

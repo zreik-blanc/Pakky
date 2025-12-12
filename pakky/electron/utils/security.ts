@@ -22,8 +22,8 @@ export const ALLOWED_CONFIG_DIRS = [
 // Based on OWASP Command Injection and PayloadsAllTheThings research
 const DANGEROUS_PATTERNS = [
     // === Data Destruction ===
-    /(sudo\s+)?rm\s+(-[rRf]+\s*)+[\/~\*]/i,           // rm -rf / or ~ or * (with optional sudo)
-    /(sudo\s+)?rm\s+-[rRf]*[\/~\*]/i,                  // rm -rf/* without space
+    /(sudo\s+)?rm\s+(-[rRf]+\s*)+[/~*]/i,           // rm -rf / or ~ or * (with optional sudo)
+    /(sudo\s+)?rm\s+-[rRf]*[/~*]/i,                  // rm -rf/* without space
     /mkfs\./i,                                          // Filesystem formatting
     /dd\s+if=/i,                                             // dd command (can destroy data)
     />\s*\/dev\/(sd|hd|nvme)/i,                             // Writing to disk devices

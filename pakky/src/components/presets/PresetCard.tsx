@@ -1,3 +1,4 @@
+import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -5,6 +6,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Preset } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
+import { slideInFromBottom, hoverScale, tapScale } from '@/lib/animations';
 
 interface PresetCardProps {
     preset: Preset;
@@ -33,6 +35,7 @@ export function PresetCard({
     const Icon = config.icon;
     const formulaeCount = (preset.packages?.formulae || preset.macos?.homebrew?.formulae || []).length;
     const casksCount = (preset.packages?.casks || preset.macos?.homebrew?.casks || []).length;
+    const scriptsCount = (preset.scripts || []).length;
 
     return (
         <Card
@@ -74,33 +77,52 @@ export function PresetCard({
                     <Badge variant="secondary" className="text-[10px] bg-muted/50">
                         {casksCount} Apps
                     </Badge>
+                    {scriptsCount > 0 && (
+                        <Badge variant="secondary" className="text-[10px] bg-muted/50">
+                            {scriptsCount} Scripts
+                        </Badge>
+                    )}
                 </div>
 
                 {/* Package preview on hover */}
-                {isHovered && (
-                    <div className="mt-3 flex flex-wrap gap-1 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                        {packagePreview.slice(0, 4).map((pkg) => (
-                            <span
-                                key={pkg}
-                                className="px-1.5 py-0.5 bg-background/60 rounded text-[10px] text-muted-foreground font-mono"
-                            >
-                                {pkg}
-                            </span>
-                        ))}
-                    </div>
-                )}
+                <AnimatePresence>
+                    {isHovered && (
+                        <motion.div
+                            className="mt-3 flex flex-wrap gap-1"
+                            variants={slideInFromBottom}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                        >
+                            {packagePreview.slice(0, 4).map((pkg) => (
+                                <span
+                                    key={pkg}
+                                    className="px-1.5 py-0.5 bg-background/60 rounded text-[10px] text-muted-foreground font-mono"
+                                >
+                                    {pkg}
+                                </span>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </CardContent>
 
             <CardFooter className="relative pt-0">
-                <Button
-                    onClick={onLoad}
-                    className="w-full gap-2 transition-all duration-200"
-                    variant="outline"
-                    size="sm"
+                <motion.div
+                    className="w-full"
+                    whileHover={hoverScale}
+                    whileTap={tapScale}
                 >
-                    <span>Load</span>
-                    <ChevronRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
-                </Button>
+                    <Button
+                        onClick={onLoad}
+                        className="w-full gap-2 transition-all duration-200"
+                        variant="outline"
+                        size="sm"
+                    >
+                        <span>Load</span>
+                        <ChevronRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                    </Button>
+                </motion.div>
             </CardFooter>
         </Card>
     );

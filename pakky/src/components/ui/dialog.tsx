@@ -1,5 +1,6 @@
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
+import { motion } from "motion/react"
 import { X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -38,10 +39,17 @@ const DialogContent = React.forwardRef<
             {...props}
         >
             {children}
-            <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-                <X className="h-4 w-4" />
-                <span className="sr-only">Close</span>
-            </DialogPrimitive.Close>
+            <motion.div
+                className="absolute right-4 top-4"
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            >
+                <DialogPrimitive.Close className="rounded-sm opacity-70 transition-all border-none hover:opacity-100 hover:text-destructive focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none active:ring-0 active:outline-none disabled:pointer-events-none">
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                </DialogPrimitive.Close>
+            </motion.div>
         </DialogPrimitive.Content>
     </DialogPortal>
 ))

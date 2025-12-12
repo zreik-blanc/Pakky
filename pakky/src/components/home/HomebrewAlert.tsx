@@ -1,5 +1,7 @@
+import { motion } from 'motion/react';
 import { Loader2, PackageOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { slideInFromTop, spinnerTransition } from '@/lib/animations';
 
 interface HomebrewAlertProps {
     isInstalling: boolean;
@@ -8,7 +10,12 @@ interface HomebrewAlertProps {
 
 export function HomebrewAlert({ isInstalling, onInstall }: HomebrewAlertProps) {
     return (
-        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center justify-between animate-in slide-in-from-top-2">
+        <motion.div
+            className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 flex items-center justify-between"
+            variants={slideInFromTop}
+            initial="hidden"
+            animate="visible"
+        >
             <div className="flex items-center gap-3">
                 <div className="p-2 bg-yellow-500/10 rounded-full text-yellow-600">
                     <PackageOpen className="w-5 h-5" />
@@ -25,13 +32,19 @@ export function HomebrewAlert({ isInstalling, onInstall }: HomebrewAlertProps) {
             >
                 {isInstalling ? (
                     <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        <motion.div
+                            className="mr-2"
+                            animate={{ rotate: 360 }}
+                            transition={spinnerTransition}
+                        >
+                            <Loader2 className="w-4 h-4" />
+                        </motion.div>
                         Installing...
                     </>
                 ) : (
                     'Install Homebrew'
                 )}
             </Button>
-        </div>
+        </motion.div>
     );
 }

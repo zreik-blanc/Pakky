@@ -1,12 +1,13 @@
 import * as React from "react"
+import { motion, type HTMLMotionProps } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
 const Card = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement>
+    HTMLMotionProps<'div'>
 >(({ className, ...props }, ref) => (
-    <div
+    <motion.div
         ref={ref}
         className={cn(
             "rounded-lg border bg-card text-card-foreground shadow-sm",

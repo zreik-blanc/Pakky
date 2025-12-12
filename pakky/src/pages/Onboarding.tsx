@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { SystemInfo } from '@/lib/types';
 import { userConfigAPI } from '@/lib/electron';
-import { cn } from '@/lib/utils';
+import { fadeInUp, pageTransition } from '@/lib/animations';
 import {
     WelcomeStep,
     NameStep,
@@ -21,25 +22,18 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
     const [step, setStep] = useState<Step>('welcome');
     const [name, setName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showContent, setShowContent] = useState(false);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isExiting, setIsExiting] = useState(false);
-
-    // Smooth content appearance
-    useEffect(() => {
-        const timer = setTimeout(() => setShowContent(true), 150);
-        return () => clearTimeout(timer);
-    }, [step]);
 
     const transitionToStep = useCallback((nextStep: Step) => {
         if (isTransitioning) return;
         setIsTransitioning(true);
-        setShowContent(false);
 
+        // Wait for exit animation before changing step
         setTimeout(() => {
             setStep(nextStep);
             setIsTransitioning(false);
-        }, 400);
+        }, 300);
     }, [isTransitioning]);
 
     const handleNext = () => {
@@ -56,16 +50,18 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                 systemInfo: systemInfo || undefined,
             });
             transitionToStep('complete');
-            // Wait for complete step to show briefly, then fade out, then call onComplete
-            setTimeout(() => {
-                setIsExiting(true);
-                // Wait for fade-out animation to complete before calling onComplete
-                setTimeout(onComplete, 400);
-            }, 800);
+            // The morph animation in CompleteStep will call onMorphComplete
+            // which triggers the actual transition to the main app
         } catch (error) {
             console.error('Failed to save user config:', error);
             setIsSubmitting(false);
         }
+    };
+
+    const handleMorphComplete = () => {
+        setIsExiting(true);
+        // Trigger exit immediately to sync "Travel" (Unmount) with "Fade" (isExiting)
+        onComplete();
     };
 
     const steps: Step[] = ['welcome', 'name', 'system', 'complete'];
@@ -79,39 +75,72 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
                 isExiting={isExiting}
             />
 
-            {/* Main content */}
-            <div
-                className={cn(
-                    "max-w-md w-full transition-all duration-500 ease-out",
-                    showContent
-                        ? "opacity-100 translate-y-0 scale-100"
-                        : "opacity-0 translate-y-6 scale-[0.98]"
-                )}
-            >
-                {step === 'welcome' && (
-                    <WelcomeStep onNext={handleNext} isTransitioning={isTransitioning} />
-                )}
+            {/* Main content with Motion animations */}
+            <div className="max-w-md w-full">
+                <AnimatePresence mode="wait">
+                    {step === 'welcome' && !isTransitioning && (
+                        <motion.div
+                            key="welcome"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={pageTransition}
+                        >
+                            <WelcomeStep onNext={handleNext} isTransitioning={isTransitioning} />
+                        </motion.div>
+                    )}
 
-                {step === 'name' && (
-                    <NameStep
-                        name={name}
-                        onNameChange={setName}
-                        onNext={handleNext}
-                        isTransitioning={isTransitioning}
-                    />
-                )}
+                    {step === 'name' && !isTransitioning && (
+                        <motion.div
+                            key="name"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={pageTransition}
+                        >
+                            <NameStep
+                                name={name}
+                                onNameChange={setName}
+                                onNext={handleNext}
+                                isTransitioning={isTransitioning}
+                            />
+                        </motion.div>
+                    )}
 
-                {step === 'system' && (
-                    <SystemStep
-                        name={name}
-                        systemInfo={systemInfo}
-                        onNext={handleNext}
-                        isSubmitting={isSubmitting}
-                        isTransitioning={isTransitioning}
-                    />
-                )}
+                    {step === 'system' && !isTransitioning && (
+                        <motion.div
+                            key="system"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={pageTransition}
+                        >
+                            <SystemStep
+                                name={name}
+                                systemInfo={systemInfo}
+                                onNext={handleNext}
+                                isSubmitting={isSubmitting}
+                                isTransitioning={isTransitioning}
+                            />
+                        </motion.div>
+                    )}
 
-                {step === 'complete' && <CompleteStep isExiting={isExiting} />}
+                    {step === 'complete' && !isTransitioning && (
+                        <motion.div
+                            key="complete"
+                            variants={fadeInUp}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            transition={pageTransition}
+                        >
+                            <CompleteStep isExiting={isExiting} onMorphComplete={handleMorphComplete} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

@@ -71,19 +71,18 @@ export function useAppInitialization() {
         initApp();
     }, []);
 
-    const handleOnboardingComplete = async () => {
-        try {
-            // Resize window to normal app size with animation
-            await windowAPI.setNormalSize();
-        } catch (error) {
-            console.error('[App] Failed to resize window:', error);
-        }
-        // Short delay to let resize animation start before React re-render
+    const handleOnboardingComplete = () => {
+        // Immediately trigger UI transition (Travel starts now)
+        setIsOnboarding(false);
+        // Trigger fade-in animation for main app
+        setTimeout(() => setShowMainApp(true), 50);
+
+        // Delay window resize by 200ms to let travel animation get a head start
         setTimeout(() => {
-            setIsOnboarding(false);
-            // Trigger fade-in animation for main app
-            setTimeout(() => setShowMainApp(true), 50);
-        }, 100);
+            windowAPI.setNormalSize().catch(error => {
+                console.error('[App] Failed to resize window:', error);
+            });
+        }, 200);
     };
 
     return {

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'motion/react';
 import { PackageInstallItem, Preset } from '@/lib/types';
 import { Package, Layers } from 'lucide-react';
 import { presetsAPI } from '@/lib/electron';
 import { PresetSkeleton, HeroPreset, PresetCard, getPresetConfig } from '@/components/presets';
 import { parsePreset, getPackageNamesPreview } from '@/lib/configParser';
 import { UI_STRINGS } from '@/lib/constants';
+import { pageEnter, staggerContainer, cardItem } from '@/lib/animations';
 
 interface PresetsPageProps {
     onLoadPreset: (packages: PackageInstallItem[]) => void;
@@ -45,7 +47,12 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
     const otherPresets = presets.slice(1);
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500 h-full overflow-y-auto overflow-x-hidden pb-8">
+        <motion.div
+            className="max-w-4xl mx-auto space-y-8 h-full overflow-y-auto overflow-x-hidden pb-8"
+            variants={pageEnter}
+            initial="hidden"
+            animate="visible"
+        >
             {/* Header */}
             <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -88,32 +95,43 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
                             <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
                                 {UI_STRINGS.PRESETS.MORE_PRESETS}
                             </h3>
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <motion.div
+                                className="grid gap-4 md:grid-cols-2"
+                                variants={staggerContainer}
+                                initial="hidden"
+                                animate="visible"
+                            >
                                 {otherPresets.map((preset, index) => (
-                                    <PresetCard
-                                        key={preset.id}
-                                        preset={preset}
-                                        config={getPresetConfig(preset.id, index + 1)}
-                                        isHovered={hoveredPreset === preset.id}
-                                        packagePreview={getPackagePreview(preset)}
-                                        onLoad={() => handleLoadPreset(preset)}
-                                        onHover={() => setHoveredPreset(preset.id)}
-                                        onLeave={() => setHoveredPreset(null)}
-                                    />
+                                    <motion.div key={preset.id} variants={cardItem}>
+                                        <PresetCard
+                                            preset={preset}
+                                            config={getPresetConfig(preset.id, index + 1)}
+                                            isHovered={hoveredPreset === preset.id}
+                                            packagePreview={getPackagePreview(preset)}
+                                            onLoad={() => handleLoadPreset(preset)}
+                                            onHover={() => setHoveredPreset(preset.id)}
+                                            onLeave={() => setHoveredPreset(null)}
+                                        />
+                                    </motion.div>
                                 ))}
-                            </div>
+                            </motion.div>
                         </div>
                     )}
 
                     {/* Empty state if no presets */}
                     {presets.length === 0 && (
-                        <div className="text-center py-12 text-muted-foreground">
+                        <motion.div
+                            className="text-center py-12 text-muted-foreground"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                        >
                             <Package className="w-12 h-12 mx-auto mb-4 opacity-30" />
                             <p>{UI_STRINGS.PRESETS.EMPTY_STATE}</p>
-                        </div>
+                        </motion.div>
                     )}
                 </>
             )}
-        </div>
+        </motion.div>
     );
 }

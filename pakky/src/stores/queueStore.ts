@@ -29,20 +29,20 @@ interface QueueActions {
     clearPackages: () => void;
     updatePackage: (id: string, updates: Partial<PackageInstallItem>) => void;
     reorderPackages: (packages: PackageInstallItem[]) => void;
-    
+
     // Import management
     setImportedPackages: (packages: PackageInstallItem[]) => void;
     clearImportedPackages: () => void;
     setHasImportedConfig: (value: boolean) => void;
-    
+
     // Log management
     setLogs: (logs: Record<string, string[]>) => void;
     addLog: (packageId: string, log: string) => void;
     clearLogs: (packageId?: string) => void;
-    
+
     // Initialization
     initFromUserConfig: (queue: PackageInstallItem[]) => void;
-    
+
     // Internal
     _scheduleSave: () => void;
 }
@@ -98,7 +98,8 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
         set((state) => ({
             packages: QueueManager.remove(state.packages, id),
             logs: (() => {
-                const { [id]: _, ...rest } = state.logs;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [id]: _removed, ...rest } = state.logs;
                 return rest;
             })(),
         }));
@@ -106,8 +107,8 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
     },
 
     clearPackages: () => {
-        set({ 
-            packages: [], 
+        set({
+            packages: [],
             hasImportedConfig: false,
             logs: {},
         });
@@ -138,14 +139,14 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
     // ----------------------------------------
 
     setImportedPackages: (packages) => {
-        set({ 
+        set({
             importedPackages: packages,
             hasImportedConfig: packages.length > 0,
         });
     },
 
     clearImportedPackages: () => {
-        set({ 
+        set({
             importedPackages: [],
             hasImportedConfig: false,
         });
@@ -175,7 +176,8 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
     clearLogs: (packageId) => {
         if (packageId) {
             set((state) => {
-                const { [packageId]: _, ...rest } = state.logs;
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { [packageId]: _removed, ...rest } = state.logs;
                 return { logs: rest };
             });
         } else {
@@ -201,7 +203,7 @@ export const useQueueStore = create<QueueStore>((set, get) => ({
 
     _scheduleSave: () => {
         const state = get();
-        
+
         // Clear existing timeout
         if (state._saveTimeout) {
             clearTimeout(state._saveTimeout);
