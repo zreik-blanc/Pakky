@@ -1,6 +1,7 @@
+import { motion } from 'motion/react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Package, Terminal, ArrowRight, Star, Zap } from 'lucide-react';
+import { Package, Terminal, ArrowRight, Star, Zap, ScrollText } from 'lucide-react';
 import type { Preset } from '@/lib/types';
 
 interface HeroPresetProps {
@@ -14,7 +15,8 @@ interface HeroPresetProps {
 export function HeroPreset({ preset, packagePreview, onLoad, onHover, onLeave }: HeroPresetProps) {
     const formulaeCount = (preset.packages?.formulae || preset.macos?.homebrew?.formulae || []).length;
     const casksCount = (preset.packages?.casks || preset.macos?.homebrew?.casks || []).length;
-    const totalPackages = formulaeCount + casksCount;
+    const scriptsCount = (preset.scripts || []).length;
+    const totalPackages = formulaeCount + casksCount + scriptsCount;
 
     return (
         <div
@@ -50,6 +52,12 @@ export function HeroPreset({ preset, packagePreview, onLoad, onHover, onLeave }:
                             <Package className="w-3 h-3 mr-1" />
                             {casksCount} Apps
                         </Badge>
+                        {scriptsCount > 0 && (
+                            <Badge variant="outline" className="border-border/50">
+                                <ScrollText className="w-3 h-3 mr-1" />
+                                {scriptsCount} Scripts
+                            </Badge>
+                        )}
                     </div>
 
                     {/* Package preview */}
@@ -71,16 +79,25 @@ export function HeroPreset({ preset, packagePreview, onLoad, onHover, onLeave }:
                 </div>
 
                 <div className="flex md:flex-col items-center justify-center gap-4 md:pl-6 md:border-l border-border/30">
-                    <div className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center ring-1 ring-primary/20">
-                        <Zap className="w-8 h-8 text-primary" />
-                    </div>
-                    <Button
-                        onClick={onLoad}
-                        className="gap-2 group/btn shadow-md hover:shadow-lg transition-all duration-200"
+                    <motion.div
+                        className="w-16 h-16 bg-gradient-to-br from-primary/20 to-primary/5 rounded-2xl flex items-center justify-center ring-1 ring-primary/20"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                     >
-                        Load Preset
-                        <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
-                    </Button>
+                        <Zap className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <motion.div
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                    >
+                        <Button
+                            onClick={onLoad}
+                            className="gap-2 group/btn shadow-md hover:shadow-lg transition-all duration-200"
+                        >
+                            Load Preset
+                            <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-0.5 transition-transform" />
+                        </Button>
+                    </motion.div>
                 </div>
             </div>
         </div>

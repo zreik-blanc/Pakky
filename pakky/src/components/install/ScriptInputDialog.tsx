@@ -36,12 +36,12 @@ function validateUrl(url: string): boolean {
     }
 }
 
-export function ScriptInputDialog({ 
-    open, 
-    onOpenChange, 
-    packages, 
-    onConfirm, 
-    onSkip 
+export function ScriptInputDialog({
+    open,
+    onOpenChange,
+    packages,
+    onConfirm,
+    onSkip
 }: ScriptInputDialogProps) {
     const [values, setValues] = useState<Record<string, string>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +49,7 @@ export function ScriptInputDialog({
     // Collect all input fields from scripts
     const inputFields: InputField[] = packages
         .filter(pkg => pkg.type === 'script' && pkg.promptForInput)
-        .flatMap(pkg => 
+        .flatMap(pkg =>
             Object.entries(pkg.promptForInput || {}).map(([key, config]) => ({
                 scriptName: pkg.name,
                 key,
@@ -59,7 +59,7 @@ export function ScriptInputDialog({
             }))
         );
 
-    // Initialize values with defaults
+    // Initialize values with defaults when dialog opens
     useEffect(() => {
         if (open) {
             const initialValues: Record<string, string> = {};
@@ -72,6 +72,7 @@ export function ScriptInputDialog({
                 setValues(prev => ({ ...initialValues, ...prev }));
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only run when dialog opens or field count changes
     }, [open, inputFields.length]);
 
     const handleChange = (key: string, value: string) => {
@@ -88,10 +89,10 @@ export function ScriptInputDialog({
 
     const validateInputs = (): boolean => {
         const newErrors: Record<string, string> = {};
-        
+
         inputFields.forEach(field => {
             const value = values[field.key] || '';
-            
+
             if (!value.trim()) {
                 newErrors[field.key] = 'This field is required';
                 return;

@@ -1,6 +1,8 @@
+import { motion } from 'motion/react';
 import { Cpu, Laptop, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SystemInfo } from '@/lib/types';
+import { spinnerTransition, hoverScale } from '@/lib/animations';
 
 interface SystemStepProps {
     name: string;
@@ -21,7 +23,10 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
             <div className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-8 shadow-2xl space-y-6">
                 {systemInfo && (
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30 transition-all duration-300 hover:bg-muted/30">
+                        <motion.div
+                            className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30"
+                            whileHover={hoverScale}
+                        >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                                     <Laptop className="w-4 h-4 text-primary" />
@@ -34,9 +39,12 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
                                 </p>
                                 <p className="text-sm text-muted-foreground mt-0.5">{systemInfo.version}</p>
                             </div>
-                        </div>
+                        </motion.div>
 
-                        <div className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30 transition-all duration-300 hover:bg-muted/30">
+                        <motion.div
+                            className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30"
+                            whileHover={hoverScale}
+                        >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                                     <Cpu className="w-4 h-4 text-primary" />
@@ -49,18 +57,22 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
                                     {systemInfo.arch === 'arm64' ? 'Apple Silicon' : 'Intel'}
                                 </p>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
                 )}
 
                 <Button
-                    className="w-full h-13 text-base gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-13 text-base gap-2 shadow-lg hover:shadow-xl transition-shadow duration-300"
                     onClick={onNext}
                     disabled={isSubmitting || isTransitioning}
                 >
                     {isSubmitting ? (
                         <>
-                            <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            <motion.div
+                                className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
+                                animate={{ rotate: 360 }}
+                                transition={spinnerTransition}
+                            />
                             Setting up...
                         </>
                     ) : (

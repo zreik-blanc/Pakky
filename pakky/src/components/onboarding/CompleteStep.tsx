@@ -26,7 +26,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
             hasCalledComplete.current = true;
             const completeTimer = setTimeout(() => {
                 onMorphComplete();
-            }, 600); // Wait for morph animation to complete
+            }, 800); // 1.4s Morph (Smooth zooming out)
             return () => clearTimeout(completeTimer);
         }
     }, [showLogo, onMorphComplete]);
@@ -36,7 +36,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
             className="text-center space-y-8"
         >
             {/* Animated icon container */}
-            <div className="relative mx-auto w-28 h-28 flex items-center justify-center">
+            <div className="relative mx-auto w-48 h-48 flex items-center justify-center">
                 {/* Success glow - only visible before morph */}
                 <AnimatePresence>
                     {!showLogo && !isExiting && (
@@ -44,18 +44,19 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                             className="absolute inset-0 bg-green-500/20 rounded-full blur-2xl"
                             initial={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
+                            transition={{ duration: 0.5 }}
                         />
                     )}
                 </AnimatePresence>
 
                 {/* Morph container with shared layoutId */}
+
                 <motion.div
                     layoutId="pakky-logo"
                     className="relative flex items-center justify-center"
                     style={{
-                        width: showLogo ? 40 : 112,
-                        height: showLogo ? 40 : 112,
+                        width: showLogo ? 144 : 192,
+                        height: showLogo ? 144 : 192,
                     }}
                     transition={{
                         layout: {
@@ -76,12 +77,12 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                             backgroundColor: showLogo
                                 ? 'rgba(var(--primary-rgb, 59, 130, 246), 0.1)'
                                 : 'rgba(34, 197, 94, 0.1)',
-                            borderRadius: showLogo ? '8px' : '9999px',
+                            borderRadius: showLogo ? '24px' : '9999px',
                             boxShadow: showLogo
                                 ? '0 0 0 1px rgba(var(--primary-rgb, 59, 130, 246), 0.2)'
                                 : '0 0 0 2px rgba(34, 197, 94, 0.4), 0 25px 50px -12px rgba(34, 197, 94, 0.2)',
                         }}
-                        transition={{ duration: 0.5, ease: 'easeInOut' }}
+                        transition={{ duration: 0.8, ease: 'easeInOut' }}
                     />
 
                     {/* Checkmark icon - fades out */}
@@ -91,20 +92,20 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                                 key="checkmark"
                                 initial={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.5, rotate: -45 }}
-                                transition={{ duration: 0.3 }}
+                                transition={{ duration: 0.5 }}
                                 className="absolute inset-0 flex items-center justify-center"
                             >
-                                <CheckCircle2 className="w-14 h-14 text-green-500 drop-shadow-lg" />
+                                <CheckCircle2 className="w-20 h-20 text-green-500 drop-shadow-lg" />
                             </motion.div>
                         ) : (
                             <motion.div
                                 key="logo"
                                 initial={{ opacity: 0, scale: 0.5, rotate: 45 }}
                                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                transition={{ duration: 0.3, delay: 0.1 }}
+                                transition={{ duration: 0.5, delay: 0.1 }}
                                 className="absolute inset-0 flex items-center justify-center"
                             >
-                                <Package className="w-5 h-5 text-primary" />
+                                <Package className="w-1/2 h-1/2 text-primary" />
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -118,7 +119,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                     opacity: showLogo || isExiting ? 0 : 1,
                     y: showLogo || isExiting ? -20 : 0,
                 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
+                transition={{ duration: 0.8, ease: 'easeOut' }}
             >
                 <h2 className="text-3xl font-bold tracking-tight text-green-500">
                     All set!
@@ -126,33 +127,6 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                 <p className="text-muted-foreground text-base">
                     Taking you to Pakky...
                 </p>
-            </motion.div>
-
-            {/* Loading dots - fade out immediately when morphing */}
-            <motion.div
-                className="flex justify-center"
-                animate={{
-                    opacity: showLogo || isExiting ? 0 : 1,
-                }}
-                transition={{ duration: 0.3 }}
-            >
-                <div className="flex gap-1.5">
-                    {[0, 1, 2].map((i) => (
-                        <motion.div
-                            key={i}
-                            className="w-2 h-2 rounded-full bg-green-500"
-                            animate={{
-                                scale: [1, 1.2, 1],
-                                opacity: [0.5, 1, 0.5],
-                            }}
-                            transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                delay: i * 0.2,
-                            }}
-                        />
-                    ))}
-                </div>
             </motion.div>
         </div>
     );

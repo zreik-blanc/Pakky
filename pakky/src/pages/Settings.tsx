@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { Settings as SettingsIcon, User, Info, Trash2, LogOut, AlertTriangle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import {
 import { userConfigAPI, systemAPI } from '@/lib/electron';
 import { APP, UI_STRINGS } from '@/lib/constants';
 import type { UserConfig } from '@/lib/types';
+import { pageEnter, spinnerTransition, smoothSpring } from '@/lib/animations';
 
 export default function SettingsPage() {
     const [userConfig, setUserConfig] = useState<UserConfig | null>(null);
@@ -75,13 +77,22 @@ export default function SettingsPage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                <motion.div
+                    className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full"
+                    animate={{ rotate: 360 }}
+                    transition={spinnerTransition}
+                />
             </div>
         );
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full overflow-y-auto overflow-x-hidden pb-8 scrollbar-hide">
+        <motion.div
+            className="max-w-2xl mx-auto space-y-6 h-full overflow-y-auto overflow-x-hidden pb-8 scrollbar-hide"
+            variants={pageEnter}
+            initial="hidden"
+            animate="visible"
+        >
             <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center">
                     <SettingsIcon className="w-5 h-5 text-muted-foreground" />
@@ -207,9 +218,9 @@ export default function SettingsPage() {
                         }[level];
 
                         return (
-                            <div
+                            <motion.div
                                 key={level}
-                                className={`relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${isSelected
+                                className={`relative flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${isSelected
                                     ? `${config.selectedBorder} ${config.selectedBg}`
                                     : 'border-border/50 hover:border-border hover:bg-muted/30'
                                     }`}
@@ -223,11 +234,25 @@ export default function SettingsPage() {
                                         }
                                     }
                                 }}
+                                whileHover={{ scale: 1.01 }}
+                                whileTap={{ scale: 0.99 }}
+                                transition={smoothSpring}
                             >
-                                <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? config.radioColor : 'border-muted-foreground/30'
-                                    }`}>
-                                    {isSelected && <div className={`w-2 h-2 rounded-full ${config.dotColor}`} />}
-                                </div>
+                                <motion.div
+                                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${isSelected ? config.radioColor : 'border-muted-foreground/30'
+                                        }`}
+                                    animate={{ scale: isSelected ? 1 : 0.9 }}
+                                    transition={smoothSpring}
+                                >
+                                    {isSelected && (
+                                        <motion.div
+                                            className={`w-2 h-2 rounded-full ${config.dotColor}`}
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            transition={smoothSpring}
+                                        />
+                                    )}
+                                </motion.div>
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-medium">{config.name}</span>
@@ -239,7 +264,7 @@ export default function SettingsPage() {
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-0.5">{config.description}</p>
                                 </div>
-                            </div>
+                            </motion.div>
                         );
                     })}
                 </CardContent>
@@ -341,7 +366,11 @@ export default function SettingsPage() {
                         >
                             {isResetting ? (
                                 <>
-                                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                                    <motion.div
+                                        className="w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"
+                                        animate={{ rotate: 360 }}
+                                        transition={spinnerTransition}
+                                    />
                                     {UI_STRINGS.SETTINGS.RESETTING_BUTTON}
                                 </>
                             ) : (
@@ -351,6 +380,6 @@ export default function SettingsPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </motion.div>
     );
 }

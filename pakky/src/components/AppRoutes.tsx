@@ -1,7 +1,9 @@
 import { lazy, Suspense } from 'react';
+import { motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
 import { QueueManager } from '@/lib/managers/queueManager';
+import { spinnerTransition } from '@/lib/animations';
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('@/pages/Home'));
@@ -13,7 +15,12 @@ function PageLoader() {
     return (
         <div className="flex items-center justify-center h-full">
             <div className="flex flex-col items-center gap-3">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={spinnerTransition}
+                >
+                    <Loader2 className="w-8 h-8 text-primary" />
+                </motion.div>
                 <span className="text-sm text-muted-foreground">Loading...</span>
             </div>
         </div>

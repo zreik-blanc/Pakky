@@ -85,6 +85,7 @@ export default {
                 sm: "calc(var(--radius) - 4px)",
             },
             keyframes: {
+                // Radix UI Accordion keyframes - must be kept for Accordion component
                 "accordion-down": {
                     from: { height: "0" },
                     to: { height: "var(--radix-accordion-content-height)" },
@@ -93,18 +94,15 @@ export default {
                     from: { height: "var(--radix-accordion-content-height)" },
                     to: { height: "0" },
                 },
-                "indeterminate-progress": {
-                    "0%": { transform: "translateX(-100%) scaleX(0.2)" },
-                    "50%": { transform: "translateX(0%) scaleX(0.5)" },
-                    "100%": { transform: "translateX(100%) scaleX(0.2)" },
-                }
+                // Note: Custom animations (shake, float, pulse, etc.) are now in Motion library
+                // See src/lib/animations/variants.ts
             },
             animation: {
                 "accordion-down": "accordion-down 0.2s ease-out",
                 "accordion-up": "accordion-up 0.2s ease-out",
-                "indeterminate-progress": "indeterminate-progress 1s infinite linear",
             },
         },
     },
+    // Note: tailwindcss-animate kept for shadcn/ui dialog/sheet data-state animations
     plugins: [require("tailwindcss-animate")],
 }

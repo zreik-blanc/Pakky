@@ -1,6 +1,13 @@
+import { motion } from 'motion/react';
+import { pulseTransition } from '@/lib/animations';
+
 export function PresetSkeleton() {
     return (
-        <div className="bg-card/30 border border-border/30 rounded-xl p-4 animate-pulse">
+        <motion.div
+            className="bg-card/30 border border-border/30 rounded-xl p-4"
+            animate={{ opacity: [0.5, 1, 0.5] }}
+            transition={pulseTransition}
+        >
             <div className="flex items-start gap-4">
                 <div className="w-12 h-12 bg-muted/50 rounded-xl" />
                 <div className="flex-1 space-y-2">
@@ -14,6 +21,6 @@ export function PresetSkeleton() {
                 <div className="h-5 bg-muted/30 rounded-full w-16" />
             </div>
             <div className="h-9 bg-muted/30 rounded-lg mt-4" />
-        </div>
+        </motion.div>
     );
 }

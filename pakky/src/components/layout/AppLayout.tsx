@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Package, Home, Sparkles, Settings, Upload, CheckCircle2, AlertCircle, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { InstallProgress } from '@/lib/types';
+import {
+    slideInFromLeft,
+    slideInFromBottom,
+    scaleIn,
+    pingTransition,
+    quickTween,
+    StaggerText,
+} from '@/lib/animations';
 
 type Page = 'home' | 'presets' | 'settings';
 
@@ -49,15 +57,26 @@ export default function AppLayout({
     return (
         <div className="h-screen flex bg-background text-foreground overflow-hidden">
             {/* Sidebar */}
-            <aside
-                className={cn(
-                    "bg-card/40 backdrop-blur-md border-r border-border/50 flex flex-col transition-all duration-300 ease-in-out relative group",
-                    isCollapsed ? "w-16" : "w-60"
-                )}
+            <motion.aside
+                className="bg-card/40 backdrop-blur-md flex flex-col relative group z-50"
+                animate={{ width: isCollapsed ? 64 : 240 }}
+                transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
             >
-                {/* Logo area - handles macOS traffic lights */}
+                {/* Border element - starts below traffic lights with fade-in */}
                 <div
-                    className="h-20 flex items-end gap-3 px-4 pb-3 border-b border-border/30"
+                    className="absolute top-10 right-0 bottom-0 w-px"
+                    style={{ background: 'linear-gradient(to bottom, transparent, hsl(var(--border) / 0.5) 20px)' }}
+                />
+
+                {/* Spacer for macOS traffic lights - no border here */}
+                <div
+                    className="h-7 shrink-0"
+                    style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+                />
+
+                {/* Logo area */}
+                <div
+                    className="h-14 flex items-center gap-3 px-4 border-b border-border/30"
                     style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
                 >
                     <motion.div
@@ -75,14 +94,25 @@ export default function AppLayout({
                     >
                         <Package className="w-5 h-5" />
                     </motion.div>
-                    {!isCollapsed && (
-                        <div className="animate-in fade-in slide-in-from-left-2 duration-200 pb-0.5" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
-                            <h1 className="text-base font-bold tracking-tight leading-tight">Pakky</h1>
-                            <p className="text-[9px] text-muted-foreground/70 font-mono uppercase tracking-wider">
-                                {systemInfo?.platform === 'macos' ? 'macOS' : systemInfo?.platform} • {systemInfo?.arch}
-                            </p>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {!isCollapsed && (
+                            <motion.div
+                                variants={slideInFromLeft}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="pb-0.5"
+                                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                            >
+                                <h1 className="text-base font-bold tracking-tight leading-tight">
+                                    <StaggerText isVisible={!isCollapsed}>Pakky</StaggerText>
+                                </h1>
+                                <p className="text-[9px] text-muted-foreground/70 font-mono uppercase tracking-wider">
+                                    {systemInfo?.platform === 'macos' ? 'macOS' : systemInfo?.platform} • {systemInfo?.arch}
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
 
                 {/* Navigation */}
@@ -95,7 +125,7 @@ export default function AppLayout({
                                 key={item.id}
                                 variant={isActive ? "secondary" : "ghost"}
                                 className={cn(
-                                    "w-full transition-all duration-200",
+                                    "w-full transition-colors duration-200",
                                     isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3",
                                     isActive && "font-semibold shadow-sm bg-secondary/80",
                                     !isActive && "hover:bg-accent/50"
@@ -104,14 +134,12 @@ export default function AppLayout({
                                 title={isCollapsed ? item.label : undefined}
                             >
                                 <Icon className={cn(
-                                    "w-4 h-4 shrink-0 transition-colors",
+                                    "w-4 h-4 shrink-0",
                                     isActive ? "text-primary" : "text-muted-foreground"
                                 )} />
-                                {!isCollapsed && (
-                                    <span className="animate-in fade-in slide-in-from-left-2 duration-200">
-                                        {item.label}
-                                    </span>
-                                )}
+                                <StaggerText isVisible={!isCollapsed}>
+                                    {item.label}
+                                </StaggerText>
                             </Button>
                         );
                     })}
@@ -122,69 +150,83 @@ export default function AppLayout({
                     <Button
                         variant="outline"
                         className={cn(
-                            "w-full transition-all duration-200 border-border/50 hover:bg-accent/50",
+                            "w-full transition-colors duration-200 border-border/50 hover:bg-accent/50",
                             isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3"
                         )}
                         onClick={onImportConfig}
                         title={isCollapsed ? "Import Config" : undefined}
                     >
                         <Upload className="w-4 h-4 text-muted-foreground shrink-0" />
-                        {!isCollapsed && (
-                            <span className="animate-in fade-in slide-in-from-left-2 duration-200">
-                                Import Config
-                            </span>
-                        )}
+                        <StaggerText isVisible={!isCollapsed}>
+                            Import Config
+                        </StaggerText>
                     </Button>
                 </div>
 
                 {/* Quick Stats */}
-                {progress.totalPackages > 0 && (
-                    <div className={cn(
-                        "p-2 border-t border-border/30 animate-in fade-in slide-in-from-bottom-2 duration-300",
-                        isCollapsed && "flex flex-col items-center gap-2"
-                    )}>
-                        {!isCollapsed && (
-                            <div className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-widest px-1 mb-2">
-                                Status
-                            </div>
-                        )}
-                        <div className={cn(
-                            "gap-2",
-                            isCollapsed ? "flex flex-col" : "grid grid-cols-2"
-                        )}>
-                            <div className={cn(
-                                "bg-green-500/10 border border-green-500/20 rounded-lg text-center transition-all hover:bg-green-500/15",
-                                isCollapsed ? "p-2" : "p-2.5"
-                            )}>
-                                <div className={cn(
-                                    "font-bold text-green-500 flex items-center justify-center gap-1",
-                                    isCollapsed ? "text-sm" : "text-base"
-                                )}>
-                                    <CheckCircle2 className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
-                                    {progress.completedPackages}
+                <AnimatePresence>
+                    {progress.totalPackages > 0 && (
+                        <motion.div
+                            variants={slideInFromBottom}
+                            initial="hidden"
+                            animate="visible"
+                            exit="exit"
+                            className={cn(
+                                "p-2 border-t border-border/30",
+                                isCollapsed && "flex flex-col items-center gap-2"
+                            )}
+                        >
+                            {!isCollapsed && (
+                                <div className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-widest px-1 mb-2">
+                                    Status
                                 </div>
-                                {!isCollapsed && (
-                                    <div className="text-[9px] text-green-600 font-medium">Done</div>
-                                )}
-                            </div>
+                            )}
                             <div className={cn(
-                                "bg-red-500/10 border border-red-500/20 rounded-lg text-center transition-all hover:bg-red-500/15",
-                                isCollapsed ? "p-2" : "p-2.5"
+                                "gap-2",
+                                isCollapsed ? "flex flex-col" : "grid grid-cols-2"
                             )}>
-                                <div className={cn(
-                                    "font-bold text-red-500 flex items-center justify-center gap-1",
-                                    isCollapsed ? "text-sm" : "text-base"
-                                )}>
-                                    <AlertCircle className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
-                                    {progress.failedPackages}
-                                </div>
-                                {!isCollapsed && (
-                                    <div className="text-[9px] text-red-600 font-medium">Failed</div>
-                                )}
+                                <motion.div
+                                    className={cn(
+                                        "bg-green-500/10 border border-green-500/20 rounded-lg text-center",
+                                        isCollapsed ? "p-2" : "p-2.5"
+                                    )}
+                                    whileHover={{ backgroundColor: 'rgba(34, 197, 94, 0.15)' }}
+                                    transition={quickTween}
+                                >
+                                    <div className={cn(
+                                        "font-bold text-green-500 flex items-center justify-center gap-1",
+                                        isCollapsed ? "text-sm" : "text-base"
+                                    )}>
+                                        <CheckCircle2 className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                                        {progress.completedPackages}
+                                    </div>
+                                    {!isCollapsed && (
+                                        <div className="text-[9px] text-green-600 font-medium">Done</div>
+                                    )}
+                                </motion.div>
+                                <motion.div
+                                    className={cn(
+                                        "bg-red-500/10 border border-red-500/20 rounded-lg text-center",
+                                        isCollapsed ? "p-2" : "p-2.5"
+                                    )}
+                                    whileHover={{ backgroundColor: 'rgba(239, 68, 68, 0.15)' }}
+                                    transition={quickTween}
+                                >
+                                    <div className={cn(
+                                        "font-bold text-red-500 flex items-center justify-center gap-1",
+                                        isCollapsed ? "text-sm" : "text-base"
+                                    )}>
+                                        <AlertCircle className={cn(isCollapsed ? "w-3 h-3" : "w-3.5 h-3.5")} />
+                                        {progress.failedPackages}
+                                    </div>
+                                    {!isCollapsed && (
+                                        <div className="text-[9px] text-red-600 font-medium">Failed</div>
+                                    )}
+                                </motion.div>
                             </div>
-                        </div>
-                    </div>
-                )}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Collapse Toggle */}
                 <div className="p-2 border-t border-border/30">
@@ -192,7 +234,7 @@ export default function AppLayout({
                         variant="ghost"
                         size="sm"
                         className={cn(
-                            "w-full transition-all duration-200 text-muted-foreground hover:text-foreground",
+                            "w-full transition-colors duration-200 text-muted-foreground hover:text-foreground",
                             isCollapsed ? "justify-center px-0" : "justify-start gap-3 px-3"
                         )}
                         onClick={() => setIsCollapsed(!isCollapsed)}
@@ -203,12 +245,19 @@ export default function AppLayout({
                         ) : (
                             <>
                                 <PanelLeftClose className="w-4 h-4 shrink-0" />
-                                <span className="text-xs animate-in fade-in slide-in-from-left-2 duration-200">Collapse</span>
+                                <motion.span
+                                    className="text-xs"
+                                    variants={slideInFromLeft}
+                                    initial="hidden"
+                                    animate="visible"
+                                >
+                                    Collapse
+                                </motion.span>
                             </>
                         )}
                     </Button>
                 </div>
-            </aside>
+            </motion.aside>
 
             {/* Main area */}
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -222,20 +271,30 @@ export default function AppLayout({
                     </div>
 
                     {/* Status indicator */}
-                    {progress.status === 'installing' && (
-                        <div
-                            className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20 animate-in fade-in zoom-in-95 duration-300"
-                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-                        >
-                            <div className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
-                            </div>
-                            <span className="text-xs font-medium text-primary">
-                                Installing {progress.completedPackages}/{progress.totalPackages}
-                            </span>
-                        </div>
-                    )}
+                    <AnimatePresence>
+                        {progress.status === 'installing' && (
+                            <motion.div
+                                variants={scaleIn}
+                                initial="hidden"
+                                animate="visible"
+                                exit="exit"
+                                className="flex items-center gap-2 px-3 py-1 bg-primary/10 rounded-full border border-primary/20"
+                                style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                            >
+                                <div className="relative flex h-1.5 w-1.5">
+                                    <motion.span
+                                        className="absolute inline-flex h-full w-full rounded-full bg-primary"
+                                        animate={{ scale: [1, 2], opacity: [0.75, 0] }}
+                                        transition={pingTransition}
+                                    />
+                                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                                </div>
+                                <span className="text-xs font-medium text-primary">
+                                    Installing {progress.completedPackages}/{progress.totalPackages}
+                                </span>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </header>
 
                 {/* Main Content */}

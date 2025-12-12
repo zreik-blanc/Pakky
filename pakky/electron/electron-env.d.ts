@@ -30,6 +30,7 @@ type PakkyInvokeChannel =
   | 'config:save'
   | 'config:selectFile'
   | 'config:saveDialog'
+  | 'config:parseContent'
   | 'install:start'
   | 'install:cancel'
   | 'install:getInstalled'

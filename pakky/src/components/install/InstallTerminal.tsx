@@ -1,6 +1,8 @@
+import { motion } from "motion/react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { spinnerTransition, pulseTransition } from "@/lib/animations"
 
 interface InstallTerminalProps {
     logs: string[]
@@ -17,8 +19,18 @@ export function InstallTerminal({ logs, isInstalling, className }: InstallTermin
                 <div className="space-y-1">
                     {logs.length === 0 && isInstalling && (
                         <div className="text-muted-foreground flex items-center gap-2">
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                            <span className="animate-pulse">Starting installation...</span>
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={spinnerTransition}
+                            >
+                                <Loader2 className="w-3 h-3" />
+                            </motion.div>
+                            <motion.span
+                                animate={{ opacity: [0.5, 1, 0.5] }}
+                                transition={pulseTransition}
+                            >
+                                Starting installation...
+                            </motion.span>
                         </div>
                     )}
                     {logs.map((log, i) => (

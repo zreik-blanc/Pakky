@@ -1,7 +1,10 @@
 /**
  * ToggleSwitch Component
  * A custom toggle switch with label and optional description
+ * Now with smooth motion animations for the toggle knob
  */
+
+import { motion } from 'motion/react';
 
 interface ToggleSwitchProps {
     checked: boolean;
@@ -18,7 +21,7 @@ export function ToggleSwitch({
 }: ToggleSwitchProps) {
     return (
         <label className="flex items-start gap-3 cursor-pointer group">
-            <button
+            <motion.button
                 type="button"
                 role="switch"
                 aria-checked={checked}
@@ -29,15 +32,18 @@ export function ToggleSwitch({
                     focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
                     ${checked ? 'bg-primary' : 'bg-muted'}
                 `}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
-                <span
-                    className={`
-                        pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow-lg 
-                        ring-0 transition duration-200 ease-in-out
-                        ${checked ? 'translate-x-4' : 'translate-x-0'}
-                    `}
+                <motion.span
+                    className="pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-lg ring-0"
+                    animate={{
+                        x: checked ? 16 : 0,
+                        scale: checked ? 1 : 0.9
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
-            </button>
+            </motion.button>
             <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium leading-none group-hover:text-foreground transition-colors">
                     {label}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import type { SystemInfo, PackageInstallItem, UserConfig } from '@/lib/types';
+import { motion } from 'motion/react';
+import type { SystemInfo, PackageInstallItem, UserConfig, ConfigSettings } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
 import { installAPI, configAPI } from '@/lib/electron';
 import type { PakkyConfig } from '@/lib/types';
@@ -15,6 +16,7 @@ import { AddScriptDialog } from '@/components/install/AddScriptDialog';
 import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
 import { usePackageActions } from '@/hooks/usePackageActions';
 import { usePackageManagerCheck } from '@/hooks/usePackageManagerCheck';
+import { pageEnter } from '@/lib/animations';
 
 interface HomePageProps {
     systemInfo: SystemInfo | null;
@@ -48,6 +50,13 @@ export default function HomePage({
     const [showImportedAlert, setShowImportedAlert] = useState(false);
     const [showScriptInputDialog, setShowScriptInputDialog] = useState(false);
     const [showAddScriptDialog, setShowAddScriptDialog] = useState(false);
+
+    // Installation settings - user configurable
+    const [installSettings, setInstallSettings] = useState<ConfigSettings>({
+        continue_on_error: true,
+        skip_already_installed: true,
+        parallel_installs: false,
+    });
 
     const {
         progress,
@@ -90,6 +99,13 @@ export default function HomePage({
             onClearImported?.();
         }
     }, [importedPackages, onClearImported, setSelectedPackages]);
+
+    // Sync install settings when config is loaded/imported
+    useEffect(() => {
+        if (loadedConfig?.settings) {
+            setInstallSettings(prev => ({ ...prev, ...loadedConfig.settings }));
+        }
+    }, [loadedConfig]);
 
     // Check if user wants to install from imported config
     const handleStartInstall = () => {
@@ -174,8 +190,9 @@ export default function HomePage({
             startInstallation();
             setInstallLogs({});
 
-            // Pass config settings and user input values
-            await installAPI.startInstallation(updatedPackages, loadedConfig?.settings, userInputValues);
+            // Pass install settings (UI settings override loaded config settings)
+            const settingsToUse = { ...loadedConfig?.settings, ...installSettings };
+            await installAPI.startInstallation(updatedPackages, settingsToUse, userInputValues);
         } catch (error) {
             console.error('Installation failed:', error);
             completeInstallation();
@@ -244,7 +261,12 @@ export default function HomePage({
     const isInstalling = progress.status === 'installing';
 
     return (
-        <div className="max-w-4xl mx-auto flex flex-col h-full animate-in fade-in duration-500">
+        <motion.div
+            className="max-w-4xl mx-auto flex flex-col h-full"
+            variants={pageEnter}
+            initial="hidden"
+            animate="visible"
+        >
             {/* Imported config confirmation alert */}
             {showImportedAlert && (
                 <ImportedConfigAlert
@@ -285,8 +307,11 @@ export default function HomePage({
                     installLogs={installLogs}
                     isInstalling={isInstalling}
                     isStartingInstall={isStartingInstall}
+                    installSettings={installSettings}
+                    onInstallSettingsChange={setInstallSettings}
                     onRemove={removePackage}
                     onReinstall={handleReinstall}
+                    onReorder={setSelectedPackages}
                     onStartInstall={handleStartInstall}
                     onCancelInstall={handleCancelInstall}
                     onExport={handleExportConfig}
@@ -323,6 +348,6 @@ export default function HomePage({
                 onOpenChange={setShowAddScriptDialog}
                 onAdd={handleAddScript}
             />
-        </div>
+        </motion.div>
     );
 }
