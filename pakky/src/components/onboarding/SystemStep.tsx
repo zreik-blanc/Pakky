@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { Cpu, Laptop, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { SystemInfo } from '@/lib/types';
-import { spinnerTransition, hoverScale } from '@/lib/animations';
+import { spinnerTransition } from '@/lib/animations';
 
 interface SystemStepProps {
     name: string;
@@ -20,12 +20,17 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
                 <p className="text-muted-foreground text-base">Here's what we detected about your system.</p>
             </div>
 
-            <div className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-8 shadow-2xl space-y-6">
+            <motion.div
+                layoutId="onboarding-card"
+                className="bg-card/60 backdrop-blur-md border border-border/40 rounded-2xl p-8 shadow-2xl space-y-6"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+            >
                 {systemInfo && (
                     <div className="grid grid-cols-2 gap-4">
                         <motion.div
                             className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30"
-                            whileHover={hoverScale}
+                            whileHover={{ scale: 1.02, backgroundColor: "hsl(var(--muted) / 0.3)" }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -43,7 +48,8 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
 
                         <motion.div
                             className="bg-muted/20 rounded-xl p-5 space-y-3 border border-border/30"
-                            whileHover={hoverScale}
+                            whileHover={{ scale: 1.02, backgroundColor: "hsl(var(--muted) / 0.3)" }}
+                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
                         >
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -61,28 +67,34 @@ export function SystemStep({ name, systemInfo, onNext, isSubmitting, isTransitio
                     </div>
                 )}
 
-                <Button
-                    className="w-full h-13 text-base gap-2 shadow-lg hover:shadow-xl transition-shadow duration-300"
-                    onClick={onNext}
-                    disabled={isSubmitting || isTransitioning}
+                <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 >
-                    {isSubmitting ? (
-                        <>
-                            <motion.div
-                                className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
-                                animate={{ rotate: 360 }}
-                                transition={spinnerTransition}
-                            />
-                            Setting up...
-                        </>
-                    ) : (
-                        <>
-                            Complete Setup
-                            <ArrowRight className="w-4 h-4" />
-                        </>
-                    )}
-                </Button>
-            </div>
+                    <Button
+                        className="w-full h-13 text-base gap-2 shadow-lg hover:shadow-xl transition-all duration-300"
+                        onClick={onNext}
+                        disabled={isSubmitting || isTransitioning}
+                    >
+                        {isSubmitting ? (
+                            <>
+                                <motion.div
+                                    className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
+                                    animate={{ rotate: 360 }}
+                                    transition={spinnerTransition}
+                                />
+                                Setting up...
+                            </>
+                        ) : (
+                            <>
+                                Complete Setup
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
+                    </Button>
+                </motion.div>
+            </motion.div>
         </div>
     );
 }

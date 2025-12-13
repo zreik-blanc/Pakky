@@ -9,14 +9,14 @@ interface ImportedConfigAlertProps {
     onReviewConfig: () => void;
 }
 
-export function ImportedConfigAlert({ 
-    packageCount, 
-    onConfirm, 
+export function ImportedConfigAlert({
+    packageCount,
+    onConfirm,
     onReject,
-    onReviewConfig 
+    onReviewConfig
 }: ImportedConfigAlertProps) {
     return (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
             <Card className="w-full max-w-md border-orange-500/30 shadow-lg">
                 <CardHeader className="pb-3">
                     <div className="flex items-center gap-3">
@@ -36,15 +36,15 @@ export function ImportedConfigAlert({
 
                 <CardContent className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                        You're about to install packages from an imported configuration file. 
-                        If you don't recognize the source of this config, we recommend reviewing 
+                        You're about to install packages from an imported configuration file.
+                        If you don't recognize the source of this config, we recommend reviewing
                         the packages before proceeding.
                     </p>
 
                     <div className="bg-orange-500/5 border border-orange-500/20 rounded-lg p-3">
                         <p className="text-xs text-muted-foreground">
-                            <strong className="text-foreground">Tip:</strong> You can click on each package 
-                            in the queue to see its details, or export the config to review any 
+                            <strong className="text-foreground">Tip:</strong> You can click on each package
+                            in the queue to see its details, or export the config to review any
                             post-install scripts before running the installation.
                         </p>
                     </div>

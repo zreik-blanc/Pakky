@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { systemAPI, userConfigAPI, windowAPI } from '@/lib/electron';
+import { systemAPI, userConfigAPI } from '@/lib/electron';
 import type { Platform, SystemInfo, UserConfig } from '@/lib/types';
 
 export function useAppInitialization() {
@@ -13,8 +13,12 @@ export function useAppInitialization() {
     useEffect(() => {
         const initApp = async () => {
             try {
-                // 1. Get System Info
-                const info = await systemAPI.getSystemInfo();
+                // 1. Get System Info & Onboarding Status in parallel
+                const [info, storedConfig] = await Promise.all([
+                    systemAPI.getSystemInfo(),
+                    userConfigAPI.read()
+                ]);
+
                 const sysInfo = {
                     platform: info.platform as Platform,
                     arch: info.arch,
@@ -24,8 +28,7 @@ export function useAppInitialization() {
                 };
                 setSystemInfo(sysInfo);
 
-                // 2. Check User Config (Onboarding Status)
-                const storedConfig = await userConfigAPI.read();
+                // 2. Handle User Config
                 if (storedConfig) {
                     setUserConfig(storedConfig);
                 }
@@ -76,13 +79,6 @@ export function useAppInitialization() {
         setIsOnboarding(false);
         // Trigger fade-in animation for main app
         setTimeout(() => setShowMainApp(true), 50);
-
-        // Delay window resize by 200ms to let travel animation get a head start
-        setTimeout(() => {
-            windowAPI.setNormalSize().catch(error => {
-                console.error('[App] Failed to resize window:', error);
-            });
-        }, 200);
     };
 
     return {

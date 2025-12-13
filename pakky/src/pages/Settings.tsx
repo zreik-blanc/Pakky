@@ -16,6 +16,7 @@ import { userConfigAPI, systemAPI } from '@/lib/electron';
 import { APP, UI_STRINGS } from '@/lib/constants';
 import type { UserConfig } from '@/lib/types';
 import { pageEnter, spinnerTransition, smoothSpring } from '@/lib/animations';
+import { usePackageManagerCheck } from '@/hooks/usePackageManagerCheck';
 
 export default function SettingsPage() {
     const [userConfig, setUserConfig] = useState<UserConfig | null>(null);
@@ -25,6 +26,9 @@ export default function SettingsPage() {
     const [isEditing, setIsEditing] = useState(false);
     const [showResetDialog, setShowResetDialog] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
+    const { packageManagerName } = usePackageManagerCheck({
+        platform: userConfig?.systemInfo?.platform
+    });
 
     useEffect(() => {
         const loadConfig = async () => {
@@ -293,7 +297,7 @@ export default function SettingsPage() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">{UI_STRINGS.SETTINGS.PACKAGE_MANAGER_LABEL}</p>
-                            <p className="text-foreground">{APP.PACKAGE_MANAGER}</p>
+                            <p className="text-foreground">{packageManagerName || 'Unknown'}</p>
                         </div>
                     </div>
                 </CardContent>

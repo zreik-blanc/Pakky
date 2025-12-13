@@ -545,6 +545,7 @@ describe('QueueManager', () => {
             it('handles unknown package type gracefully', () => {
                 // TypeScript would normally prevent this, but runtime might not
                 const item = QueueManager.createItem({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     type: 'unknown' as any,
                     name: 'test',
                 })
@@ -557,11 +558,13 @@ describe('QueueManager', () => {
             it('handles undefined id gracefully', () => {
                 const packages = [createMockPackage()]
                 // This should not crash
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = QueueManager.isDuplicate(packages, undefined as any)
                 expect(typeof result).toBe('boolean')
             })
 
             it('handles packages with missing ids', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const packages = [{ ...createMockPackage(), id: undefined as any }]
                 const result = QueueManager.isDuplicate(packages, 'formula:git')
                 expect(result).toBe(false)
@@ -576,6 +579,7 @@ describe('QueueManager', () => {
             })
 
             it('handles packages with undefined names', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const packages = [{ ...createMockPackage(), name: undefined as any }]
                 // Should not crash
                 expect(() =>
@@ -762,6 +766,7 @@ describe('QueueManager', () => {
                 QueueManager.add([], createMockParams({ name: maliciousName }))
 
                 // Verify prototype was not polluted
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 expect(({} as any).malicious).toBeUndefined()
             })
         })
@@ -930,36 +935,42 @@ describe('QueueManager', () => {
         describe('type coercion issues', () => {
             it('throws on number as name (TypeScript would prevent)', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: 123 as any }))
                 ).toThrow()
             })
 
             it('throws on boolean as name', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: true as any }))
                 ).toThrow()
             })
 
             it('throws on array as name', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: ['a', 'b'] as any }))
                 ).toThrow()
             })
 
             it('throws on object as name', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: { foo: 'bar' } as any }))
                 ).toThrow()
             })
 
             it('throws on null as name', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: null as any }))
                 ).toThrow()
             })
 
             it('throws on function as name', () => {
                 expect(() =>
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.add([], createMockParams({ name: (() => 'test') as any }))
                 ).toThrow()
             })
@@ -967,6 +978,7 @@ describe('QueueManager', () => {
             it('throws on Symbol as type', () => {
                 // Symbols cannot be converted to strings
                 expect(() => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     QueueManager.generateId(Symbol('test') as any, 'name')
                 }).toThrow()
             })

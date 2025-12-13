@@ -9,7 +9,7 @@ export function registerSystemHandlers() {
         return getPlatformName()
     })
 
-    ipcMain.handle('system:getInfo', () => {
-        return getSystemInfo()
+    ipcMain.handle('system:getInfo', async () => {
+        return await getSystemInfo()
     })
 }

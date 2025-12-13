@@ -408,6 +408,7 @@ describe('useQueueStore', () => {
                     ...createMockPackage(),
                     description: undefined,
                     logs: undefined,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 } as any
 
                 act(() => {
@@ -576,6 +577,7 @@ describe('useQueueStore', () => {
             it('handles undefined queue', () => {
                 act(() => {
                     useQueueStore.getState().setPackages([createMockPackage()])
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     useQueueStore.getState().initFromUserConfig(undefined as any)
                 })
 

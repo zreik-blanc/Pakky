@@ -59,7 +59,7 @@ export function TagInput({
 
     return (
         <div className="space-y-2">
-            <div className="flex flex-wrap gap-1.5 p-2 min-h-[42px] rounded-md border border-input bg-background">
+            <div className="flex flex-wrap items-center gap-1.5 p-2 min-h-[42px] rounded-md border border-input bg-background shadow-sm transition-all duration-150 focus-within:outline-none focus-within:border-primary/50 focus-within:shadow-md focus-within:ring-1 focus-within:ring-primary/20">
                 <AnimatePresence mode="popLayout">
                     {tags.map(tag => (
                         <motion.div

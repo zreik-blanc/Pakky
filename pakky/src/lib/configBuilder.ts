@@ -21,6 +21,7 @@ import { APP, EXPORT_DEFAULTS, TAG_RULES } from './constants';
 
 export interface BuildConfigOptions {
     name: string;
+    version?: string;
     description?: string;
     author?: string;
     tags?: string[];
@@ -160,7 +161,7 @@ export function buildPakkyConfig(
     const config: PakkyConfig = {
         $schema: './pakky-config.schema.json',
         name: options.name,
-        version: EXPORT_DEFAULTS.VERSION,
+        version: options.version || EXPORT_DEFAULTS.VERSION,
     };
 
     // Add optional top-level fields

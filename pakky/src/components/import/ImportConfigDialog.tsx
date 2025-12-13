@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Upload, ClipboardPaste, FileJson, ArrowLeft, Loader2, AlertCircle } from 'lucide-react';
 import {
@@ -34,13 +34,30 @@ export function ImportConfigDialog({
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Track timeout for cleanup
+    const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (resetTimeoutRef.current) {
+                clearTimeout(resetTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const handleClose = () => {
         onOpenChange(false);
-        // Reset state after animation
-        setTimeout(() => {
+        // Clear any existing timeout first
+        if (resetTimeoutRef.current) {
+            clearTimeout(resetTimeoutRef.current);
+        }
+        // Reset state after animation with cleanup tracking
+        resetTimeoutRef.current = setTimeout(() => {
             setMethod('choice');
             setPastedContent('');
             setError(null);
+            resetTimeoutRef.current = null;
         }, 200);
     };
 

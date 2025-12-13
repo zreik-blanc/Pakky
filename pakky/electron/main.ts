@@ -1,7 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import fs from 'node:fs'
 import { registerAllHandlers } from './ipc'
 import { ELECTRON_CONFIG } from './constants'
 import { WINDOW } from '../src/lib/constants'
@@ -29,30 +28,19 @@ process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 
 
 let win: BrowserWindow | null
 
-/**
- * Check if user has completed onboarding (has config file)
- */
-function hasUserConfig(): boolean {
-  try {
-    const configPath = path.join(app.getPath('userData'), ELECTRON_CONFIG.PATHS.USER_CONFIG)
-    return fs.existsSync(configPath)
-  } catch {
-    return false
-  }
-}
+
 
 function createWindow() {
-  // Check if user has completed onboarding to determine initial window size
-  const isReturningUser = hasUserConfig()
-  const windowConfig = isReturningUser ? WINDOW.NORMAL : WINDOW.ONBOARDING
+  const windowConfig = WINDOW.NORMAL
 
-  logger.main.info(`Creating window - Returning user: ${isReturningUser}, Size: ${windowConfig.WIDTH}x${windowConfig.HEIGHT}`)
+  logger.main.info(`Creating window - Size: ${windowConfig.WIDTH}x${windowConfig.HEIGHT}`)
 
   win = new BrowserWindow({
     width: windowConfig.WIDTH,
     height: windowConfig.HEIGHT,
     minWidth: windowConfig.MIN_WIDTH,
     minHeight: windowConfig.MIN_HEIGHT,
+    center: true,
     icon: path.join(process.env.VITE_PUBLIC, ELECTRON_CONFIG.PATHS.ICON),
     titleBarStyle: ELECTRON_CONFIG.WINDOW.TITLE_BAR_STYLE, // macOS native title bar
     show: false, // Don't show until ready to prevent white flash

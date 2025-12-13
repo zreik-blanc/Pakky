@@ -17,7 +17,7 @@ import type { PakkyConfig, PackageInstallItem, SystemInfo, ConfigSettings } from
 import { buildPakkyConfig, generateTagSuggestions, getMacOSMinVersion, DEFAULT_BUILD_OPTIONS, type BuildConfigOptions } from '@/lib/configBuilder';
 import { getSuggestedTemplates, templatesToSteps } from '@/lib/scriptTemplates';
 import { EXPORT_DEFAULTS } from '@/lib/constants';
-import { hoverScale, tapScale, formContainer, formItem } from '@/lib/animations';
+import { formContainer, formItem } from '@/lib/animations';
 
 interface ExportPreviewDialogProps {
     open: boolean;
@@ -38,9 +38,11 @@ export function ExportPreviewDialog({
 }: ExportPreviewDialogProps) {
     // Basic info
     const [name, setName] = useState<string>(EXPORT_DEFAULTS.NAME);
+    const [version, setVersion] = useState<string>(EXPORT_DEFAULTS.VERSION);
     const [description, setDescription] = useState<string>(EXPORT_DEFAULTS.DESCRIPTION);
     const [tags, setTags] = useState<string[]>([]);
     const [nameError, setNameError] = useState<string>('');
+    const [versionError, setVersionError] = useState<string>('');
 
     // Export options
     const [includeDescriptions, setIncludeDescriptions] = useState(DEFAULT_BUILD_OPTIONS.includeDescriptions);
@@ -70,6 +72,7 @@ export function ExportPreviewDialog({
     useEffect(() => {
         if (open) {
             setName(EXPORT_DEFAULTS.NAME);
+            setVersion(EXPORT_DEFAULTS.VERSION);
             setDescription(EXPORT_DEFAULTS.DESCRIPTION);
             setTags([]);
             setIncludeDescriptions(DEFAULT_BUILD_OPTIONS.includeDescriptions);
@@ -78,11 +81,18 @@ export function ExportPreviewDialog({
             setSettings(DEFAULT_BUILD_OPTIONS.settings);
             setSelectedTemplates([]);
             setNameError('');
+            setVersionError('');
 
             // Pre-populate system requirements from current system
             if (systemInfo) {
                 setMinVersion(getMacOSMinVersion(systemInfo.version));
-                setSelectedArchitectures([systemInfo.arch as 'arm64' | 'x86_64']);
+                const validArchs: ('arm64' | 'x86_64')[] = ['arm64', 'x86_64'];
+                const arch = systemInfo.arch;
+                if (validArchs.includes(arch as 'arm64' | 'x86_64')) {
+                    setSelectedArchitectures([arch as 'arm64' | 'x86_64']);
+                } else {
+                    setSelectedArchitectures([]);
+                }
             } else {
                 setMinVersion('');
                 setSelectedArchitectures([]);
@@ -103,6 +113,7 @@ export function ExportPreviewDialog({
     const previewConfig = useMemo(() => {
         const options: BuildConfigOptions = {
             name,
+            version,
             description: description || undefined,
             author: userName,
             tags: tags.length > 0 ? tags : undefined,
@@ -126,7 +137,7 @@ export function ExportPreviewDialog({
 
         return config;
     }, [
-        name, description, userName, tags, includeDescriptions, includeMetadata,
+        name, version, description, userName, tags, includeDescriptions, includeMetadata,
         includeSystemRequirements, settings, systemInfo, packages, selectedTemplates,
         minVersion, selectedArchitectures
     ]);
@@ -141,6 +152,19 @@ export function ExportPreviewDialog({
             setNameError('Name is too long (max 100 characters)');
             return;
         }
+
+        // Validate version (semver-like format)
+        if (!version.trim()) {
+            setVersionError('Version is required');
+            return;
+        }
+        // Relaxed semver pattern: major.minor.patch with optional pre-release/build
+        const semverPattern = /^\d+\.\d+\.\d+(-[a-zA-Z0-9.-]+)?(\+[a-zA-Z0-9.-]+)?$/;
+        if (!semverPattern.test(version.trim())) {
+            setVersionError('Invalid format. Use semantic versioning (e.g., 1.0.0)');
+            return;
+        }
+
         onConfirm(previewConfig);
     };
 
@@ -217,6 +241,50 @@ export function ExportPreviewDialog({
                                     )}
                                 </motion.div>
 
+                                {/* Version and Tags side by side */}
+                                <motion.div className="grid grid-cols-2 gap-4" variants={formItem}>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="version">Version</Label>
+                                        <Input
+                                            id="version"
+                                            value={version}
+                                            onChange={(e) => {
+                                                setVersion(e.target.value);
+                                                if (versionError) setVersionError('');
+                                            }}
+                                            placeholder="1.0.0"
+                                            className={versionError ? 'border-destructive' : ''}
+                                        />
+                                        <AnimatePresence>
+                                            {versionError ? (
+                                                <motion.p
+                                                    className="text-xs text-destructive"
+                                                    initial={{ opacity: 0, y: -5 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -5 }}
+                                                >
+                                                    {versionError}
+                                                </motion.p>
+                                            ) : (
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    Semantic version (e.g., 1.0.0)
+                                                </p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Tags</Label>
+                                        <TagInput
+                                            tags={tags}
+                                            suggestions={tagSuggestions}
+                                            onChange={setTags}
+                                        />
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Press Enter or comma to add
+                                        </p>
+                                    </div>
+                                </motion.div>
+
                                 <motion.div className="grid gap-2" variants={formItem}>
                                     <Label htmlFor="description">Description</Label>
                                     <Textarea
@@ -225,15 +293,6 @@ export function ExportPreviewDialog({
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         className="resize-none h-20"
-                                    />
-                                </motion.div>
-
-                                <motion.div className="grid gap-2" variants={formItem}>
-                                    <Label>Tags</Label>
-                                    <TagInput
-                                        tags={tags}
-                                        suggestions={tagSuggestions}
-                                        onChange={setTags}
                                     />
                                 </motion.div>
 
@@ -395,17 +454,13 @@ export function ExportPreviewDialog({
                 </Tabs>
 
                 <DialogFooter className="p-6 pt-2 shrink-0 bg-background/80 backdrop-blur-sm z-50 border-t">
-                    <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                    </motion.div>
-                    <motion.div whileHover={!name.trim() ? {} : hoverScale} whileTap={!name.trim() ? {} : tapScale}>
-                        <Button onClick={handleConfirm} className="gap-2" disabled={!name.trim()}>
-                            <Download className="w-4 h-4" />
-                            Save Configuration
-                        </Button>
-                    </motion.div>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirm} className="gap-2" disabled={!name.trim()}>
+                        <Download className="w-4 h-4" />
+                        Save Configuration
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

@@ -335,7 +335,7 @@ export const orbitTransition = (duration: number, reverse = false): Transition =
     duration,
     repeat: Infinity,
     ease: 'linear',
-    ...(reverse && { repeatType: 'loop' as const }),
+    ...(reverse && { repeatType: 'reverse' as const }),
 });
 
 // ============================================================================

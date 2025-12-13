@@ -1,3 +1,4 @@
+import { useEffect, useRef, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { AlertTriangle, ShieldAlert, ShieldX, X, Skull } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,18 +49,96 @@ const severityConfig = {
     },
 };
 
+// Get all focusable elements within a container
+function getFocusableElements(container: HTMLElement): HTMLElement[] {
+    const focusableSelectors = [
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        'a[href]',
+        '[tabindex]:not([tabindex="-1"])',
+    ].join(', ');
+
+    return Array.from(container.querySelectorAll<HTMLElement>(focusableSelectors));
+}
+
 export function SecurityWarningAlert({ security, onConfirm, onReject }: SecurityWarningAlertProps) {
     const config = severityConfig[security.severity];
     const IconComponent = config.icon;
     const isCritical = security.severity === 'critical';
     const isHighOrCritical = security.severity === 'high' || security.severity === 'critical';
 
+    const dialogRef = useRef<HTMLDivElement>(null);
+    const previousActiveElement = useRef<Element | null>(null);
+
+    // Handle Escape key to close modal
+    const handleKeyDown = useCallback((event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            onReject();
+            return;
+        }
+
+        // Focus trap: handle Tab key
+        if (event.key === 'Tab' && dialogRef.current) {
+            const focusableElements = getFocusableElements(dialogRef.current);
+            if (focusableElements.length === 0) return;
+
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+
+            if (event.shiftKey) {
+                // Shift + Tab: if on first element, go to last
+                if (document.activeElement === firstElement) {
+                    event.preventDefault();
+                    lastElement.focus();
+                }
+            } else {
+                // Tab: if on last element, go to first
+                if (document.activeElement === lastElement) {
+                    event.preventDefault();
+                    firstElement.focus();
+                }
+            }
+        }
+    }, [onReject]);
+
+    // Set up focus trap and keyboard handling
+    useEffect(() => {
+        // Store the currently focused element to restore later
+        previousActiveElement.current = document.activeElement;
+
+        // Focus the first focusable element in the dialog
+        if (dialogRef.current) {
+            const focusableElements = getFocusableElements(dialogRef.current);
+            if (focusableElements.length > 0) {
+                focusableElements[0].focus();
+            }
+        }
+
+        // Add keyboard event listener
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+            // Restore focus to the previously focused element
+            if (previousActiveElement.current instanceof HTMLElement) {
+                previousActiveElement.current.focus();
+            }
+        };
+    }, [handleKeyDown]);
+
     return (
         <motion.div
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="security-alert-title"
+            ref={dialogRef}
         >
             <motion.div
                 initial={{ scale: 0.95, opacity: 0, y: 10 }}
@@ -77,7 +156,7 @@ export function SecurityWarningAlert({ security, onConfirm, onReject }: Security
                                 <IconComponent className={`w-6 h-6 ${config.color}`} />
                             </motion.div>
                             <div>
-                                <CardTitle className={config.color}>
+                                <CardTitle id="security-alert-title" className={config.color}>
                                     {config.title}
                                 </CardTitle>
                                 <p className="text-sm text-muted-foreground mt-1">
