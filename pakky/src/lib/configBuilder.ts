@@ -46,7 +46,7 @@ export interface BuildConfigOptions {
  * Generate tag suggestions based on package names
  */
 export function generateTagSuggestions(packages: PackageInstallItem[]): string[] {
-    const packageNames = packages.map(p => p.name.toLowerCase());
+    const packageNames = packages.map(p => (p.name ?? '').toLowerCase());
     const suggestedTags = new Set<string>();
 
     for (const rule of TAG_RULES) {

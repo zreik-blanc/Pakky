@@ -107,10 +107,10 @@ export class QueueManager {
      * Check if a package with the same type and name exists (ignoring script timestamps).
      */
     static isDuplicateByTypeAndName(packages: PackageInstallItem[], type: PackageType, name: string): boolean {
-        const normalizedName = name.trim().toLowerCase();
+        const normalizedName = String(name ?? '').trim().toLowerCase();
         return packages.some(pkg =>
             pkg.type === type &&
-            pkg.name.trim().toLowerCase() === normalizedName
+            String(pkg.name ?? '').trim().toLowerCase() === normalizedName
         );
     }
 
@@ -223,7 +223,10 @@ export class QueueManager {
         const [moved] = result.splice(index, 1);
         result.splice(targetIndex, 0, moved);
 
-        return this.reindex(result);
+        // Clear all positions to ensure reindex uses array order, not stale position values
+        const withClearedPositions = result.map(pkg => ({ ...pkg, position: undefined }));
+
+        return this.reindex(withClearedPositions);
     }
 
     /**

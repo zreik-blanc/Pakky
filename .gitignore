@@ -120,6 +120,7 @@ test-configs/
 # ===========================
 # Development ideas/notes (private)
 ideas/
+Memory Bank/
 
 # User data created by the app
 user-config.json

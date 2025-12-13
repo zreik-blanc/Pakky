@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { installAPI } from '@/lib/electron';
 import { UI_STRINGS } from '@/lib/constants';
 
@@ -45,7 +46,7 @@ export function usePackageManagerCheck({ platform }: UsePackageManagerCheckProps
     // Check for package manager on mount
     useEffect(() => {
         const config = platform ? PACKAGE_MANAGER_CONFIG[platform as SupportedPlatform] : null;
-        
+
         if (config) {
             config.check().then(isInstalled => {
                 setIsMissing(!isInstalled);
@@ -63,14 +64,14 @@ export function usePackageManagerCheck({ platform }: UsePackageManagerCheckProps
             setIsMissing(false);
         } catch (error) {
             console.error(`Failed to install ${config.name}:`, error);
-            alert(config.errorMessage);
+            toast.error(config.errorMessage);
         } finally {
             setIsInstalling(false);
         }
     };
 
-    const packageManagerName = platform 
-        ? PACKAGE_MANAGER_CONFIG[platform as SupportedPlatform]?.name 
+    const packageManagerName = platform
+        ? PACKAGE_MANAGER_CONFIG[platform as SupportedPlatform]?.name
         : undefined;
 
     return {
