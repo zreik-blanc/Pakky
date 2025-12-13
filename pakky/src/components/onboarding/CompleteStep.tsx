@@ -26,7 +26,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
             hasCalledComplete.current = true;
             const completeTimer = setTimeout(() => {
                 onMorphComplete();
-            }, 800); // 1.4s Morph (Smooth zooming out)
+            }, 800); // 800ms delay for morph animation to complete
             return () => clearTimeout(completeTimer);
         }
     }, [showLogo, onMorphComplete]);
@@ -60,29 +60,29 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                     }}
                     transition={{
                         layout: {
-                            type: 'tween',
-                            ease: [0.32, 0.72, 0, 1],
-                            duration: 0.8
+                            type: 'spring',
+                            stiffness: 400,
+                            damping: 30
                         }
                     }}
                 >
                     {/* Checkmark circle - morphs into logo bg */}
                     <motion.div
-                        className="absolute inset-0 rounded-lg flex items-center justify-center ring-1"
+                        className="absolute inset-0 rounded-lg flex items-center justify-center ring-1 bg-background"
                         initial={{
                             backgroundColor: 'rgba(34, 197, 94, 0.1)',
                             borderRadius: '9999px',
                         }}
                         animate={{
                             backgroundColor: showLogo
-                                ? 'rgba(34, 197, 94, 0.1)' // Keep green (primary)
+                                ? 'rgba(34, 197, 94, 0.1)'
                                 : 'rgba(34, 197, 94, 0.1)',
                             borderRadius: showLogo ? '24px' : '9999px',
                             boxShadow: showLogo
-                                ? '0 0 0 1px rgba(34, 197, 94, 0.2)' // Green border
+                                ? '0 0 0 1px rgba(34, 197, 94, 0.2)'
                                 : '0 0 0 2px rgba(34, 197, 94, 0.4), 0 25px 50px -12px rgba(34, 197, 94, 0.2)',
                         }}
-                        transition={{ duration: 0.8, ease: 'easeInOut' }}
+                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
 
                     {/* Checkmark icon - fades out */}
@@ -92,7 +92,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                                 key="checkmark"
                                 initial={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.5, rotate: -45 }}
-                                transition={{ duration: 0.5 }}
+                                transition={{ duration: 0.2 }}
                                 className="absolute inset-0 flex items-center justify-center"
                             >
                                 <CheckCircle2 className="w-20 h-20 text-green-500 drop-shadow-lg" />
@@ -102,7 +102,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                                 key="logo"
                                 initial={{ opacity: 0, scale: 0.5, rotate: 45 }}
                                 animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                                transition={{ duration: 0.5, delay: 0.1 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 25, delay: 0.1 }}
                                 className="absolute inset-0 flex items-center justify-center"
                             >
                                 <Package className="w-1/2 h-1/2 text-primary" />
@@ -119,7 +119,7 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                     opacity: showLogo || isExiting ? 0 : 1,
                     y: showLogo || isExiting ? -20 : 0,
                 }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
+                transition={{ duration: 0.4, ease: 'backIn' }}
             >
                 <h2 className="text-3xl font-bold tracking-tight text-green-500">
                     All set!

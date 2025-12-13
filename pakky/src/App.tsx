@@ -122,8 +122,13 @@ function App() {
 
   // Handle import from pasted content
   const handleImportFromContent = useCallback(async (content: string) => {
-    const { config, security } = await configAPI.parseContent(content);
-    await processImportedConfig(config, security);
+    try {
+      const { config, security } = await configAPI.parseContent(content);
+      await processImportedConfig(config, security);
+    } catch (error) {
+      console.error('Failed to import config from pasted content:', error);
+      toast.error('Failed to import config. Please check the format and try again.');
+    }
   }, [processImportedConfig]);
 
   // Handle security warning confirmation

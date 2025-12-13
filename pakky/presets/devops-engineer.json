@@ -90,15 +90,5 @@
                 "1password"
             ]
         }
-    },
-    "scripts": [
-        {
-            "name": "Configure kubectl aliases",
-            "commands": [
-                "echo 'alias k=kubectl' >> ~/.zshrc",
-                "echo 'alias kgp=\"kubectl get pods\"' >> ~/.zshrc"
-            ],
-            "condition": "grep -q 'alias k=kubectl' ~/.zshrc || true"
-        }
-    ]
+    }
 }

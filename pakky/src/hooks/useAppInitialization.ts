@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { systemAPI, userConfigAPI, windowAPI } from '@/lib/electron';
+import { systemAPI, userConfigAPI } from '@/lib/electron';
 import type { Platform, SystemInfo, UserConfig } from '@/lib/types';
 
 export function useAppInitialization() {
@@ -79,13 +79,6 @@ export function useAppInitialization() {
         setIsOnboarding(false);
         // Trigger fade-in animation for main app
         setTimeout(() => setShowMainApp(true), 50);
-
-        // Delay window resize by 200ms to let travel animation get a head start
-        setTimeout(() => {
-            windowAPI.setNormalSize().catch(error => {
-                console.error('[App] Failed to resize window:', error);
-            });
-        }, 200);
     };
 
     return {

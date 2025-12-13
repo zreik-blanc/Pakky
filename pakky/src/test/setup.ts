@@ -58,11 +58,10 @@ const mockElectronAPI = {
 
     // Window API
     windowAPI: {
-        setOnboardingSize: vi.fn(),
-        setNormalSize: vi.fn(),
         minimize: vi.fn(),
         maximize: vi.fn(),
         close: vi.fn(),
+        getSize: vi.fn().mockResolvedValue({ width: 1200, height: 800 }),
     },
 
     // System API

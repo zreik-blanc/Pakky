@@ -45,7 +45,7 @@ const DialogContent = React.forwardRef<
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
             >
-                <DialogPrimitive.Close className="rounded-sm opacity-70 transition-all border-none hover:opacity-100 hover:text-destructive focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none active:ring-0 active:outline-none disabled:pointer-events-none">
+                <DialogPrimitive.Close className="rounded-sm opacity-70 transition-all border-none hover:opacity-100 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none">
                     <X className="h-4 w-4" />
                     <span className="sr-only">Close</span>
                 </DialogPrimitive.Close>

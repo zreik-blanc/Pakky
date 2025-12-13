@@ -494,7 +494,7 @@ describe('error handling', () => {
             const config = buildPakkyConfig(packages, defaultOptions)
 
             const formula = config.macos?.homebrew?.formulae?.[0]
-            expect(typeof formula === 'object' && formula.name).toBe(longName)
+            expect(formula).toEqual(expect.objectContaining({ name: longName }))
         })
 
         it('handles special characters in description', () => {
@@ -510,8 +510,8 @@ describe('error handling', () => {
                 includeDescriptions: true,
             })
             const formula = config.macos?.homebrew?.formulae?.[0]
-            expect(typeof formula === 'object' && formula.description).toBe(
-                '<script>alert("xss")</script>'
+            expect(formula).toEqual(
+                expect.objectContaining({ description: '<script>alert("xss")</script>' })
             )
         })
 
