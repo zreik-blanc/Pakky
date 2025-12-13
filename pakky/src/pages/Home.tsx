@@ -73,6 +73,7 @@ export default function HomePage({
         isMissing: isPackageManagerMissing,
         isInstalling: isInstallingPackageManager,
         handleInstall: handleInstallPackageManager,
+        packageManagerName,
     } = usePackageManagerCheck({ platform: systemInfo?.platform });
 
     // Installation subscription hook
@@ -265,93 +266,97 @@ export default function HomePage({
     const isInstalling = progress.status === 'installing';
 
     return (
-        <motion.div
-            className="max-w-4xl mx-auto flex flex-col h-full"
-            variants={pageEnter}
-            initial="hidden"
-            animate="visible"
-        >
-            {/* Imported config confirmation alert */}
-            {showImportedAlert && (
-                <ImportedConfigAlert
-                    packageCount={selectedPackages.length}
-                    onConfirm={handleImportedAlertConfirm}
-                    onReject={handleImportedAlertReject}
-                    onReviewConfig={handleReviewConfig}
-                />
-            )}
-
-            {/* Welcome / Search Header - Fixed, doesn't scroll */}
-            <div className="space-y-4 mb-6 shrink-0">
-                {isPackageManagerMissing && (
-                    <HomebrewAlert
-                        isInstalling={isInstallingPackageManager}
-                        onInstall={handleInstallPackageManager}
+        <>
+            <motion.div
+                className="max-w-4xl mx-auto flex flex-col h-full"
+                variants={pageEnter}
+                initial="hidden"
+                animate="visible"
+            >
+                {/* Imported config confirmation alert */}
+                {showImportedAlert && (
+                    <ImportedConfigAlert
+                        packageCount={selectedPackages.length}
+                        onConfirm={handleImportedAlertConfirm}
+                        onReject={handleImportedAlertReject}
+                        onReviewConfig={handleReviewConfig}
                     />
                 )}
 
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-3xl font-bold tracking-tight">{UI_STRINGS.HOME.TITLE}</h2>
-                    <p className="text-muted-foreground">{UI_STRINGS.HOME.DESCRIPTION}</p>
+                {/* Welcome / Search Header - Fixed, doesn't scroll */}
+                <div className="space-y-4 mb-6 shrink-0">
+                    {isPackageManagerMissing && (
+                        <HomebrewAlert
+                            isInstalling={isInstallingPackageManager}
+                            onInstall={handleInstallPackageManager}
+                        />
+                    )}
+
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-3xl font-bold tracking-tight">{UI_STRINGS.HOME.TITLE}</h2>
+                        <p className="text-muted-foreground">{UI_STRINGS.HOME.DESCRIPTION}</p>
+                    </div>
+
+                    <div className="card p-1 bg-gradient-to-br from-card/50 to-background border-border/50 shadow-sm relative z-20">
+                        <PackageSearch
+                            onAddPackage={addPackage}
+                            disabled={isInstalling}
+                            isAdded={(id) => selectedPackages.some(p => p.id === id)}
+                        />
+                    </div>
                 </div>
 
-                <div className="card p-1 bg-gradient-to-br from-card/50 to-background border-border/50 shadow-sm relative z-20">
-                    <PackageSearch
-                        onAddPackage={addPackage}
-                        disabled={isInstalling}
-                        isAdded={(id) => selectedPackages.some(p => p.id === id)}
+                {/* Selected Packages List - fills remaining space */}
+                <div className="flex-1 min-h-0">
+                    <PackageQueue
+                        packages={selectedPackages}
+                        installLogs={installLogs}
+                        isInstalling={isInstalling}
+                        isStartingInstall={isStartingInstall}
+                        installSettings={installSettings}
+                        onInstallSettingsChange={setInstallSettings}
+                        onRemove={removePackage}
+                        onReinstall={handleReinstall}
+                        onReorder={setSelectedPackages}
+                        onStartInstall={handleStartInstall}
+                        onCancelInstall={handleCancelInstall}
+                        onExport={handleExportConfig}
+                        onClear={handleClearAll}
+                        onNavigateToPresets={onNavigateToPresets}
+                        onAddScript={() => setShowAddScriptDialog(true)}
                     />
                 </div>
-            </div>
 
-            {/* Selected Packages List - fills remaining space */}
-            <div className="flex-1 min-h-0">
-                <PackageQueue
+                <ExportPreviewDialog
+                    open={showExportDialog}
+                    onOpenChange={setShowExportDialog}
                     packages={selectedPackages}
-                    installLogs={installLogs}
-                    isInstalling={isInstalling}
-                    isStartingInstall={isStartingInstall}
-                    installSettings={installSettings}
-                    onInstallSettingsChange={setInstallSettings}
-                    onRemove={removePackage}
-                    onReinstall={handleReinstall}
-                    onReorder={setSelectedPackages}
-                    onStartInstall={handleStartInstall}
-                    onCancelInstall={handleCancelInstall}
-                    onExport={handleExportConfig}
-                    onClear={handleClearAll}
-                    onNavigateToPresets={onNavigateToPresets}
-                    onAddScript={() => setShowAddScriptDialog(true)}
+                    onConfirm={handleConfirmExport}
+                    userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
+                    systemInfo={systemInfo}
                 />
-            </div>
 
-            {/* Footer Info */}
-            <div className="fixed bottom-2 right-4 text-[10px] text-muted-foreground/30 pointer-events-none">
-                {UI_STRINGS.HOME.FOOTER_INFO} • {systemInfo?.arch}
-            </div>
+                <ScriptInputDialog
+                    open={showScriptInputDialog}
+                    onOpenChange={setShowScriptInputDialog}
+                    packages={selectedPackages}
+                    onConfirm={handleScriptInputConfirm}
+                    onSkip={handleSkipScripts}
+                />
 
-            <ExportPreviewDialog
-                open={showExportDialog}
-                onOpenChange={setShowExportDialog}
-                packages={selectedPackages}
-                onConfirm={handleConfirmExport}
-                userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
-                systemInfo={systemInfo}
-            />
+                <AddScriptDialog
+                    open={showAddScriptDialog}
+                    onOpenChange={setShowAddScriptDialog}
+                    onAdd={handleAddScript}
+                />
+            </motion.div>
 
-            <ScriptInputDialog
-                open={showScriptInputDialog}
-                onOpenChange={setShowScriptInputDialog}
-                packages={selectedPackages}
-                onConfirm={handleScriptInputConfirm}
-                onSkip={handleSkipScripts}
-            />
-
-            <AddScriptDialog
-                open={showAddScriptDialog}
-                onOpenChange={setShowAddScriptDialog}
-                onAdd={handleAddScript}
-            />
-        </motion.div>
+            {/* Footer Info - outside animated container for instant positioning */}
+            {packageManagerName && systemInfo?.arch && (
+                <div className="fixed bottom-2 right-4 text-[10px] text-muted-foreground/30 pointer-events-none">
+                    {packageManagerName} • {systemInfo.arch}
+                </div>
+            )}
+        </>
     );
 }
