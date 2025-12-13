@@ -104,6 +104,7 @@ function App() {
     setImportedPackages(packages);
     setHasImportedConfig(true);
     setCurrentPage('home');
+    toast.success('Config imported successfully!');
   }, []);
 
   // Handle import from file

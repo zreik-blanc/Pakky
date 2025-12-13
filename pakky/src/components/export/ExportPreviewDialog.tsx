@@ -17,7 +17,7 @@ import type { PakkyConfig, PackageInstallItem, SystemInfo, ConfigSettings } from
 import { buildPakkyConfig, generateTagSuggestions, getMacOSMinVersion, DEFAULT_BUILD_OPTIONS, type BuildConfigOptions } from '@/lib/configBuilder';
 import { getSuggestedTemplates, templatesToSteps } from '@/lib/scriptTemplates';
 import { EXPORT_DEFAULTS } from '@/lib/constants';
-import { hoverScale, tapScale, formContainer, formItem } from '@/lib/animations';
+import { formContainer, formItem } from '@/lib/animations';
 
 interface ExportPreviewDialogProps {
     open: boolean;
@@ -86,7 +86,13 @@ export function ExportPreviewDialog({
             // Pre-populate system requirements from current system
             if (systemInfo) {
                 setMinVersion(getMacOSMinVersion(systemInfo.version));
-                setSelectedArchitectures([systemInfo.arch as 'arm64' | 'x86_64']);
+                const validArchs: ('arm64' | 'x86_64')[] = ['arm64', 'x86_64'];
+                const arch = systemInfo.arch;
+                if (validArchs.includes(arch as 'arm64' | 'x86_64')) {
+                    setSelectedArchitectures([arch as 'arm64' | 'x86_64']);
+                } else {
+                    setSelectedArchitectures([]);
+                }
             } else {
                 setMinVersion('');
                 setSelectedArchitectures([]);
@@ -448,17 +454,13 @@ export function ExportPreviewDialog({
                 </Tabs>
 
                 <DialogFooter className="p-6 pt-2 shrink-0 bg-background/80 backdrop-blur-sm z-50 border-t">
-                    <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Cancel
-                        </Button>
-                    </motion.div>
-                    <motion.div whileHover={!name.trim() ? {} : hoverScale} whileTap={!name.trim() ? {} : tapScale}>
-                        <Button onClick={handleConfirm} className="gap-2" disabled={!name.trim()}>
-                            <Download className="w-4 h-4" />
-                            Save Configuration
-                        </Button>
-                    </motion.div>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Cancel
+                    </Button>
+                    <Button onClick={handleConfirm} className="gap-2" disabled={!name.trim()}>
+                        <Download className="w-4 h-4" />
+                        Save Configuration
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

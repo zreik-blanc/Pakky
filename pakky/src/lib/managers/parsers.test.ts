@@ -456,11 +456,13 @@ describe('error handling', () => {
         // ========================================
         describe('type coercion', () => {
             it('handles number as formula name', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = parseFormulaToParams(12345 as any)
                 expect(result).toBeDefined()
             })
 
             it('handles boolean as formula name', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = parseFormulaToParams(true as any)
                 expect(result).toBeDefined()
             })
@@ -469,6 +471,7 @@ describe('error handling', () => {
                 const objWithToString = {
                     name: { toString: () => 'custom' },
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const result = parseFormulaToParams(objWithToString as any)
                 expect(result).toBeDefined()
             })
@@ -476,6 +479,7 @@ describe('error handling', () => {
             it('handles version as number instead of string', () => {
                 const result = parseFormulaToParams({
                     name: 'git',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     version: 2.43 as any,
                 })
                 expect(result).toBeDefined()
@@ -484,6 +488,7 @@ describe('error handling', () => {
             it('handles extensions as string instead of array', () => {
                 const result = parseCaskToParams({
                     name: 'vscode',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     extensions: 'single-extension' as any,
                 })
                 expect(result).toBeDefined()
@@ -492,6 +497,7 @@ describe('error handling', () => {
             it('handles commands as single string instead of array', () => {
                 const result = parseScriptToParams({
                     name: 'script',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     commands: 'single command' as any,
                 })
                 expect(result).toBeDefined()
@@ -500,6 +506,7 @@ describe('error handling', () => {
             it('handles required as string "true"', () => {
                 const result = parseFormulaToParams({
                     name: 'git',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     required: 'true' as any,
                 })
                 expect(result.required).toBe('true')

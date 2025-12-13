@@ -76,6 +76,7 @@ describe('useInstallStore', () => {
             const config = { name: 'Test', version: '1.0.0' }
 
             act(() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 useInstallStore.getState().setConfig(config as any)
             })
 
@@ -84,6 +85,7 @@ describe('useInstallStore', () => {
 
         it('can clear config with null', () => {
             act(() => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 useInstallStore.getState().setConfig({ name: 'Test', version: '1.0.0' } as any)
                 useInstallStore.getState().setConfig(null)
             })
@@ -365,6 +367,7 @@ describe('useInstallStore', () => {
         it('resets all state to initial values', () => {
             act(() => {
                 // Set up some state
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 useInstallStore.getState().setConfig({ name: 'Test', version: '1.0.0' } as any)
                 useInstallStore.getState().setPackages([createMockPackage()])
                 useInstallStore.getState().setUserInputValues({ key: 'value' })
@@ -398,6 +401,7 @@ describe('useInstallStore', () => {
             })
 
             it('handles packages with undefined status', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const badPackage = { ...createMockPackage(), status: undefined as any }
 
                 act(() => {
@@ -408,6 +412,7 @@ describe('useInstallStore', () => {
             })
 
             it('handles packages with invalid status', () => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const badPackage = { ...createMockPackage(), status: 'invalid_status' as any }
 
                 act(() => {

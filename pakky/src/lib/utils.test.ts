@@ -67,6 +67,7 @@ describe('cn error handling', () => {
     })
 
     it('handles number 0 (falsy)', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', 0 as any)
         expect(result).toBe('base')
     })
@@ -77,6 +78,7 @@ describe('cn error handling', () => {
     })
 
     it('handles all falsy values', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn(false, null, undefined, 0 as any, '')
         expect(result).toBe('')
     })
@@ -209,36 +211,43 @@ describe('cn error handling', () => {
     // TYPE COERCION EDGE CASES
     // ========================================
     it('handles NaN', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', NaN as any)
         expect(result).not.toContain('NaN')
     })
 
     it('handles Infinity (clsx includes it as string)', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', Infinity as any)
         // clsx converts Infinity to string 'Infinity'
         expect(result).toContain('base')
     })
 
     it('handles BigInt', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', BigInt(123) as any)
         expect(result).toBeDefined()
     })
 
     it('handles Symbol (should not crash)', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect(() => cn('base', Symbol('test') as any)).not.toThrow()
     })
 
     it('handles Date object', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', new Date() as any)
         expect(result).toBeDefined()
     })
 
     it('handles RegExp', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', /test/ as any)
         expect(result).toBeDefined()
     })
 
     it('handles Error object', () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const result = cn('base', new Error('test') as any)
         expect(result).toBeDefined()
     })

@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import type { ConfigSettings } from '@/lib/types';
-import { motion } from 'motion/react';
-import { hoverScale, tapScale } from '@/lib/animations';
 
 interface InstallSettingsPopoverProps {
     settings: ConfigSettings;
@@ -36,17 +34,15 @@ export function InstallSettingsPopover({
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={disabled}
-                        className="h-8 gap-2 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Settings2 className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Settings</span>
-                    </Button>
-                </motion.div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={disabled}
+                    className="h-8 gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <Settings2 className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Settings</span>
+                </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">
                 <div className="space-y-4">

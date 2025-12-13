@@ -12,8 +12,6 @@ import {
     pulseTransition,
     spinnerTransition,
     scaleIn,
-    hoverScale,
-    tapScale,
 } from '@/lib/animations';
 import React from 'react';
 import {
@@ -215,16 +213,14 @@ function EmptyQueue({
             {/* Action buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-3">
                 {onNavigateToPresets && (
-                    <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                        <Button
-                            variant="default"
-                            className="gap-2 shadow-sm hover:shadow-md transition-shadow duration-200"
-                            onClick={onNavigateToPresets}
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            {UI_STRINGS.QUEUE.BROWSE_PRESETS}
-                        </Button>
-                    </motion.div>
+                    <Button
+                        variant="default"
+                        className="gap-2 shadow-sm hover:shadow-md transition-shadow duration-200"
+                        onClick={onNavigateToPresets}
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        {UI_STRINGS.QUEUE.BROWSE_PRESETS}
+                    </Button>
                 )}
                 <Button
                     variant="outline"
@@ -426,38 +422,34 @@ export function PackageQueue({
                     {installablePackages.length > 0 && (
                         <>
                             {isInstalling ? (
-                                <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={onCancelInstall}
-                                        className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
-                                    >
-                                        <Square className="w-3 h-3 fill-current" />
-                                        {UI_STRINGS.COMMON.CANCEL}
-                                    </Button>
-                                </motion.div>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={onCancelInstall}
+                                    className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
+                                >
+                                    <Square className="w-3 h-3 fill-current" />
+                                    {UI_STRINGS.COMMON.CANCEL}
+                                </Button>
                             ) : (
-                                <motion.div whileHover={hoverScale} whileTap={tapScale}>
-                                    <Button
-                                        size="sm"
-                                        onClick={onStartInstall}
-                                        disabled={isStartingInstall}
-                                        className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
-                                    >
-                                        {isStartingInstall ? (
-                                            <motion.div
-                                                animate={{ rotate: 360 }}
-                                                transition={spinnerTransition}
-                                            >
-                                                <Loader2 className="w-3.5 h-3.5" />
-                                            </motion.div>
-                                        ) : (
-                                            <Play className="w-3 h-3 fill-current" />
-                                        )}
-                                        {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
-                                    </Button>
-                                </motion.div>
+                                <Button
+                                    size="sm"
+                                    onClick={onStartInstall}
+                                    disabled={isStartingInstall}
+                                    className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
+                                >
+                                    {isStartingInstall ? (
+                                        <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={spinnerTransition}
+                                        >
+                                            <Loader2 className="w-3.5 h-3.5" />
+                                        </motion.div>
+                                    ) : (
+                                        <Play className="w-3 h-3 fill-current" />
+                                    )}
+                                    {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
+                                </Button>
                             )}
                         </>
                     )}

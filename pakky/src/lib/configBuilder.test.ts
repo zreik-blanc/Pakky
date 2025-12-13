@@ -228,6 +228,7 @@ describe('buildPakkyConfig', () => {
 
         const formula = config.macos?.homebrew?.formulae?.[0]
         expect(typeof formula).toBe('object')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((formula as any).description).toBe('Version control')
     })
 
@@ -246,6 +247,7 @@ describe('buildPakkyConfig', () => {
         })
 
         const formula = config.macos?.homebrew?.formulae?.[0]
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         expect((formula as any).description).toBeUndefined()
     })
 
@@ -379,6 +381,7 @@ describe('error handling', () => {
         })
 
         it('handles packages with undefined names', () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const packages = [{ ...createMockPackage(), name: undefined as any }]
             const result = generateTagSuggestions(packages)
             // Should not crash
@@ -448,6 +451,7 @@ describe('error handling', () => {
                 createMockPackage({
                     type: 'script',
                     name: 'test',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     commands: undefined as any,
                     position: 1,
                 }),
@@ -482,6 +486,7 @@ describe('error handling', () => {
         it('handles undefined settings', () => {
             const config = buildPakkyConfig([], {
                 ...defaultOptions,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 settings: {} as any,
             })
             // Empty settings should not be included
