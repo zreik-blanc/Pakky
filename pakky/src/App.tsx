@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, LayoutGroup, AnimatePresence } from 'motion/react';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { useInstallStore } from './stores/installStore';
 import { configAPI, userConfigAPI, type SecurityScanResult } from './lib/electron';
 import type { PackageInstallItem } from './lib/types';
@@ -116,6 +116,7 @@ function App() {
       await processImportedConfig(config, security);
     } catch (error) {
       console.error('Failed to import config from file:', error);
+      toast.error('Failed to import config. Please check the file format.');
     }
   }, [processImportedConfig]);
 

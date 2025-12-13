@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import type { SystemInfo, PackageInstallItem, UserConfig, ConfigSettings } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
@@ -195,6 +196,7 @@ export default function HomePage({
             await installAPI.startInstallation(updatedPackages, settingsToUse, userInputValues);
         } catch (error) {
             console.error('Installation failed:', error);
+            toast.error('Installation failed. Please try again.');
             completeInstallation();
         } finally {
             setIsStartingInstall(false);
@@ -207,6 +209,7 @@ export default function HomePage({
             cancelInstallInStore();
         } catch (error) {
             console.error('Failed to cancel:', error);
+            toast.error('Failed to cancel installation.');
         }
     };
 
@@ -241,6 +244,7 @@ export default function HomePage({
             }
         } catch (error) {
             console.error(UI_STRINGS.ERRORS.EXPORT_FAILED, error);
+            toast.error('Failed to export config.');
         }
     };
 

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from "motion/react"
 import { Search, Loader2, Package, Terminal, Check, Plus, Beer } from "lucide-react"
 import { Input } from "@/components/ui/input"
@@ -68,6 +69,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                 setSelectedIndex(-1)  // Reset selection on new search
             } catch (error) {
                 console.error("Search failed:", error)
+                toast.error('Search failed. Please try again.')
                 setResults([])
             } finally {
                 setIsSearching(false)

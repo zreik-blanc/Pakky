@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import { Settings as SettingsIcon, User, Info, Trash2, LogOut, AlertTriangle, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,8 +48,10 @@ export default function SettingsPage() {
             await userConfigAPI.save({ userName: editName.trim() });
             setUserConfig(prev => prev ? { ...prev, userName: editName.trim() } : null);
             setIsEditing(false);
+            toast.success('Name saved!');
         } catch (error) {
             console.error('Failed to save name:', error);
+            toast.error('Failed to save name.');
         } finally {
             setIsSaving(false);
         }
@@ -61,6 +64,7 @@ export default function SettingsPage() {
             window.location.reload();
         } catch (error) {
             console.error('Failed to reset config:', error);
+            toast.error('Failed to reset config.');
             setIsResetting(false);
             setShowResetDialog(false);
         }
@@ -229,8 +233,10 @@ export default function SettingsPage() {
                                         try {
                                             await userConfigAPI.save({ securityLevel: level });
                                             setUserConfig(prev => prev ? { ...prev, securityLevel: level } : null);
+                                            toast.success(`Security level set to ${level.toLowerCase()}.`);
                                         } catch (error) {
                                             console.error('Failed to save security level:', error);
+                                            toast.error('Failed to save security level.');
                                         }
                                     }
                                 }}

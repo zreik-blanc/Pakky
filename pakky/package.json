@@ -1,7 +1,7 @@
 {
   "name": "pakky",
   "private": true,
-  "version": "0.0.6",
+  "version": "0.0.7",
   "type": "module",
   "description": "Cross-Platform Setup Orchestrator - One-click installation from shareable JSON configs",
   "author": "efee",
@@ -41,6 +41,7 @@
     "bash-parser": "^0.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "electron-log": "^5.4.3",
     "lucide-react": "^0.556.0",
     "motion": "^12.23.26",
     "node-pty": "^1.0.0",
