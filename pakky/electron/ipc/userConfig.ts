@@ -59,7 +59,7 @@ export function registerUserConfigHandlers() {
                 if (!sysInfo) {
                     try {
                         const { getSystemInfo } = await import('../utils')
-                        const detected = getSystemInfo()
+                        const detected = await getSystemInfo()
                         sysInfo = {
                             platform: detected.platform,
                             arch: detected.arch,

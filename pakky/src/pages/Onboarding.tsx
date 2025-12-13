@@ -68,7 +68,7 @@ export default function OnboardingPage({ systemInfo, onComplete }: OnboardingPag
     const currentStepIndex = steps.indexOf(step);
 
     return (
-        <div className="h-screen w-full flex flex-col items-center justify-center bg-background p-8 relative overflow-hidden">
+        <div className="h-screen w-full flex flex-col items-center justify-center p-8 relative overflow-hidden">
             <OnboardingBackground
                 currentStepIndex={currentStepIndex}
                 totalSteps={steps.length}

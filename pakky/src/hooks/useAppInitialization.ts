@@ -13,8 +13,12 @@ export function useAppInitialization() {
     useEffect(() => {
         const initApp = async () => {
             try {
-                // 1. Get System Info
-                const info = await systemAPI.getSystemInfo();
+                // 1. Get System Info & Onboarding Status in parallel
+                const [info, storedConfig] = await Promise.all([
+                    systemAPI.getSystemInfo(),
+                    userConfigAPI.read()
+                ]);
+
                 const sysInfo = {
                     platform: info.platform as Platform,
                     arch: info.arch,
@@ -24,8 +28,7 @@ export function useAppInitialization() {
                 };
                 setSystemInfo(sysInfo);
 
-                // 2. Check User Config (Onboarding Status)
-                const storedConfig = await userConfigAPI.read();
+                // 2. Handle User Config
                 if (storedConfig) {
                     setUserConfig(storedConfig);
                 }

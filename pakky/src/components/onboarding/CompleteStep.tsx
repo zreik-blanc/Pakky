@@ -75,11 +75,11 @@ export function CompleteStep({ isExiting = false, onMorphComplete }: CompleteSte
                         }}
                         animate={{
                             backgroundColor: showLogo
-                                ? 'rgba(var(--primary-rgb, 59, 130, 246), 0.1)'
+                                ? 'rgba(34, 197, 94, 0.1)' // Keep green (primary)
                                 : 'rgba(34, 197, 94, 0.1)',
                             borderRadius: showLogo ? '24px' : '9999px',
                             boxShadow: showLogo
-                                ? '0 0 0 1px rgba(var(--primary-rgb, 59, 130, 246), 0.2)'
+                                ? '0 0 0 1px rgba(34, 197, 94, 0.2)' // Green border
                                 : '0 0 0 2px rgba(34, 197, 94, 0.4), 0 25px 50px -12px rgba(34, 197, 94, 0.2)',
                         }}
                         transition={{ duration: 0.8, ease: 'easeInOut' }}

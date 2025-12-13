@@ -1,4 +1,5 @@
 import os from 'node:os'
+import { execAsync } from './shell'
 
 export type PlatformName = 'macos' | 'windows' | 'linux' | 'unknown'
 
@@ -15,13 +16,33 @@ export function getPlatformName(): PlatformName {
 
 /**
  * Get system information
+ * Async to avoid blocking on operations like hostname lookup
  */
-export function getSystemInfo() {
+export async function getSystemInfo() {
+    let hostname = 'unknown'
+    let version = os.release()
+
+    // Get hostname asynchronously to avoid blocking
+    try {
+        const { stdout } = await execAsync('hostname')
+        hostname = stdout.trim()
+    } catch {
+        try { hostname = os.hostname() } catch { /* ignore */ }
+    }
+
+    // Get macOS product version (e.g. 14.2) instead of Darwin kernel version (e.g. 23.2.0)
+    if (getPlatformName() === 'macos') {
+        try {
+            const { stdout } = await execAsync('sw_vers -productVersion')
+            version = stdout.trim()
+        } catch { /* keep os.release() */ }
+    }
+
     return {
         platform: getPlatformName(),
         arch: process.arch,
-        version: os.release(),
+        version,
         homeDir: os.homedir(),
-        hostname: os.hostname(),
+        hostname,
     }
 }
