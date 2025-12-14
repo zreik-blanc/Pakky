@@ -43,6 +43,14 @@ interface GridTile {
     screenY: number;
 }
 
+/**
+ * Render an animated isometric background with a radial scanner, occasional data pulses, and step progress indicators for the onboarding UI.
+ *
+ * @param currentStepIndex - Zero-based index of the current onboarding step
+ * @param totalSteps - Total number of onboarding steps (used to render progress indicators)
+ * @param isExiting - When true, fades the background and hides progress indicators
+ * @returns A React element that displays the animated onboarding background and progress indicators
+ */
 export function OnboardingBackground({ currentStepIndex, totalSteps, isExiting = false }: OnboardingBackgroundProps) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
