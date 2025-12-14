@@ -23,6 +23,15 @@ interface ImportConfigDialogProps {
     onImportFromContent: (content: string) => Promise<void>;
 }
 
+/**
+ * Displays a dialog that lets the user import a Pakky configuration either by uploading a file or by pasting JSON content.
+ *
+ * @param open - Whether the dialog is visible
+ * @param onOpenChange - Called with `false` to request closing the dialog
+ * @param onImportFromFile - Called when the user selects the file upload import option
+ * @param onImportFromContent - Async callback invoked with pasted configuration content to perform the import
+ * @returns The import configuration dialog element
+ */
 export function ImportConfigDialog({
     open,
     onOpenChange,
@@ -36,6 +45,14 @@ export function ImportConfigDialog({
 
     // Track timeout for cleanup
     const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Clear any pending timeout when dialog opens to prevent stale resets
+    useEffect(() => {
+        if (open && resetTimeoutRef.current) {
+            clearTimeout(resetTimeoutRef.current);
+            resetTimeoutRef.current = null;
+        }
+    }, [open]);
 
     // Cleanup timeout on unmount
     useEffect(() => {

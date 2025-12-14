@@ -22,8 +22,18 @@ export function getPlatformName(): PlatformName {
 }
 
 /**
- * Get system information
- * Async to avoid blocking on operations like hostname lookup
+ * Collects basic system information for the current host.
+ *
+ * Attempts to determine the hostname and OS version; on macOS it prefers the
+ * user-visible product version reported by `sw_vers -productVersion` and falls
+ * back to `os.release()` if `sw_vers` fails or times out.
+ *
+ * @returns An object with:
+ * - `platform`: the normalized platform name (`'macos' | 'windows' | 'linux' | 'unknown'`)
+ * - `arch`: the CPU architecture string (e.g., `'x64'`, `'arm64'`)
+ * - `version`: the OS version string (macOS product version when available, otherwise kernel release)
+ * - `homeDir`: the user's home directory path
+ * - `hostname`: the resolved hostname or `'unknown'` if it could not be obtained
  */
 export async function getSystemInfo() {
     let hostname = 'unknown'
@@ -46,7 +56,15 @@ export async function getSystemInfo() {
             version = stdout.trim()
         } catch (err) {
             // Log timeout/error but keep os.release() as fallback
-            if (err && typeof err === 'object' && 'killed' in err && err.killed) {
+            // Check multiple timeout indicators for cross-version Node/Electron compatibility
+            const isTimeout =
+                err &&
+                typeof err === 'object' &&
+                (('killed' in err && err.killed === true) ||
+                    ('code' in err && err.code === 'ETIMEDOUT') ||
+                    ('signal' in err && err.signal != null))
+
+            if (isTimeout) {
                 console.warn('[platform] sw_vers timed out after', EXEC_TIMEOUT_MS, 'ms, using os.release() fallback')
             } else {
                 console.warn('[platform] sw_vers failed:', err, '- using os.release() fallback')
