@@ -200,7 +200,7 @@ export function OnboardingBackground({ currentStepIndex, totalSteps, isExiting =
 
         // Pulse spawner
         const pulseInterval = setInterval(() => {
-            if (Math.random() > 0.5) return;
+            if (Math.random() > 0.6) return;
             const axis = Math.random() > 0.5 ? 'x' : 'y';
             const startX = Math.floor((Math.random() - 0.5) * 40);
             const startY = Math.floor((Math.random() - 0.5) * 40);

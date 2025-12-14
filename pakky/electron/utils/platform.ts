@@ -46,7 +46,15 @@ export async function getSystemInfo() {
             version = stdout.trim()
         } catch (err) {
             // Log timeout/error but keep os.release() as fallback
-            if (err && typeof err === 'object' && 'killed' in err && err.killed) {
+            // Check multiple timeout indicators for cross-version Node/Electron compatibility
+            const isTimeout =
+                err &&
+                typeof err === 'object' &&
+                (('killed' in err && err.killed === true) ||
+                    ('code' in err && err.code === 'ETIMEDOUT') ||
+                    ('signal' in err && err.signal != null))
+
+            if (isTimeout) {
                 console.warn('[platform] sw_vers timed out after', EXEC_TIMEOUT_MS, 'ms, using os.release() fallback')
             } else {
                 console.warn('[platform] sw_vers failed:', err, '- using os.release() fallback')

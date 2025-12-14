@@ -37,6 +37,14 @@ export function ImportConfigDialog({
     // Track timeout for cleanup
     const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Clear any pending timeout when dialog opens to prevent stale resets
+    useEffect(() => {
+        if (open && resetTimeoutRef.current) {
+            clearTimeout(resetTimeoutRef.current);
+            resetTimeoutRef.current = null;
+        }
+    }, [open]);
+
     // Cleanup timeout on unmount
     useEffect(() => {
         return () => {

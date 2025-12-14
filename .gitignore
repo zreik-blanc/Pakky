@@ -56,7 +56,6 @@ dist-electron/
 dist-ssr/
 out/
 release/
-build/
 *.app
 *.dmg
 *.exe
