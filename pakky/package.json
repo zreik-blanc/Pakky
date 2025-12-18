@@ -1,7 +1,7 @@
 {
   "name": "pakky",
   "private": true,
-  "version": "0.0.8",
+  "version": "0.0.9",
   "type": "module",
   "description": "Cross-Platform Setup Orchestrator - One-click installation from shareable JSON configs",
   "author": "efee",

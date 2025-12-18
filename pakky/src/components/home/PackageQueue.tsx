@@ -419,39 +419,39 @@ export function PackageQueue({
                         )}
                     </AnimatePresence>
 
-                    {installablePackages.length > 0 && (
-                        <>
-                            {isInstalling ? (
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={onCancelInstall}
-                                    className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
+                    {/* Cancel button - always show during installation */}
+                    {isInstalling && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={onCancelInstall}
+                            className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
+                        >
+                            <Square className="w-3 h-3 fill-current" />
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </Button>
+                    )}
+
+                    {/* Install button - show when there are installable packages and not installing */}
+                    {!isInstalling && installablePackages.length > 0 && (
+                        <Button
+                            size="sm"
+                            onClick={onStartInstall}
+                            disabled={isStartingInstall}
+                            className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
+                        >
+                            {isStartingInstall ? (
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={spinnerTransition}
                                 >
-                                    <Square className="w-3 h-3 fill-current" />
-                                    {UI_STRINGS.COMMON.CANCEL}
-                                </Button>
+                                    <Loader2 className="w-3.5 h-3.5" />
+                                </motion.div>
                             ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={onStartInstall}
-                                    disabled={isStartingInstall}
-                                    className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
-                                >
-                                    {isStartingInstall ? (
-                                        <motion.div
-                                            animate={{ rotate: 360 }}
-                                            transition={spinnerTransition}
-                                        >
-                                            <Loader2 className="w-3.5 h-3.5" />
-                                        </motion.div>
-                                    ) : (
-                                        <Play className="w-3 h-3 fill-current" />
-                                    )}
-                                    {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
-                                </Button>
+                                <Play className="w-3 h-3 fill-current" />
                             )}
-                        </>
+                            {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
+                        </Button>
                     )}
                 </div>
             </div>

@@ -48,6 +48,7 @@ export default function HomePage({
 }: HomePageProps) {
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
+    const [exportDialogTab, setExportDialogTab] = useState<'general' | 'options' | 'preview'>('general');
     const [showImportedAlert, setShowImportedAlert] = useState(false);
     const [showScriptInputDialog, setShowScriptInputDialog] = useState(false);
     const [showAddScriptDialog, setShowAddScriptDialog] = useState(false);
@@ -226,14 +227,16 @@ export default function HomePage({
         setShowImportedAlert(false);
     };
 
-    // Handle review config (opens export dialog)
+    // Handle review config (opens export dialog on preview tab)
     const handleReviewConfig = () => {
         setShowImportedAlert(false);
+        setExportDialogTab('preview');
         setShowExportDialog(true);
     };
 
     const handleExportConfig = () => {
         if (selectedPackages.length === 0) return;
+        setExportDialogTab('general');
         setShowExportDialog(true);
     };
 
@@ -334,6 +337,7 @@ export default function HomePage({
                     onConfirm={handleConfirmExport}
                     userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
                     systemInfo={systemInfo}
+                    defaultTab={exportDialogTab}
                 />
 
                 <ScriptInputDialog

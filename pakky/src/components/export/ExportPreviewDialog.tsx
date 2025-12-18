@@ -26,6 +26,8 @@ interface ExportPreviewDialogProps {
     onConfirm: (config: PakkyConfig) => void;
     userName?: string;
     systemInfo?: SystemInfo | null;
+    /** Which tab to show when dialog opens. Defaults to 'general' */
+    defaultTab?: 'general' | 'options' | 'preview';
 }
 
 export function ExportPreviewDialog({
@@ -34,7 +36,8 @@ export function ExportPreviewDialog({
     packages,
     onConfirm,
     userName,
-    systemInfo
+    systemInfo,
+    defaultTab = 'general'
 }: ExportPreviewDialogProps) {
     // Basic info
     const [name, setName] = useState<string>(EXPORT_DEFAULTS.NAME);
@@ -59,6 +62,9 @@ export function ExportPreviewDialog({
     // Post-install templates
     const [selectedTemplates, setSelectedTemplates] = useState<string[]>([]);
 
+    // Active tab (controlled for reset on open)
+    const [activeTab, setActiveTab] = useState<'general' | 'options' | 'preview'>(defaultTab);
+
     // Tag suggestions based on packages
     const tagSuggestions = useMemo(() => generateTagSuggestions(packages), [packages]);
 
@@ -75,6 +81,7 @@ export function ExportPreviewDialog({
             setVersion(EXPORT_DEFAULTS.VERSION);
             setDescription(EXPORT_DEFAULTS.DESCRIPTION);
             setTags([]);
+            setActiveTab(defaultTab); // Reset to the specified default tab
             setIncludeDescriptions(DEFAULT_BUILD_OPTIONS.includeDescriptions);
             setIncludeMetadata(DEFAULT_BUILD_OPTIONS.includeMetadata);
             setIncludeSystemRequirements(DEFAULT_BUILD_OPTIONS.includeSystemRequirements);
@@ -98,7 +105,7 @@ export function ExportPreviewDialog({
                 setSelectedArchitectures([]);
             }
         }
-    }, [open, systemInfo]);
+    }, [open, systemInfo, defaultTab]);
 
     // Toggle architecture selection
     const toggleArchitecture = (arch: 'arm64' | 'x86_64') => {
@@ -185,7 +192,7 @@ export function ExportPreviewDialog({
                     </DialogDescription>
                 </DialogHeader>
 
-                <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'general' | 'options' | 'preview')} className="flex-1 flex flex-col min-h-0">
                     <TabsList className="mx-6 grid grid-cols-3 w-auto">
                         <TabsTrigger value="general" className="gap-1.5">
                             <FileJson className="w-3.5 h-3.5" />
