@@ -9,6 +9,13 @@ import type { ParsedCommand } from './bash-parser'
 // Valid package name pattern (prevents command injection)
 export const PACKAGE_NAME_REGEX = /^[a-z0-9][a-z0-9-_@/.]*$/i
 
+// Security limits to prevent ReDoS and resource exhaustion
+export const SECURITY_LIMITS = {
+    MAX_COMMAND_LENGTH: 10000,     // Maximum length of a single command
+    MAX_COMMANDS_PER_SCRIPT: 100,  // Maximum commands in a script
+    MAX_TOTAL_COMMANDS_LENGTH: 500000, // Maximum total length of all commands
+} as const
+
 // Allowed directories for config files (prevents path traversal)
 export const ALLOWED_CONFIG_DIRS = [
     os.homedir(),
@@ -264,7 +271,35 @@ export function scanShellCommands(
         recommendations: [],
     }
 
+    // Security limit: Check total number of commands
+    if (commands.length > SECURITY_LIMITS.MAX_COMMANDS_PER_SCRIPT) {
+        return {
+            ...result,
+            hasDangerousContent: true,
+            warnings: [`Script exceeds maximum command limit (${commands.length} > ${SECURITY_LIMITS.MAX_COMMANDS_PER_SCRIPT})`],
+            severity: 'high'
+        }
+    }
+
+    // Security limit: Check total combined length
+    const totalLength = commands.reduce((sum, cmd) => sum + cmd.length, 0)
+    if (totalLength > SECURITY_LIMITS.MAX_TOTAL_COMMANDS_LENGTH) {
+        return {
+            ...result,
+            hasDangerousContent: true,
+            warnings: [`Total script length exceeds limit (${totalLength} chars)`],
+            severity: 'high'
+        }
+    }
+
     for (const command of commands) {
+        // Security limit: Check individual command length to prevent ReDoS
+        if (command.length > SECURITY_LIMITS.MAX_COMMAND_LENGTH) {
+            result.hasDangerousContent = true
+            result.dangerousCommands.push(command.slice(0, 100) + '...')
+            result.warnings.push(`Command exceeds maximum length (${command.length} > ${SECURITY_LIMITS.MAX_COMMAND_LENGTH} chars)`)
+            continue
+        }
         // Try AST parsing if required by security level
         if (level.requiresASTValidation) {
             const parseResult = parseShellCommand(command)
@@ -420,16 +455,32 @@ export function extractShellCommands(config: Record<string, unknown>): string[] 
 
 /**
  * Validates that a file path is within allowed directories
+ * Uses path.relative() to prevent directory name collision attacks
  * @param filePath - The path to validate
  * @returns true if the path is allowed, false otherwise
  */
 export function isPathAllowed(filePath: string): boolean {
     const resolvedPath = path.resolve(filePath)
-    // Check if path is within any allowed directory
-    const isAllowed = ALLOWED_CONFIG_DIRS.some(dir => resolvedPath.startsWith(dir))
-    // Also verify it's a .json file for config operations
+
+    // Verify it's a .json file for config operations
     const isJsonFile = resolvedPath.endsWith('.json')
-    return isAllowed && isJsonFile
+    if (!isJsonFile) return false
+
+    // Use proper path comparison with separator awareness
+    const isAllowed = ALLOWED_CONFIG_DIRS.some(dir => {
+        const normalizedDir = path.resolve(dir)
+        const relativePath = path.relative(normalizedDir, resolvedPath)
+
+        // Path is allowed only if:
+        // 1. It doesn't escape the directory (no leading ..)
+        // 2. It's not an absolute path (which would indicate different root)
+        return (
+            !relativePath.startsWith('..') &&
+            !path.isAbsolute(relativePath)
+        )
+    })
+
+    return isAllowed
 }
 
 /**

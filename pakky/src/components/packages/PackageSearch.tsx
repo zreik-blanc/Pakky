@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback, useImperativeHandle, forwardRef } from "react"
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from "motion/react"
 import { Search, Loader2, Package, Terminal, Check, Plus, Beer } from "lucide-react"
@@ -16,7 +16,18 @@ interface PackageSearchProps {
     isAdded: (id: string) => boolean
 }
 
-export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearchProps) {
+export interface PackageSearchHandle {
+    focus: () => void
+}
+
+export const PackageSearch = forwardRef<PackageSearchHandle, PackageSearchProps>(function PackageSearch({ onAddPackage, disabled, isAdded }, ref) {
+    const inputRef = useRef<HTMLInputElement>(null)
+
+    useImperativeHandle(ref, () => ({
+        focus: () => {
+            inputRef.current?.focus()
+        }
+    }))
     const [query, setQuery] = useState("")
     const [results, setResults] = useState<SearchResult[]>([])
     const [isSearching, setIsSearching] = useState(false)
@@ -102,6 +113,7 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
                     )}
                 </div>
                 <Input
+                    ref={inputRef}
                     type="text"
                     value={query}
                     onChange={(e) => {
@@ -221,4 +233,4 @@ export function PackageSearch({ onAddPackage, disabled, isAdded }: PackageSearch
             </AnimatePresence>
         </div>
     )
-}
+})

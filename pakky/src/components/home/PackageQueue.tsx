@@ -50,6 +50,7 @@ interface PackageQueueProps {
     onClear: () => void;
     onNavigateToPresets?: () => void;
     onAddScript?: () => void;
+    onSearchFocus?: () => void;
 }
 
 // Sortable package item wrapper
@@ -119,10 +120,12 @@ function SortablePackageItem({
 
 function EmptyQueue({
     onNavigateToPresets,
-    onAddScript
+    onAddScript,
+    onSearchFocus
 }: {
     onNavigateToPresets?: () => void,
-    onAddScript?: () => void
+    onAddScript?: () => void,
+    onSearchFocus?: () => void
 }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -225,7 +228,7 @@ function EmptyQueue({
                 <Button
                     variant="outline"
                     className="gap-2 hover:bg-accent/50 transition-colors duration-200"
-                    onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}
+                    onClick={() => onSearchFocus?.()}
                 >
                     <Search className="w-4 h-4" />
                     {UI_STRINGS.QUEUE.SEARCH_PACKAGES}
@@ -270,7 +273,8 @@ export function PackageQueue({
     onExport,
     onClear,
     onNavigateToPresets,
-    onAddScript
+    onAddScript,
+    onSearchFocus
 }: PackageQueueProps) {
     // Track active dragging item
     const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -326,7 +330,7 @@ export function PackageQueue({
     );
 
     if (packages.length === 0) {
-        return <EmptyQueue onNavigateToPresets={onNavigateToPresets} onAddScript={onAddScript} />;
+        return <EmptyQueue onNavigateToPresets={onNavigateToPresets} onAddScript={onAddScript} onSearchFocus={onSearchFocus} />;
     }
 
     return (
@@ -419,39 +423,39 @@ export function PackageQueue({
                         )}
                     </AnimatePresence>
 
-                    {installablePackages.length > 0 && (
-                        <>
-                            {isInstalling ? (
-                                <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={onCancelInstall}
-                                    className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
+                    {/* Cancel button - always show during installation */}
+                    {isInstalling && (
+                        <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={onCancelInstall}
+                            className="h-8 shadow-sm gap-2 hover:shadow-md transition-shadow duration-200"
+                        >
+                            <Square className="w-3 h-3 fill-current" />
+                            {UI_STRINGS.COMMON.CANCEL}
+                        </Button>
+                    )}
+
+                    {/* Install button - show when there are installable packages and not installing */}
+                    {!isInstalling && installablePackages.length > 0 && (
+                        <Button
+                            size="sm"
+                            onClick={onStartInstall}
+                            disabled={isStartingInstall}
+                            className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
+                        >
+                            {isStartingInstall ? (
+                                <motion.div
+                                    animate={{ rotate: 360 }}
+                                    transition={spinnerTransition}
                                 >
-                                    <Square className="w-3 h-3 fill-current" />
-                                    {UI_STRINGS.COMMON.CANCEL}
-                                </Button>
+                                    <Loader2 className="w-3.5 h-3.5" />
+                                </motion.div>
                             ) : (
-                                <Button
-                                    size="sm"
-                                    onClick={onStartInstall}
-                                    disabled={isStartingInstall}
-                                    className="h-8 shadow-sm bg-primary hover:bg-primary/90 gap-2 hover:shadow-md transition-shadow duration-200"
-                                >
-                                    {isStartingInstall ? (
-                                        <motion.div
-                                            animate={{ rotate: 360 }}
-                                            transition={spinnerTransition}
-                                        >
-                                            <Loader2 className="w-3.5 h-3.5" />
-                                        </motion.div>
-                                    ) : (
-                                        <Play className="w-3 h-3 fill-current" />
-                                    )}
-                                    {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
-                                </Button>
+                                <Play className="w-3 h-3 fill-current" />
                             )}
-                        </>
+                            {isStartingInstall ? UI_STRINGS.QUEUE.CHECKING : UI_STRINGS.QUEUE.INSTALL_ALL}
+                        </Button>
                     )}
                 </div>
             </div>

@@ -1,0 +1,62 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+# CodeRabbit Configuration
+# Documentation: https://docs.coderabbit.ai/guides/configure-coderabbit
+
+language: en-US
+
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+    ignore_title_keywords:
+      - "WIP"
+      - "DO NOT MERGE"
+      - "[skip ci]"
+
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+
+  path_instructions:
+    - path: "pakky/src/**/*.{ts,tsx}"
+      instructions: |
+        When reviewing changes to these files, suggest unit tests using Vitest.
+        Follow the existing test patterns in the codebase:
+        - Use `describe` and `it` blocks
+        - Import from 'vitest' for test utilities
+        - For React components, consider @testing-library/react patterns
+        - Place tests in co-located `.test.ts` or `.test.tsx` files
+        - Consider edge cases, error handling, and type safety
+
+    - path: "pakky/electron/**/*.ts"
+      instructions: |
+        Review for security best practices in Electron main process code.
+        Check for proper IPC handling and context isolation.
+        Suggest tests for utility functions where applicable.
+
+    - path: "pakky/src/stores/**/*.ts"
+      instructions: |
+        Review state management logic carefully.
+        Suggest unit tests for store actions and selectors.
+        Check for proper state immutability patterns.
+
+    - path: "pakky/src/lib/**/*.ts"
+      instructions: |
+        These are core utility functions - thorough testing is essential.
+        Suggest comprehensive unit tests covering:
+        - Happy path scenarios
+        - Edge cases and boundary conditions
+        - Error handling
+        - Type safety
+
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 90000
+
+chat:
+  auto_reply: true
+
+early_access: false

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import type { SystemInfo, PackageInstallItem, UserConfig, ConfigSettings } from '@/lib/types';
@@ -6,7 +6,7 @@ import { useInstallStore } from '@/stores/installStore';
 import { installAPI, configAPI } from '@/lib/electron';
 import type { PakkyConfig } from '@/lib/types';
 import { UI_STRINGS } from '@/lib/constants';
-import { PackageSearch } from '@/components/packages/PackageSearch';
+import { PackageSearch, type PackageSearchHandle } from '@/components/packages/PackageSearch';
 import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
 import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
@@ -48,9 +48,16 @@ export default function HomePage({
 }: HomePageProps) {
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
+    const [exportDialogTab, setExportDialogTab] = useState<'general' | 'options' | 'preview'>('general');
     const [showImportedAlert, setShowImportedAlert] = useState(false);
     const [showScriptInputDialog, setShowScriptInputDialog] = useState(false);
     const [showAddScriptDialog, setShowAddScriptDialog] = useState(false);
+
+    // Ref for PackageSearch to enable programmatic focus
+    const searchRef = useRef<PackageSearchHandle>(null);
+    const handleSearchFocus = useCallback(() => {
+        searchRef.current?.focus();
+    }, []);
 
     // Installation settings - user configurable
     const [installSettings, setInstallSettings] = useState<ConfigSettings>({
@@ -226,14 +233,16 @@ export default function HomePage({
         setShowImportedAlert(false);
     };
 
-    // Handle review config (opens export dialog)
+    // Handle review config (opens export dialog on preview tab)
     const handleReviewConfig = () => {
         setShowImportedAlert(false);
+        setExportDialogTab('preview');
         setShowExportDialog(true);
     };
 
     const handleExportConfig = () => {
         if (selectedPackages.length === 0) return;
+        setExportDialogTab('general');
         setShowExportDialog(true);
     };
 
@@ -299,6 +308,7 @@ export default function HomePage({
 
                     <div className="card p-1 bg-gradient-to-br from-card/50 to-background border-border/50 shadow-sm relative z-20">
                         <PackageSearch
+                            ref={searchRef}
                             onAddPackage={addPackage}
                             disabled={isInstalling}
                             isAdded={(id) => selectedPackages.some(p => p.id === id)}
@@ -324,6 +334,7 @@ export default function HomePage({
                         onClear={handleClearAll}
                         onNavigateToPresets={onNavigateToPresets}
                         onAddScript={() => setShowAddScriptDialog(true)}
+                        onSearchFocus={handleSearchFocus}
                     />
                 </div>
 
@@ -334,6 +345,7 @@ export default function HomePage({
                     onConfirm={handleConfirmExport}
                     userName={systemInfo?.platform === 'macos' ? userConfig?.userName : 'User'}
                     systemInfo={systemInfo}
+                    defaultTab={exportDialogTab}
                 />
 
                 <ScriptInputDialog

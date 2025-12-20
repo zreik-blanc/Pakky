@@ -49,6 +49,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: true, // Enable sandbox for additional process isolation
     },
   })
 

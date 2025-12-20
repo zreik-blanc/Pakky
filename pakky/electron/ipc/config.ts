@@ -1,16 +1,49 @@
 import { ipcMain, dialog, app } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { isPathAllowed, scanShellCommands, extractShellCommands, type SecurityScanResult } from '../utils'
+import { isPathAllowed, scanShellCommands, extractShellCommands, strictRateLimiter, logger, type SecurityScanResult } from '../utils'
 import type { PakkyConfig, SecurityLevelKey } from '../../src/lib/types'
 import { PakkyConfigSchema } from './schemas'
 import { ZodError } from 'zod'
 import { DIALOGS } from '../constants'
 
+// Security limits for JSON parsing
+const JSON_LIMITS = {
+    MAX_SIZE: 10 * 1024 * 1024,      // 10MB max file size
+    MAX_NESTING_DEPTH: 50,            // Maximum nesting depth
+} as const
+
 // Extended return type that includes security scan results
 interface ConfigLoadResult {
     config: PakkyConfig
     security: SecurityScanResult
+}
+
+/**
+ * Check JSON nesting depth to prevent stack overflow
+ */
+function checkNestingDepth(obj: unknown, depth: number = 0): void {
+    if (depth > JSON_LIMITS.MAX_NESTING_DEPTH) {
+        throw new Error(`JSON nesting exceeds maximum depth of ${JSON_LIMITS.MAX_NESTING_DEPTH}`)
+    }
+    if (typeof obj === 'object' && obj !== null) {
+        for (const value of Object.values(obj)) {
+            checkNestingDepth(value, depth + 1)
+        }
+    }
+}
+
+/**
+ * Safely parse JSON with size and depth limits
+ */
+function safeJsonParse(content: string): unknown {
+    if (content.length > JSON_LIMITS.MAX_SIZE) {
+        throw new Error(`JSON content exceeds maximum size of ${JSON_LIMITS.MAX_SIZE} bytes`)
+    }
+
+    const parsed = JSON.parse(content)
+    checkNestingDepth(parsed)
+    return parsed
 }
 
 /**
@@ -31,7 +64,13 @@ async function getUserSecurityLevel(): Promise<SecurityLevelKey> {
  * Register config-related IPC handlers
  */
 export function registerConfigHandlers() {
-    ipcMain.handle('config:load', async (_, filePath: string): Promise<ConfigLoadResult> => {
+    ipcMain.handle('config:load', async (event, filePath: string): Promise<ConfigLoadResult> => {
+        // Rate limiting to prevent DoS
+        const rateLimitKey = `config:load:${event.sender.id}`
+        if (!strictRateLimiter.allow(rateLimitKey)) {
+            throw new Error('Rate limit exceeded. Please slow down.')
+        }
+
         // Security: Validate path to prevent path traversal attacks
         if (!isPathAllowed(filePath)) {
             throw new Error('Access to this file path is not allowed')
@@ -39,7 +78,7 @@ export function registerConfigHandlers() {
 
         try {
             const content = await fs.readFile(filePath, 'utf-8')
-            const json = JSON.parse(content)
+            const json = safeJsonParse(content) as Record<string, unknown>
             const config = PakkyConfigSchema.parse(json)
 
             // Get user's security level preference
@@ -67,13 +106,19 @@ export function registerConfigHandlers() {
 
             return { config, security }
         } catch (error) {
-            console.error('Config load error:', error)
+            // Structured error logging with details for debugging
+            logger.config.error('Configuration load failed', {
+                filePath,
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                type: error instanceof ZodError ? 'validation' : 'unknown'
+            })
 
             if (error instanceof ZodError) {
                 throw new Error(`Invalid configuration: ${error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`)
             }
 
-            // Security: Don't expose detailed error information
+            // Security: Don't expose detailed error information to renderer
             throw new Error('Failed to load configuration file')
         }
     })
@@ -94,9 +139,15 @@ export function registerConfigHandlers() {
     })
 
     // New handler: Parse config content directly (for paste import)
-    ipcMain.handle('config:parseContent', async (_, content: string): Promise<ConfigLoadResult> => {
+    ipcMain.handle('config:parseContent', async (event, content: string): Promise<ConfigLoadResult> => {
+        // Rate limiting to prevent DoS
+        const rateLimitKey = `config:parseContent:${event.sender.id}`
+        if (!strictRateLimiter.allow(rateLimitKey)) {
+            throw new Error('Rate limit exceeded. Please slow down.')
+        }
+
         try {
-            const json = JSON.parse(content)
+            const json = safeJsonParse(content) as Record<string, unknown>
             const config = PakkyConfigSchema.parse(json)
 
             // Get user's security level preference
@@ -124,7 +175,13 @@ export function registerConfigHandlers() {
 
             return { config, security }
         } catch (error) {
-            console.error('Config parse error:', error)
+            // Structured error logging with details for debugging
+            logger.config.error('Configuration parse failed', {
+                contentLength: content.length,
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+                type: error instanceof SyntaxError ? 'syntax' : error instanceof ZodError ? 'validation' : 'unknown'
+            })
 
             if (error instanceof SyntaxError) {
                 throw new Error('Invalid JSON format. Please check your configuration syntax.')

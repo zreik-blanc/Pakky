@@ -2,6 +2,7 @@
 export {
     PACKAGE_NAME_REGEX,
     ALLOWED_CONFIG_DIRS,
+    SECURITY_LIMITS,
     isPathAllowed,
     isValidPackageName,
     isSafeUrl,
@@ -9,6 +10,9 @@ export {
     extractShellCommands,
 } from './security'
 export type { SecurityScanResult } from './security'
+
+// Rate limiter utilities
+export { RateLimiter, ipcRateLimiter, strictRateLimiter } from './rate-limiter'
 
 // Command allowlist utilities
 export {
