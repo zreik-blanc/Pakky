@@ -95,14 +95,21 @@ export function getCommandCategory(command: string): CommandCategory | null {
 
 /**
  * Check if a command is allowed for a given set of categories
+ * @param command - The command to check
+ * @param allowedCategories - Categories that are allowed
+ * @param allowUnknown - Whether to allow unknown commands (defaults to false for security)
  */
-export function isCommandAllowed(command: string, allowedCategories: CommandCategory[]): boolean {
+export function isCommandAllowed(
+    command: string,
+    allowedCategories: CommandCategory[],
+    allowUnknown: boolean = false
+): boolean {
     const category = getCommandCategory(command);
 
     if (!category) {
-        // Unknown commands are blocked by default in STRICT mode
-        // but allowed in other modes (will be caught by regex patterns)
-        return allowedCategories.includes('SYSTEM');
+        // Unknown commands are blocked by default
+        // Only allow if explicitly configured via allowUnknown parameter
+        return allowUnknown;
     }
 
     return allowedCategories.includes(category);

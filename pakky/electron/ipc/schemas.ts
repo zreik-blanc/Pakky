@@ -124,16 +124,28 @@ const LinuxConfigSchema = z.object({
 });
 
 const ScriptStepSchema = z.object({
-    name: z.string(),
+    name: z.string()
+        .min(1, 'Script name is required')
+        .max(255, 'Script name cannot exceed 255 characters'),
     position: z.number().optional(), // Queue position for ordering
-    condition: z.string().optional(),
-    prompt: z.string().optional(),
+    condition: z.string()
+        .max(1000, 'Condition cannot exceed 1000 characters')
+        .optional(),
+    prompt: z.string()
+        .max(500, 'Prompt cannot exceed 500 characters')
+        .optional(),
     prompt_for_input: z.record(z.string(), z.object({
-        message: z.string(),
-        default: z.string().optional(),
+        message: z.string().max(500, 'Message cannot exceed 500 characters'),
+        default: z.string().max(1000, 'Default value cannot exceed 1000 characters').optional(),
         validation: z.enum(['email', 'url', 'path', 'none']).optional(),
     })).optional(),
-    commands: z.array(z.string()),
+    commands: z.array(
+        z.string()
+            .min(1, 'Command cannot be empty')
+            .max(10000, 'Command cannot exceed 10000 characters')
+    )
+        .min(1, 'At least one command is required')
+        .max(100, 'Maximum 100 commands per script'),
     continue_on_error: z.boolean().optional(),
 });
 

@@ -50,6 +50,7 @@ interface PackageQueueProps {
     onClear: () => void;
     onNavigateToPresets?: () => void;
     onAddScript?: () => void;
+    onSearchFocus?: () => void;
 }
 
 // Sortable package item wrapper
@@ -119,10 +120,12 @@ function SortablePackageItem({
 
 function EmptyQueue({
     onNavigateToPresets,
-    onAddScript
+    onAddScript,
+    onSearchFocus
 }: {
     onNavigateToPresets?: () => void,
-    onAddScript?: () => void
+    onAddScript?: () => void,
+    onSearchFocus?: () => void
 }) {
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -225,7 +228,7 @@ function EmptyQueue({
                 <Button
                     variant="outline"
                     className="gap-2 hover:bg-accent/50 transition-colors duration-200"
-                    onClick={() => document.querySelector<HTMLInputElement>('input[type="text"]')?.focus()}
+                    onClick={() => onSearchFocus?.()}
                 >
                     <Search className="w-4 h-4" />
                     {UI_STRINGS.QUEUE.SEARCH_PACKAGES}
@@ -270,7 +273,8 @@ export function PackageQueue({
     onExport,
     onClear,
     onNavigateToPresets,
-    onAddScript
+    onAddScript,
+    onSearchFocus
 }: PackageQueueProps) {
     // Track active dragging item
     const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -326,7 +330,7 @@ export function PackageQueue({
     );
 
     if (packages.length === 0) {
-        return <EmptyQueue onNavigateToPresets={onNavigateToPresets} onAddScript={onAddScript} />;
+        return <EmptyQueue onNavigateToPresets={onNavigateToPresets} onAddScript={onAddScript} onSearchFocus={onSearchFocus} />;
     }
 
     return (

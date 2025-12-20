@@ -11,6 +11,7 @@ export interface SecurityLevel {
     allowedCategories: CommandCategory[];
     requiresASTValidation: boolean;
     blockObfuscation: boolean;
+    warning?: string; // Warning message for risky security levels
 }
 
 export type CommandCategory =
@@ -41,7 +42,10 @@ export const SECURITY_LEVELS: Record<SecurityLevelKey, SecurityLevel> = {
         description: 'Allows most operations with warnings. Only for fully trusted configs.',
         allowedCategories: ['SAFE', 'FILESYSTEM', 'NETWORK', 'PACKAGE_MANAGERS', 'SYSTEM'],
         requiresASTValidation: false,
-        blockObfuscation: false
+        blockObfuscation: false,
+        warning: 'PERMISSIVE mode allows dangerous system operations including sudo commands. ' +
+                 'Only use this with configurations you completely trust. ' +
+                 'Malicious configs could compromise your system.'
     }
 } as const;
 

@@ -1,6 +1,20 @@
 import { spawn } from 'node:child_process'
-import { execFileAsync, isValidPackageName, getHomebrewPath, getEnhancedEnv, logger } from '../utils'
+import { execFileAsync, isValidPackageName, getHomebrewPath, getEnhancedEnv, logger, scanShellCommands } from '../utils'
+import { DEFAULT_SECURITY_LEVEL, type SecurityLevelKey } from '../constants/security-levels'
 import type { PackageInstallItem } from '../../src/lib/types'
+
+/**
+ * Shell escape a string for safe interpolation into shell commands
+ * Wraps in single quotes and escapes any single quotes within
+ */
+function escapeShellArg(arg: string): string {
+    // Escape single quotes and wrap in single quotes
+    return `'${arg.replace(/'/g, "'\\''")}'`
+}
+
+// Constants for placeholder validation
+const PLACEHOLDER_NAME_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]{0,63}$/
+const MAX_VALUE_LENGTH = 1000
 
 /**
  * Installation state tracker
@@ -185,24 +199,50 @@ export async function installPackage(
 }
 
 /**
- * Replace {{placeholder}} variables in a command with user input values
+ * Replace {{placeholder}} variables in a command with safely escaped user input values
+ * Validates placeholder names and value lengths to prevent injection attacks
  */
-function replaceCommandPlaceholders(command: string, userInputValues: Record<string, string>): string {
-    return command.replace(/\{\{([^}]+)\}\}/g, (match, key) => {
-        const value = userInputValues[key.trim()]
-        return value !== undefined ? value : match
+function replaceCommandPlaceholders(
+    command: string,
+    userInputValues: Record<string, string>
+): string {
+    return command.replace(/\{\{([a-zA-Z_][a-zA-Z0-9_]*)\}\}/g, (match, key) => {
+        const trimmedKey = key.trim()
+
+        // Validate placeholder name format
+        if (!PLACEHOLDER_NAME_REGEX.test(trimmedKey)) {
+            throw new Error(`Invalid placeholder name: ${trimmedKey}`)
+        }
+
+        const value = userInputValues[trimmedKey]
+        if (value === undefined) return match
+
+        // Enforce length limit to prevent buffer overflow attacks
+        if (value.length > MAX_VALUE_LENGTH) {
+            throw new Error(`Value for {{${trimmedKey}}} exceeds maximum length of ${MAX_VALUE_LENGTH}`)
+        }
+
+        // Check for control characters that could cause issues
+        // eslint-disable-next-line no-control-regex
+        if (/[\x00-\x1f\x7f]/.test(value)) {
+            throw new Error(`Value for {{${trimmedKey}}} contains invalid control characters`)
+        }
+
+        // Shell-escape the value to prevent command injection
+        return escapeShellArg(value)
     })
 }
 
 /**
- * Execute a script
+ * Execute a script with security validation
  */
 async function executeScript(
     pkg: PackageInstallItem,
     state: InstallationState,
     sendProgress: ProgressCallback,
     sendLog: LogCallback,
-    userInputValues: Record<string, string> = {}
+    userInputValues: Record<string, string> = {},
+    securityLevel: SecurityLevelKey = DEFAULT_SECURITY_LEVEL
 ): Promise<boolean> {
     const commands = pkg.commands || []
 
@@ -210,6 +250,39 @@ async function executeScript(
         sendLog(`✗ No commands defined for script: ${pkg.name}`, 'stderr')
         sendProgress('failed', 'No commands defined')
         return false
+    }
+
+    // CRITICAL: Validate commands before execution using security scanner
+    const securityScan = scanShellCommands(commands, securityLevel)
+
+    if (securityScan.hasDangerousContent) {
+        const warnings = securityScan.dangerousCommands.slice(0, 3).map(c => c.slice(0, 50))
+        sendLog(`✗ Security scan failed: dangerous content detected`, 'stderr')
+        sendLog(`  Blocked commands: ${warnings.join(', ')}...`, 'stderr')
+        sendProgress('failed', 'Script blocked by security scan')
+        logger.install.warn(`Script "${pkg.name}" blocked - dangerous content detected`, {
+            commands: securityScan.dangerousCommands
+        })
+        return false
+    }
+
+    if (securityScan.severity === 'critical' || securityScan.severity === 'high') {
+        sendLog(`✗ Script contains ${securityScan.severity} severity commands`, 'stderr')
+        if (securityScan.hasObfuscation) {
+            sendLog(`  Obfuscation detected - this may indicate malicious intent`, 'stderr')
+        }
+        sendProgress('failed', `Blocked: ${securityScan.severity} risk level`)
+        logger.install.warn(`Script "${pkg.name}" blocked - ${securityScan.severity} severity`, {
+            obfuscated: securityScan.obfuscatedCommands,
+            warnings: securityScan.warnings
+        })
+        return false
+    }
+
+    // Log any warnings but continue for medium/low severity
+    if (securityScan.warnings.length > 0 && securityScan.severity !== 'none') {
+        sendLog(`⚠ Security warnings for script: ${pkg.name}`, 'stderr')
+        securityScan.warnings.slice(0, 3).forEach(w => sendLog(`  ${w}`, 'stderr'))
     }
 
     sendLog(`▶ Running script: ${pkg.name}`, 'stdout')

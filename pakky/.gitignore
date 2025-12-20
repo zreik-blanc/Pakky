@@ -47,3 +47,6 @@ Thumbs.db
 
 # Test configs (contains security test cases, not for public)
 test-configs/
+
+# configs
+CLAUDE.md
