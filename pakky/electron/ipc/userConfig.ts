@@ -48,11 +48,9 @@ export function registerUserConfigHandlers() {
 
     ipcMain.handle('userConfig:save', async (_, config: unknown) => {
         // Validate request payload
-        let validatedConfig: Partial<UserConfig>
+        let validatedConfig: ReturnType<typeof PartialUserConfigSchema.parse>
         try {
-            // Parse and cast to our interface type
-            const parsed = PartialUserConfigSchema.parse(config)
-            validatedConfig = parsed as Partial<UserConfig>
+            validatedConfig = PartialUserConfigSchema.parse(config)
         } catch (error) {
             if (error instanceof ZodError) {
                 const issues = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')

@@ -85,7 +85,7 @@ function App() {
           {/* Import config dialog */}
           <ImportConfigDialog
             open={showImportDialog}
-            onOpenChange={closeImportDialog}
+            onOpenChange={(open) => !open && closeImportDialog()}
             onImportFromFile={handleImportFromFile}
             onImportFromContent={handleImportFromContent}
           />

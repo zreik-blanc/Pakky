@@ -241,7 +241,7 @@ export const PackageInstallItemSchema = z.object({
         default: z.string().optional(),
         validation: z.enum(['email', 'url', 'path', 'none']).optional(),
     })).optional(),
-    logs: z.array(z.string()),
+    logs: z.array(z.string()).default([]),
     error: z.string().optional(),
     startTime: z.number().optional(),
     endTime: z.number().optional(),

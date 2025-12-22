@@ -99,6 +99,7 @@ export function useConfigImport(
         if (pendingImport) {
             setImportedPackages(pendingImport.packages);
             onImportSuccess();
+            toast.success('Config imported successfully!');
         }
         setSecurityWarning(null);
         setPendingImport(null);
