@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron'
-import { execFileAsync, isValidPackageName, getHomebrewPath } from '../utils'
+import { execFileAsync, isValidPackageName, getHomebrewPath, logger } from '../utils'
 
 // Search result item interface
 interface SearchResultItem {
@@ -28,7 +28,7 @@ export function registerSearchHandlers() {
         // Get the Homebrew path - needed for packaged apps where PATH doesn't include brew
         const brewPath = getHomebrewPath()
         if (!brewPath) {
-            console.error('Homebrew not found')
+            logger.search.warn('Homebrew not found, search unavailable')
             return []
         }
 
@@ -85,7 +85,10 @@ export function registerSearchHandlers() {
 
             return results.slice(0, 15) // Limit total results
         } catch (error) {
-            console.error('Search error:', error)
+            logger.search.error('Package search failed', {
+                query,
+                error: error instanceof Error ? error.message : String(error)
+            })
             return []
         }
     })

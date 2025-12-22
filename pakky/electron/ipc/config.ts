@@ -83,13 +83,13 @@ export function registerConfigHandlers() {
 
             // Get user's security level preference
             const securityLevel = await getUserSecurityLevel()
-            console.log(`[Security] Using security level: ${securityLevel}`)
+            logger.config.debug(`Using security level: ${securityLevel}`)
 
             // Security: Scan for dangerous shell commands using user's security level
             const shellCommands = extractShellCommands(json)
             const security = scanShellCommands(shellCommands, securityLevel)
 
-            console.log(`[Security] Scan result:`, {
+            logger.config.debug('Security scan result', {
                 level: securityLevel,
                 dangerous: security.dangerousCommands.length,
                 suspicious: security.suspiciousCommands.length,
@@ -98,10 +98,10 @@ export function registerConfigHandlers() {
             })
 
             if (security.hasDangerousContent) {
-                console.warn('[Security] Dangerous commands detected in config:', security.dangerousCommands)
+                logger.config.warn('Dangerous commands detected in config', { commands: security.dangerousCommands })
             }
             if (security.blockedCommands.length > 0) {
-                console.warn(`[Security] Commands blocked at ${securityLevel} level:`, security.blockedCommands)
+                logger.config.warn(`Commands blocked at ${securityLevel} level`, { commands: security.blockedCommands })
             }
 
             return { config, security }
@@ -132,8 +132,10 @@ export function registerConfigHandlers() {
         try {
             await fs.writeFile(filePath, JSON.stringify(config, null, 2), 'utf-8')
         } catch (error) {
-            // Security: Don't expose detailed error information
-            console.error('Config save error:', error)
+            logger.config.error('Config save failed', {
+                filePath,
+                error: error instanceof Error ? error.message : String(error)
+            })
             throw new Error('Failed to save configuration file')
         }
     })
@@ -152,13 +154,13 @@ export function registerConfigHandlers() {
 
             // Get user's security level preference
             const securityLevel = await getUserSecurityLevel()
-            console.log(`[Security] Parsing pasted content with security level: ${securityLevel}`)
+            logger.config.debug(`Parsing pasted content with security level: ${securityLevel}`)
 
             // Security: Scan for dangerous shell commands using user's security level
             const shellCommands = extractShellCommands(json)
             const security = scanShellCommands(shellCommands, securityLevel)
 
-            console.log(`[Security] Pasted content scan result:`, {
+            logger.config.debug('Pasted content scan result', {
                 level: securityLevel,
                 dangerous: security.dangerousCommands.length,
                 suspicious: security.suspiciousCommands.length,
@@ -167,10 +169,10 @@ export function registerConfigHandlers() {
             })
 
             if (security.hasDangerousContent) {
-                console.warn('[Security] Dangerous commands detected in pasted config:', security.dangerousCommands)
+                logger.config.warn('Dangerous commands detected in pasted config', { commands: security.dangerousCommands })
             }
             if (security.blockedCommands.length > 0) {
-                console.warn(`[Security] Commands blocked at ${securityLevel} level:`, security.blockedCommands)
+                logger.config.warn(`Commands blocked at ${securityLevel} level`, { commands: security.blockedCommands })
             }
 
             return { config, security }

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 import type {
-    PakkyConfig,
     InstallProgress,
     PackageInstallItem,
     PackageStatus
@@ -29,14 +28,13 @@ function calculatePackageCounts(packages: PackageInstallItem[]) {
 // Store Interface
 // ============================================
 
-interface InstallStore {
-    // State
+interface InstallProgressState {
+    /** Installation progress tracking */
     progress: InstallProgress;
-    config: PakkyConfig | null;
-    userInputValues: Record<string, string>;
+}
 
-    // Actions
-    setConfig: (config: PakkyConfig | null) => void;
+interface InstallProgressActions {
+    // Lifecycle
     startInstallation: () => void;
     cancelInstallation: () => void;
     completeInstallation: () => void;
@@ -47,13 +45,15 @@ interface InstallStore {
     addPackageLog: (packageId: string, log: string) => void;
     setCurrentPackage: (packageId: string | undefined) => void;
 
-    // User input
-    setUserInputValues: (values: Record<string, string>) => void;
-    setUserInputValue: (key: string, value: string) => void;
-
     // Reset
     reset: () => void;
 }
+
+type InstallStore = InstallProgressState & InstallProgressActions;
+
+// ============================================
+// Initial State
+// ============================================
 
 const initialProgress: InstallProgress = {
     status: 'idle',
@@ -64,12 +64,12 @@ const initialProgress: InstallProgress = {
     skippedPackages: 0,
 };
 
+// ============================================
+// Store
+// ============================================
+
 export const useInstallStore = create<InstallStore>((set) => ({
     progress: initialProgress,
-    config: null,
-    userInputValues: {},
-
-    setConfig: (config) => set({ config }),
 
     startInstallation: () => set((state) => ({
         progress: {
@@ -165,18 +165,17 @@ export const useInstallStore = create<InstallStore>((set) => ({
         },
     })),
 
-    setUserInputValues: (values) => set({ userInputValues: values }),
-
-    setUserInputValue: (key, value) => set((state) => ({
-        userInputValues: {
-            ...state.userInputValues,
-            [key]: value,
-        },
-    })),
-
     reset: () => set({
         progress: initialProgress,
-        config: null,
-        userInputValues: {},
     }),
 }));
+
+// ============================================
+// Selectors
+// ============================================
+
+export const selectProgress = (state: InstallStore) => state.progress;
+export const selectStatus = (state: InstallStore) => state.progress.status;
+export const selectPackages = (state: InstallStore) => state.progress.packages;
+export const selectCurrentPackage = (state: InstallStore) => state.progress.currentPackage;
+export const selectIsInstalling = (state: InstallStore) => state.progress.status === 'installing';

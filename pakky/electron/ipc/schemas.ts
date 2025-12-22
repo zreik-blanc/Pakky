@@ -198,9 +198,9 @@ export const PresetSchema = z.object({
     windows: WindowsConfigSchema.optional(),
     linux: LinuxConfigSchema.optional(),
     // Keep legacy packages support for backward compatibility if needed, or remove if we want strict adherence to new schema
-    // The previous schema had a generic 'packages' object which seems to be a simplified macos/homebrew mirror. 
+    // The previous schema had a generic 'packages' object which seems to be a simplified macos/homebrew mirror.
     // Given the direction is "future ready" and "every schema", usage of specific OS schemas is better.
-    // However, to avoid breaking existing presets that might use 'packages' (though checking devops-engineer.json it uses macos.homebrew), 
+    // However, to avoid breaking existing presets that might use 'packages' (though checking devops-engineer.json it uses macos.homebrew),
     // I will keep it but make it optional as it was.
     packages: z.object({
         taps: z.array(z.string()).optional(),
@@ -209,3 +209,72 @@ export const PresetSchema = z.object({
     }).optional(),
     scripts: z.array(ScriptStepSchema).optional(),
 });
+
+// ============================================
+// IPC Request Schemas
+// ============================================
+
+// Package type enum
+const PackageTypeSchema = z.enum(['formula', 'cask', 'mas', 'winget', 'chocolatey', 'apt', 'dnf', 'pacman', 'script']);
+
+// Package status enum
+const PackageStatusSchema = z.enum(['pending', 'checking', 'installing', 'success', 'failed', 'skipped', 'already_installed']);
+
+// Platform enum
+const PlatformSchema = z.enum(['macos', 'windows', 'linux', 'unknown']);
+
+// Package install item schema for IPC requests
+export const PackageInstallItemSchema = z.object({
+    id: z.string().min(1, 'Package ID is required'),
+    name: z.string().min(1, 'Package name is required'),
+    type: PackageTypeSchema,
+    status: PackageStatusSchema,
+    position: z.number().optional(),
+    description: z.string().optional(),
+    version: z.string().optional(),
+    required: z.boolean().optional(),
+    postInstall: z.array(z.string()).optional(),
+    extensions: z.array(z.string()).optional(),
+    commands: z.array(z.string().max(10000)).optional(),
+    promptForInput: z.record(z.string(), z.object({
+        message: z.string(),
+        default: z.string().optional(),
+        validation: z.enum(['email', 'url', 'path', 'none']).optional(),
+    })).optional(),
+    logs: z.array(z.string()),
+    error: z.string().optional(),
+    startTime: z.number().optional(),
+    endTime: z.number().optional(),
+    action: z.enum(['install', 'reinstall']).optional(),
+});
+
+// Install request schema
+export const InstallRequestSchema = z.object({
+    packages: z.array(PackageInstallItemSchema)
+        .min(1, 'At least one package is required')
+        .max(1000, 'Maximum 1000 packages per installation'),
+    settings: ConfigSettingsSchema.optional(),
+    userInputValues: z.record(z.string(), z.string()).optional(),
+});
+
+// System info schema for user config
+const SystemInfoSchema = z.object({
+    platform: PlatformSchema,
+    arch: z.string(),
+    version: z.string(),
+    homeDir: z.string(),
+    hostname: z.string(),
+});
+
+// User config schema for IPC
+export const UserConfigSchema = z.object({
+    userName: z.string().max(100).optional(),
+    systemInfo: SystemInfoSchema.optional(),
+    queue: z.array(PackageInstallItemSchema).optional(),
+    firstLaunchAt: z.string().optional(),
+    lastSeenAt: z.string().optional(),
+    securityLevel: z.enum(['STRICT', 'STANDARD', 'PERMISSIVE']).optional(),
+});
+
+// Partial user config for save operations
+export const PartialUserConfigSchema = UserConfigSchema.partial();

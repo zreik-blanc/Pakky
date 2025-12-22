@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { systemAPI, userConfigAPI } from '@/lib/electron';
+import { useQueueStore } from '@/stores/queueStore';
 import type { Platform, SystemInfo, UserConfig } from '@/lib/types';
 
 export function useAppInitialization() {
@@ -9,6 +10,7 @@ export function useAppInitialization() {
     const [showMainApp, setShowMainApp] = useState(false);
     const [userConfig, setUserConfig] = useState<UserConfig | null>(null);
     const [configError, setConfigError] = useState<string | null>(null);
+    const initFromUserConfig = useQueueStore(state => state.initFromUserConfig);
 
     useEffect(() => {
         const initApp = async () => {
@@ -31,6 +33,10 @@ export function useAppInitialization() {
                 // 2. Handle User Config
                 if (storedConfig) {
                     setUserConfig(storedConfig);
+                    // Initialize queue store with saved queue
+                    if (storedConfig.queue && storedConfig.queue.length > 0) {
+                        initFromUserConfig(storedConfig.queue);
+                    }
                 }
 
                 if (!storedConfig) {
@@ -72,7 +78,7 @@ export function useAppInitialization() {
         };
 
         initApp();
-    }, []);
+    }, [initFromUserConfig]);
 
     const handleOnboardingComplete = () => {
         // Immediately trigger UI transition (Travel starts now)
