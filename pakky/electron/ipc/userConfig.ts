@@ -3,6 +3,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { UserConfig } from '../../src/lib/types'
 import { logger } from '../utils'
+import { PartialUserConfigSchema } from './schemas'
+import { ZodError } from 'zod'
 
 const USER_CONFIG_FILENAME = 'user-config.json'
 
@@ -44,7 +46,20 @@ export function registerUserConfigHandlers() {
         }
     })
 
-    ipcMain.handle('userConfig:save', async (_, config: Partial<UserConfig>) => {
+    ipcMain.handle('userConfig:save', async (_, config: unknown) => {
+        // Validate request payload
+        let validatedConfig: ReturnType<typeof PartialUserConfigSchema.parse>
+        try {
+            validatedConfig = PartialUserConfigSchema.parse(config)
+        } catch (error) {
+            if (error instanceof ZodError) {
+                const issues = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+                logger.config.error('Invalid user config save request', { issues })
+                throw new Error(`Invalid configuration: ${issues}`)
+            }
+            throw error
+        }
+
         try {
             const configPath = await getUserConfigPath()
 
@@ -53,9 +68,9 @@ export function registerUserConfigHandlers() {
             try {
                 const existingContent = await fs.readFile(configPath, 'utf-8')
                 const existingConfig = JSON.parse(existingContent)
-                newConfig = { ...existingConfig, ...config, lastSeenAt: new Date().toISOString() }
+                newConfig = { ...existingConfig, ...validatedConfig, lastSeenAt: new Date().toISOString() }
             } catch {
-                let sysInfo = config.systemInfo
+                let sysInfo = validatedConfig.systemInfo
                 if (!sysInfo) {
                     try {
                         const { getSystemInfo } = await import('../utils')
@@ -67,7 +82,7 @@ export function registerUserConfigHandlers() {
                             homeDir: detected.homeDir,
                             hostname: detected.hostname
                         }
-                    } catch (e) {
+                    } catch {
                         sysInfo = {
                             platform: 'unknown',
                             arch: 'unknown',
@@ -80,10 +95,10 @@ export function registerUserConfigHandlers() {
 
                 const now = new Date().toISOString()
                 newConfig = {
-                    userName: config.userName || 'User',
+                    userName: validatedConfig.userName || 'User',
                     systemInfo: sysInfo,
-                    queue: config.queue || [],
-                    firstLaunchAt: config.firstLaunchAt || now,
+                    queue: validatedConfig.queue || [],
+                    firstLaunchAt: validatedConfig.firstLaunchAt || now,
                     lastSeenAt: now,
                 }
             }

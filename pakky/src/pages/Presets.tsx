@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { PackageInstallItem, Preset } from '@/lib/types';
+import { Preset } from '@/lib/types';
 import { Package, Layers } from 'lucide-react';
 import { presetsAPI } from '@/lib/electron';
 import { PresetSkeleton, HeroPreset, PresetCard, getPresetConfig } from '@/components/presets';
 import { parsePreset, getPackageNamesPreview } from '@/lib/configParser';
 import { UI_STRINGS } from '@/lib/constants';
 import { pageEnter, staggerContainer, cardItem } from '@/lib/animations';
+import { useQueueStore } from '@/stores/queueStore';
 
 interface PresetsPageProps {
-    onLoadPreset: (packages: PackageInstallItem[]) => void;
+    onNavigateHome?: () => void;
 }
 
-export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
+export default function PresetsPage({ onNavigateHome }: PresetsPageProps) {
+    const { addPackages } = useQueueStore();
     const [presets, setPresets] = useState<Preset[]>([]);
     const [loading, setLoading] = useState(true);
     const [hoveredPreset, setHoveredPreset] = useState<string | null>(null);
@@ -35,7 +37,8 @@ export default function PresetsPage({ onLoadPreset }: PresetsPageProps) {
     const handleLoadPreset = (preset: Preset) => {
         // Use centralized parser that handles rich schemas (descriptions, post_install, etc.)
         const packages = parsePreset(preset);
-        onLoadPreset(packages);
+        addPackages(packages);
+        onNavigateHome?.();
     };
 
     const getPackagePreview = (preset: Preset) => {

@@ -16,12 +16,25 @@ interface RateLimitEntry {
 export class RateLimiter {
     private limits: Map<string, RateLimitEntry> = new Map();
     private config: RateLimitConfig;
+    private cleanupIntervalId: ReturnType<typeof setInterval> | null = null;
 
     constructor(config: RateLimitConfig = { maxRequests: 100, windowMs: 1000 }) {
         this.config = config;
 
         // Cleanup old entries periodically
-        setInterval(() => this.cleanup(), 60000);
+        this.cleanupIntervalId = setInterval(() => this.cleanup(), 60000);
+    }
+
+    /**
+     * Stop the cleanup interval and clear all entries.
+     * This method is idempotent and safe to call multiple times.
+     */
+    destroy(): void {
+        if (this.cleanupIntervalId !== null) {
+            clearInterval(this.cleanupIntervalId);
+            this.cleanupIntervalId = null;
+        }
+        this.limits.clear();
     }
 
     /**

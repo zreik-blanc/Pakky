@@ -56,42 +56,6 @@ describe('useInstallStore', () => {
             expect(state.progress.failedPackages).toBe(0)
             expect(state.progress.skippedPackages).toBe(0)
         })
-
-        it('starts with no config', () => {
-            const state = useInstallStore.getState()
-            expect(state.config).toBeNull()
-        })
-
-        it('starts with empty userInputValues', () => {
-            const state = useInstallStore.getState()
-            expect(state.userInputValues).toEqual({})
-        })
-    })
-
-    // ----------------------------------------
-    // Config Management
-    // ----------------------------------------
-    describe('setConfig', () => {
-        it('sets the config', () => {
-            const config = { name: 'Test', version: '1.0.0' }
-
-            act(() => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                useInstallStore.getState().setConfig(config as any)
-            })
-
-            expect(useInstallStore.getState().config).toEqual(config)
-        })
-
-        it('can clear config with null', () => {
-            act(() => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                useInstallStore.getState().setConfig({ name: 'Test', version: '1.0.0' } as any)
-                useInstallStore.getState().setConfig(null)
-            })
-
-            expect(useInstallStore.getState().config).toBeNull()
-        })
     })
 
     // ----------------------------------------
@@ -324,53 +288,13 @@ describe('useInstallStore', () => {
     })
 
     // ----------------------------------------
-    // User Input
-    // ----------------------------------------
-    describe('setUserInputValues', () => {
-        it('sets all user input values', () => {
-            act(() => {
-                useInstallStore.getState().setUserInputValues({ email: 'test@test.com', name: 'Test' })
-            })
-
-            expect(useInstallStore.getState().userInputValues).toEqual({
-                email: 'test@test.com',
-                name: 'Test',
-            })
-        })
-    })
-
-    describe('setUserInputValue', () => {
-        it('sets a single user input value', () => {
-            act(() => {
-                useInstallStore.getState().setUserInputValue('email', 'test@test.com')
-            })
-
-            expect(useInstallStore.getState().userInputValues.email).toBe('test@test.com')
-        })
-
-        it('preserves other values', () => {
-            act(() => {
-                useInstallStore.getState().setUserInputValues({ existing: 'value' })
-                useInstallStore.getState().setUserInputValue('new', 'newvalue')
-            })
-
-            const { userInputValues } = useInstallStore.getState()
-            expect(userInputValues.existing).toBe('value')
-            expect(userInputValues.new).toBe('newvalue')
-        })
-    })
-
-    // ----------------------------------------
     // Reset
     // ----------------------------------------
     describe('reset', () => {
         it('resets all state to initial values', () => {
             act(() => {
                 // Set up some state
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                useInstallStore.getState().setConfig({ name: 'Test', version: '1.0.0' } as any)
                 useInstallStore.getState().setPackages([createMockPackage()])
-                useInstallStore.getState().setUserInputValues({ key: 'value' })
                 useInstallStore.getState().startInstallation()
 
                 // Reset
@@ -380,8 +304,6 @@ describe('useInstallStore', () => {
             const state = useInstallStore.getState()
             expect(state.progress.status).toBe('idle')
             expect(state.progress.packages).toEqual([])
-            expect(state.config).toBeNull()
-            expect(state.userInputValues).toEqual({})
         })
     })
 
@@ -514,53 +436,6 @@ describe('useInstallStore', () => {
                 })
 
                 expect(useInstallStore.getState().progress.packages[0].logs).toContain(specialLog)
-            })
-        })
-
-        describe('setUserInputValue with edge cases', () => {
-            it('handles empty key', () => {
-                act(() => {
-                    useInstallStore.getState().setUserInputValue('', 'value')
-                })
-
-                expect(useInstallStore.getState().userInputValues['']).toBe('value')
-            })
-
-            it('handles empty value', () => {
-                act(() => {
-                    useInstallStore.getState().setUserInputValue('key', '')
-                })
-
-                expect(useInstallStore.getState().userInputValues.key).toBe('')
-            })
-
-            it('handles special characters in key', () => {
-                act(() => {
-                    useInstallStore.getState().setUserInputValue('key.with.dots', 'value')
-                })
-
-                expect(useInstallStore.getState().userInputValues['key.with.dots']).toBe('value')
-            })
-
-            it('handles overwriting existing value', () => {
-                act(() => {
-                    useInstallStore.getState().setUserInputValue('key', 'old')
-                    useInstallStore.getState().setUserInputValue('key', 'new')
-                })
-
-                expect(useInstallStore.getState().userInputValues.key).toBe('new')
-            })
-        })
-
-        describe('setUserInputValues with edge cases', () => {
-            it('handles empty object', () => {
-                act(() => {
-                    useInstallStore.getState().setUserInputValues({ existing: 'value' })
-                    useInstallStore.getState().setUserInputValues({})
-                })
-
-                // Empty object replaces existing
-                expect(useInstallStore.getState().userInputValues).toEqual({})
             })
         })
 

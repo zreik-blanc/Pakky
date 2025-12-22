@@ -3,6 +3,8 @@ import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import type { SystemInfo, PackageInstallItem, UserConfig, ConfigSettings } from '@/lib/types';
 import { useInstallStore } from '@/stores/installStore';
+import { useConfigStore, selectConfig } from '@/stores/configStore';
+import { useQueueStore, selectPackages, selectImportedPackages, selectHasImportedConfig, selectLogs } from '@/stores/queueStore';
 import { installAPI, configAPI } from '@/lib/electron';
 import type { PakkyConfig } from '@/lib/types';
 import { UI_STRINGS } from '@/lib/constants';
@@ -11,7 +13,6 @@ import { HomebrewAlert } from '@/components/home/HomebrewAlert';
 import { PackageQueue } from '@/components/home/PackageQueue';
 import { ExportPreviewDialog } from '@/components/export/ExportPreviewDialog';
 import { ImportedConfigAlert } from '@/components/alerts/ImportedConfigAlert';
-import { QueueManager } from '@/lib/managers/queueManager';
 import { ScriptInputDialog } from '@/components/install/ScriptInputDialog';
 import { AddScriptDialog } from '@/components/install/AddScriptDialog';
 import { useInstallationSubscription } from '@/hooks/useInstallationSubscription';
@@ -22,30 +23,28 @@ import { pageEnter } from '@/lib/animations';
 interface HomePageProps {
     systemInfo: SystemInfo | null;
     userConfig: UserConfig | null;
-    importedPackages?: PackageInstallItem[];
-    onClearImported?: () => void;
-    selectedPackages: PackageInstallItem[];
-    setSelectedPackages: React.Dispatch<React.SetStateAction<PackageInstallItem[]>>;
-    installLogs: Record<string, string[]>;
-    setInstallLogs: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
     onNavigateToPresets?: () => void;
-    hasImportedConfig?: boolean;
-    onClearImportedFlag?: () => void;
 }
 
 export default function HomePage({
     systemInfo,
     userConfig,
-    importedPackages,
-    onClearImported,
-    selectedPackages,
-    setSelectedPackages,
-    installLogs,
-    setInstallLogs,
     onNavigateToPresets,
-    hasImportedConfig,
-    onClearImportedFlag
 }: HomePageProps) {
+    // Use queue store for packages, logs, and import state
+    const selectedPackages = useQueueStore(selectPackages);
+    const importedPackages = useQueueStore(selectImportedPackages);
+    const hasImportedConfig = useQueueStore(selectHasImportedConfig);
+    const installLogs = useQueueStore(selectLogs);
+    const {
+        setPackages: setSelectedPackages,
+        addPackages,
+        clearImportedPackages,
+        setHasImportedConfig,
+        reorderPackages,
+        clearPackages,
+        clearLogs,
+    } = useQueueStore();
     const [isStartingInstall, setIsStartingInstall] = useState(false);
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [exportDialogTab, setExportDialogTab] = useState<'general' | 'options' | 'preview'>('general');
@@ -68,12 +67,14 @@ export default function HomePage({
 
     const {
         progress,
-        config: loadedConfig,
         setPackages,
         startInstallation,
         completeInstallation,
         cancelInstallation: cancelInstallInStore
     } = useInstallStore();
+
+    // Get loaded config from config store
+    const loadedConfig = useConfigStore(selectConfig);
 
     // Package manager check hook (Homebrew on macOS, Winget on Windows, etc.)
     const {
@@ -83,31 +84,25 @@ export default function HomePage({
         packageManagerName,
     } = usePackageManagerCheck({ platform: systemInfo?.platform });
 
-    // Installation subscription hook
-    useInstallationSubscription({
-        setSelectedPackages,
-        setInstallLogs,
-    });
+    // Installation subscription hook - uses stores directly
+    useInstallationSubscription();
 
-    // Package actions hook
+    // Package actions hook - uses stores directly
     const {
         addPackage,
         removePackage,
         handleReinstall,
     } = usePackageActions({
-        selectedPackages,
-        setSelectedPackages,
         isStartingInstall,
-        installStatus: progress.status,
     });
 
-    // Handle imported packages
+    // Handle imported packages - merge them into the queue
     useEffect(() => {
         if (importedPackages && importedPackages.length > 0) {
-            setSelectedPackages(prev => QueueManager.merge(prev, importedPackages));
-            onClearImported?.();
+            addPackages(importedPackages);
+            clearImportedPackages();
         }
-    }, [importedPackages, onClearImported, setSelectedPackages]);
+    }, [importedPackages, addPackages, clearImportedPackages]);
 
     // Sync install settings when config is loaded/imported
     useEffect(() => {
@@ -197,7 +192,7 @@ export default function HomePage({
 
             setPackages(updatedPackages);
             startInstallation();
-            setInstallLogs({});
+            clearLogs();
 
             // Pass install settings (UI settings override loaded config settings)
             const settingsToUse = { ...loadedConfig?.settings, ...installSettings };
@@ -224,7 +219,7 @@ export default function HomePage({
     // Handle imported config alert confirmation
     const handleImportedAlertConfirm = () => {
         setShowImportedAlert(false);
-        onClearImportedFlag?.(); // Clear the flag so it doesn't show again
+        setHasImportedConfig(false); // Clear the flag so it doesn't show again
         checkForScriptInputs(); // Check for script inputs before proceeding
     };
 
@@ -260,16 +255,12 @@ export default function HomePage({
 
     // Clear all packages and reset imported flag
     const handleClearAll = () => {
-        setSelectedPackages([]);
-        onClearImportedFlag?.();
+        clearPackages();
     };
 
     // Handle adding a custom script
     const handleAddScript = (script: PackageInstallItem) => {
-        setSelectedPackages(prev => {
-            const { added } = QueueManager.addMultiple(prev, [script]);
-            return [...prev, ...added];
-        });
+        addPackages([script]);
     };
 
     const isInstalling = progress.status === 'installing';
@@ -327,7 +318,7 @@ export default function HomePage({
                         onInstallSettingsChange={setInstallSettings}
                         onRemove={removePackage}
                         onReinstall={handleReinstall}
-                        onReorder={setSelectedPackages}
+                        onReorder={reorderPackages}
                         onStartInstall={handleStartInstall}
                         onCancelInstall={handleCancelInstall}
                         onExport={handleExportConfig}

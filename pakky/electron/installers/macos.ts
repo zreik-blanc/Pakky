@@ -297,7 +297,8 @@ async function executeScript(
         // Replace placeholders with user input values
         const command = replaceCommandPlaceholders(rawCommand, userInputValues)
 
-        sendLog(`$ ${command}`, 'stdout')
+        // Log raw command to avoid exposing sensitive user input (e.g., API keys, passwords)
+        sendLog(`$ ${rawCommand}`, 'stdout')
 
         const success = await new Promise<boolean>((resolve) => {
             // Use shell to execute the command

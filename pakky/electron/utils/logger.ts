@@ -59,4 +59,6 @@ export const logger = {
     install: createLogger('Install'),
     window: createLogger('Window'),
     config: createLogger('Config'),
+    search: createLogger('Search'),
+    presets: createLogger('Presets'),
 }

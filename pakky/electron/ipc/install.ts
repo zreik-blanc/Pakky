@@ -9,6 +9,8 @@ import {
     type InstallationState,
 } from '../installers'
 import { logger } from '../utils'
+import { InstallRequestSchema } from './schemas'
+import { ZodError } from 'zod'
 
 // Interface for install request from renderer
 interface InstallRequest {
@@ -24,12 +26,66 @@ const DEFAULT_SETTINGS: ConfigSettings = {
     parallel_installs: false,
 }
 
-// Track current installation state
-let currentInstallation: InstallationState = {
-    isRunning: false,
-    isCancelled: false,
-    currentProcess: null,
+// ============================================
+// Installation State Manager
+// ============================================
+
+/**
+ * Manages installation state per window to support multi-window scenarios.
+ * Uses a Map keyed by window ID to track independent installation states.
+ */
+class InstallationStateManager {
+    private states = new Map<number, InstallationState>()
+
+    /**
+     * Get or create installation state for a window
+     */
+    get(windowId: number): InstallationState {
+        let state = this.states.get(windowId)
+        if (!state) {
+            state = this.createInitialState()
+            this.states.set(windowId, state)
+        }
+        return state
+    }
+
+    /**
+     * Reset installation state for a window
+     */
+    reset(windowId: number): InstallationState {
+        const state = this.createInitialState()
+        this.states.set(windowId, state)
+        return state
+    }
+
+    /**
+     * Remove state for a closed window (cleanup)
+     */
+    remove(windowId: number): void {
+        this.states.delete(windowId)
+    }
+
+    /**
+     * Check if any installation is running across all windows
+     */
+    isAnyRunning(): boolean {
+        for (const state of this.states.values()) {
+            if (state.isRunning) return true
+        }
+        return false
+    }
+
+    private createInitialState(): InstallationState {
+        return {
+            isRunning: false,
+            isCancelled: false,
+            currentProcess: null,
+        }
+    }
 }
+
+// Single instance of the state manager
+const installationStates = new InstallationStateManager()
 
 /**
  * Register installation-related IPC handlers
@@ -47,27 +103,38 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
         return isHomebrewInstalled()
     })
 
-    ipcMain.handle('install:start', async (_event, request: InstallRequest) => {
-        if (currentInstallation.isRunning) {
+    ipcMain.handle('install:start', async (event, request: unknown) => {
+        const windowId = event.sender.id
+        const installState = installationStates.get(windowId)
+
+        if (installState.isRunning) {
             throw new Error('Installation already in progress')
         }
 
-        const { packages, settings: userSettings, userInputValues = {} } = request
-        const settings = { ...DEFAULT_SETTINGS, ...userSettings }
-
-        if (!packages || packages.length === 0) {
-            throw new Error('No packages to install')
+        // Validate request payload
+        let validatedRequest: InstallRequest
+        try {
+            // Parse and cast to our interface type
+            const parsed = InstallRequestSchema.parse(request)
+            validatedRequest = parsed as InstallRequest
+        } catch (error) {
+            if (error instanceof ZodError) {
+                const issues = error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+                logger.install.error('Invalid install request', { issues })
+                throw new Error(`Invalid install request: ${issues}`)
+            }
+            throw error
         }
+
+        const { packages, settings: userSettings, userInputValues = {} } = validatedRequest
+        const settings = { ...DEFAULT_SETTINGS, ...userSettings }
 
         logger.install.info('Starting installation with packages:', packages.map(p => p.name))
         logger.install.debug('Installation settings:', settings)
 
-        // Reset installation state
-        currentInstallation = {
-            isRunning: true,
-            isCancelled: false,
-            currentProcess: null,
-        }
+        // Reset installation state for this window
+        const currentInstallation = installationStates.reset(windowId)
+        currentInstallation.isRunning = true
 
         const win = getWindow()
 
@@ -199,9 +266,15 @@ export function registerInstallHandlers(getWindow: () => BrowserWindow | null) {
         }
     })
 
-    ipcMain.handle('install:cancel', async () => {
+    ipcMain.handle('install:cancel', async (event) => {
+        const windowId = event.sender.id
+        const installState = installationStates.get(windowId)
+
         logger.install.info('Cancelling installation...')
-        cancelInstallation(currentInstallation)
+        cancelInstallation(installState)
         return { cancelled: true }
     })
 }
+
+// Export for cleanup on window close (can be called from main.ts)
+export { installationStates }

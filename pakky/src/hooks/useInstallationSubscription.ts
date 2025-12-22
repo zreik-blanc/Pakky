@@ -1,40 +1,36 @@
 import { useEffect } from 'react';
 import { installAPI } from '@/lib/electron';
 import { useInstallStore } from '@/stores/installStore';
+import { useQueueStore } from '@/stores/queueStore';
 import type { PackageInstallItem } from '@/lib/types';
-
-interface UseInstallationSubscriptionProps {
-    setSelectedPackages: React.Dispatch<React.SetStateAction<PackageInstallItem[]>>;
-    setInstallLogs: React.Dispatch<React.SetStateAction<Record<string, string[]>>>;
-}
 
 /**
  * Hook to subscribe to installation progress and log updates via IPC.
  * Sets up listeners on mount and cleans them up on unmount.
+ * Uses stores directly instead of props to avoid prop drilling.
  */
-export function useInstallationSubscription({
-    setSelectedPackages,
-    setInstallLogs,
-}: UseInstallationSubscriptionProps) {
+export function useInstallationSubscription() {
     const {
-        setPackages,
+        setPackages: setInstallPackages,
         addPackageLog,
         completeInstallation,
     } = useInstallStore();
 
+    const { setPackages: setQueuePackages, addLog } = useQueueStore();
+
     useEffect(() => {
         const unsubProgress = installAPI.onProgress((progressUpdate) => {
             if (progressUpdate.packages) {
-                setPackages(progressUpdate.packages);
+                setInstallPackages(progressUpdate.packages);
             }
 
             if (progressUpdate.packages) {
-                setSelectedPackages(prev => {
-                    return prev.map(pkg => {
+                setQueuePackages(
+                    useQueueStore.getState().packages.map(pkg => {
                         const updated = progressUpdate.packages.find((p: PackageInstallItem) => p.id === pkg.id);
                         return updated || pkg;
-                    });
-                });
+                    })
+                );
             }
 
             if (progressUpdate.status === 'completed' || progressUpdate.status === 'cancelled') {
@@ -45,12 +41,8 @@ export function useInstallationSubscription({
         const unsubLog = installAPI.onLog((log) => {
             // Store handles log truncation via addPackageLog
             addPackageLog(log.packageId, log.line);
-            
-            // Also update local state for UI (store is source of truth for truncation)
-            setInstallLogs(prev => ({
-                ...prev,
-                [log.packageId]: [...(prev[log.packageId] || []), log.line]
-            }));
+            // Also update queue store logs
+            addLog(log.packageId, log.line);
         });
 
         return () => {
@@ -58,7 +50,6 @@ export function useInstallationSubscription({
             unsubLog();
         };
         // Intentionally only run on mount/unmount - IPC listeners should be set up once
-        // and the callbacks use refs/external state that don't need to trigger re-subscription
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 }

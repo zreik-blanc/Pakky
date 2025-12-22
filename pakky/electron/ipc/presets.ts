@@ -2,6 +2,7 @@ import { ipcMain, app } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { PresetSchema } from './schemas'
+import { logger } from '../utils'
 
 export function registerPresetsHandlers() {
     ipcMain.handle('presets:list', async () => {
@@ -16,8 +17,8 @@ export function registerPresetsHandlers() {
             // Check if directory exists
             try {
                 await fs.access(presetsDir)
-            } catch (e) {
-                console.error('[Presets] Directory not found:', presetsDir)
+            } catch {
+                logger.presets.warn('Presets directory not found', { presetsDir })
                 return []
             }
 
@@ -37,14 +38,18 @@ export function registerPresetsHandlers() {
                     }
                     return validated
                 } catch (e) {
-                    console.error(`[Presets] Failed to load preset ${file}:`, e)
+                    logger.presets.error(`Failed to load preset ${file}`, {
+                        error: e instanceof Error ? e.message : String(e)
+                    })
                     return null
                 }
             }))
 
             return presets.filter(p => p !== null)
         } catch (error) {
-            console.error('[Presets] Error listing presets:', error)
+            logger.presets.error('Error listing presets', {
+                error: error instanceof Error ? error.message : String(error)
+            })
             throw error
         }
     })

@@ -5,6 +5,7 @@ import { registerAllHandlers } from './ipc'
 import { ELECTRON_CONFIG } from './constants'
 import { WINDOW } from '../src/lib/constants'
 import { logger } from './utils'
+import { ipcRateLimiter, strictRateLimiter } from './utils/rate-limiter'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -93,6 +94,13 @@ registerAllHandlers(() => win)
 // ============================================
 // App Lifecycle
 // ============================================
+
+// Cleanup rate limiters on app quit to prevent memory leaks
+app.on('will-quit', () => {
+  logger.main.info('Cleaning up rate limiters')
+  ipcRateLimiter.destroy()
+  strictRateLimiter.destroy()
+})
 
 // Quit when all windows are closed, except on macOS
 app.on('window-all-closed', () => {

@@ -5,7 +5,7 @@
 
 export const APP = {
     NAME: 'Pakky',
-    VERSION: '0.0.9',
+    VERSION: '0.1.0',
 } as const;
 
 export const EXPORT_DEFAULTS = {
