@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Cross-Platform Setup Orchestrator - One-click installation from shareable JSON configs",
-  "author": "efee",
+  "author": "zreik-blanc",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

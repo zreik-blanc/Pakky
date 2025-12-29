@@ -1,10 +1,10 @@
 // @see - https://www.electron.build/configuration/configuration
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
-  "appId": "com.efee.pakky",
+  "appId": "com.zreikblanc.pakky",
   "productName": "Pakky",
   "asar": true,
-  "copyright": "Copyright © 2026 efee",
+  "copyright": "Copyright © 2025 zreik-blanc",
   "directories": {
     "output": "release/${version}",
     "buildResources": "build"
@@ -98,7 +98,7 @@
   // Auto-update configuration (for future use with GitHub releases)
   "publish": {
     "provider": "github",
-    "owner": "efee",
-    "repo": "pakky"
+    "owner": "zreik-blanc",
+    "repo": "Pakky"
   }
 }
