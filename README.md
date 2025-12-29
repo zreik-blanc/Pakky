@@ -19,8 +19,7 @@ A cross-platform setup orchestrator that enables one-click installation of appli
 
 ## Screenshots
 
-<!-- Add screenshots here -->
-*Coming soon*
+![Main Interface](.github/assets/screenshot-main.png)
 
 ## Installation
 
